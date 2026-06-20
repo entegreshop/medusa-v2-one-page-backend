@@ -83,32 +83,53 @@ runStep('node', ['wait-for-db.js'], (code) => {
 
     const fs = require('fs');
     const path = require('path');
-    const adminIndexPath = path.join(__dirname, '.medusa', 'server', 'admin', 'index.html');
-    const needsBuild = !fs.existsSync(adminIndexPath);
 
-    if (needsBuild) {
-      sendLog(`[logger] Admin build not found at ${adminIndexPath}. Running medusa build...\n`);
-      runStep('npx', ['medusa', 'build'], (buildCode) => {
-        if (buildCode !== 0) {
-          sendLog(`[logger] medusa build failed. Exiting.\n`);
-          process.exit(buildCode);
-        }
+    const rootPublicAdminIndex = path.join(__dirname, 'public', 'admin', 'index.html');
+    const compiledPublicAdminIndex = path.join(__dirname, '.medusa', 'server', 'public', 'admin', 'index.html');
 
-        // Step 4: Start server
-        const port = process.env.PORT || '3000';
-        runStep('npx', ['medusa', 'start', '--port', port], (code) => {
-          sendLog(`[logger] Medusa server stopped with code ${code}\n`);
-          process.exit(code);
-        });
-      });
-    } else {
-      sendLog(`[logger] Admin build found at ${adminIndexPath}. Skipping medusa build.\n`);
-      // Step 3: Start server
+    function startServer() {
       const port = process.env.PORT || '3000';
       runStep('npx', ['medusa', 'start', '--port', port], (code) => {
         sendLog(`[logger] Medusa server stopped with code ${code}\n`);
         process.exit(code);
       });
+    }
+
+    function ensureCopiedAndStart() {
+      try {
+        const srcPublic = path.join(__dirname, '.medusa', 'server', 'public');
+        const destPublic = path.join(__dirname, 'public');
+        if (fs.existsSync(srcPublic)) {
+          sendLog(`[logger] Copying admin build from ${srcPublic} to ${destPublic}...\n`);
+          fs.cpSync(srcPublic, destPublic, { recursive: true });
+          sendLog(`[logger] Admin build copied successfully!\n`);
+        } else {
+          sendLog(`[logger] Warning: Source public directory not found at ${srcPublic}\n`);
+        }
+      } catch (copyErr) {
+        sendLog(`[logger] Error copying public dir: ${copyErr.message}\n`);
+      }
+      startServer();
+    }
+
+    if (!fs.existsSync(rootPublicAdminIndex)) {
+      sendLog(`[logger] Root admin index.html not found at ${rootPublicAdminIndex}.\n`);
+      if (fs.existsSync(compiledPublicAdminIndex)) {
+        sendLog(`[logger] Compiled admin index.html found. Copying...\n`);
+        ensureCopiedAndStart();
+      } else {
+        sendLog(`[logger] Compiled admin index.html not found. Running medusa build...\n`);
+        runStep('npx', ['medusa', 'build'], (buildCode) => {
+          if (buildCode !== 0) {
+            sendLog(`[logger] medusa build failed. Exiting.\n`);
+            process.exit(buildCode);
+          }
+          ensureCopiedAndStart();
+        });
+      }
+    } else {
+      sendLog(`[logger] Root admin index.html found. Skipping build/copy.\n`);
+      startServer();
     }
   });
 });
