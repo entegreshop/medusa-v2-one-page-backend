@@ -81,11 +81,34 @@ runStep('node', ['wait-for-db.js'], (code) => {
       process.exit(code);
     }
 
-    // Step 3: Start server
-    const port = process.env.PORT || '3000';
-    runStep('npx', ['medusa', 'start', '--port', port], (code) => {
-      sendLog(`[logger] Medusa server stopped with code ${code}\n`);
-      process.exit(code);
-    });
+    const fs = require('fs');
+    const path = require('path');
+    const adminIndexPath = path.join(__dirname, '.medusa', 'server', 'admin', 'index.html');
+    const needsBuild = !fs.existsSync(adminIndexPath);
+
+    if (needsBuild) {
+      sendLog(`[logger] Admin build not found at ${adminIndexPath}. Running medusa build...\n`);
+      runStep('npx', ['medusa', 'build'], (buildCode) => {
+        if (buildCode !== 0) {
+          sendLog(`[logger] medusa build failed. Exiting.\n`);
+          process.exit(buildCode);
+        }
+
+        // Step 4: Start server
+        const port = process.env.PORT || '3000';
+        runStep('npx', ['medusa', 'start', '--port', port], (code) => {
+          sendLog(`[logger] Medusa server stopped with code ${code}\n`);
+          process.exit(code);
+        });
+      });
+    } else {
+      sendLog(`[logger] Admin build found at ${adminIndexPath}. Skipping medusa build.\n`);
+      // Step 3: Start server
+      const port = process.env.PORT || '3000';
+      runStep('npx', ['medusa', 'start', '--port', port], (code) => {
+        sendLog(`[logger] Medusa server stopped with code ${code}\n`);
+        process.exit(code);
+      });
+    }
   });
 });
