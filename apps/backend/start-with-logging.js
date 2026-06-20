@@ -98,20 +98,48 @@ runStep('node', ['wait-for-db.js'], (code) => {
           const tables = tablesRes.rows.map(r => r.table_name);
           console.log('[logger] Database Tables:', tables.join(', '));
 
-          if (tables.includes('user')) {
-            const users = await pgClient.query('SELECT id, email FROM "user"');
-            console.log('[logger] Existing Users:', JSON.stringify(users.rows));
-          }
-          if (tables.includes('auth_identity')) {
-            const auths = await pgClient.query('SELECT id, identifier FROM auth_identity');
-            console.log('[logger] Existing Auth Identities:', JSON.stringify(auths.rows));
+          // Safe column inspection helper
+          async function logTableDetails(tableName) {
+            if (!tables.includes(tableName)) return;
+            try {
+              const colsRes = await pgClient.query(`
+                SELECT column_name, data_type 
+                FROM information_schema.columns 
+                WHERE table_schema = 'public' AND table_name = $1
+              `, [tableName]);
+              const colNames = colsRes.rows.map(c => c.column_name);
+              console.log(`[logger] Columns of ${tableName}:`, colNames.join(', '));
+              
+              // Print first 5 rows to see structure
+              const rowsRes = await pgClient.query(`SELECT * FROM "${tableName}" LIMIT 5`);
+              console.log(`[logger] Sample rows of ${tableName}:`, JSON.stringify(rowsRes.rows));
+            } catch (err) {
+              console.log(`[logger] Failed to inspect table ${tableName}:`, err.message);
+            }
           }
 
-          console.log('[logger] Attempting to delete old admin@medusa.com...');
-          const authDelRes = await pgClient.query("DELETE FROM auth_identity WHERE identifier = 'admin@medusa.com'");
-          console.log('[logger] Deleted from auth_identity rows:', authDelRes.rowCount);
-          const userDelRes = await pgClient.query("DELETE FROM \"user\" WHERE email = 'admin@medusa.com'");
-          console.log('[logger] Deleted from user rows:', userDelRes.rowCount);
+          await logTableDetails('user');
+          await logTableDetails('auth_identity');
+
+          // Delete admin@medusa.com from user table
+          try {
+            const userDelRes = await pgClient.query("DELETE FROM \"user\" WHERE email = 'admin@medusa.com'");
+            console.log('[logger] Deleted from user rows:', userDelRes.rowCount);
+          } catch (err) {
+            console.log('[logger] Failed to delete from user:', err.message);
+          }
+
+          // Delete from auth_identity: we will check columns first.
+          // Since auth_identity contains provider-specific data, we search for admin@medusa.com in all rows
+          const authsRes = await pgClient.query('SELECT * FROM auth_identity');
+          console.log('[logger] Existing Auth Identities:', JSON.stringify(authsRes.rows));
+          for (const row of authsRes.rows) {
+            if (JSON.stringify(row).includes('admin@medusa.com')) {
+              console.log('[logger] Found admin@medusa.com in auth_identity row:', row.id);
+              const delRes = await pgClient.query('DELETE FROM auth_identity WHERE id = $1', [row.id]);
+              console.log('[logger] Deleted auth_identity row:', delRes.rowCount);
+            }
+          }
         } catch (dbErr) {
           console.log('[logger] Database operations error:', dbErr.message);
         } finally {
