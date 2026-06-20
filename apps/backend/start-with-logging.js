@@ -120,24 +120,81 @@ runStep('node', ['wait-for-db.js'], (code) => {
 
           await logTableDetails('user');
           await logTableDetails('auth_identity');
+          await logTableDetails('provider_identity');
 
-          // Delete admin@medusa.com from user table
-          try {
-            const userDelRes = await pgClient.query("DELETE FROM \"user\" WHERE email = 'admin@medusa.com'");
-            console.log('[logger] Deleted from user rows:', userDelRes.rowCount);
-          } catch (err) {
-            console.log('[logger] Failed to delete from user:', err.message);
+          // 1. Get user ID of admin@medusa.com
+          const adminUserRes = await pgClient.query("SELECT id FROM \"user\" WHERE email = 'admin@medusa.com'");
+          const adminUserId = adminUserRes.rows[0] ? adminUserRes.rows[0].id : null;
+          console.log('[logger] Admin user_id:', adminUserId);
+
+          let authIdsToDelete = [];
+
+          if (adminUserId) {
+            // 2. Find auth_identity records referencing this user_id in app_metadata
+            const authsRes = await pgClient.query('SELECT id, app_metadata FROM auth_identity');
+            for (const row of authsRes.rows) {
+              if (row.app_metadata && row.app_metadata.user_id === adminUserId) {
+                authIdsToDelete.push(row.id);
+              }
+            }
           }
 
-          // Delete from auth_identity: we will check columns first.
-          // Since auth_identity contains provider-specific data, we search for admin@medusa.com in all rows
-          const authsRes = await pgClient.query('SELECT * FROM auth_identity');
-          console.log('[logger] Existing Auth Identities:', JSON.stringify(authsRes.rows));
-          for (const row of authsRes.rows) {
-            if (JSON.stringify(row).includes('admin@medusa.com')) {
-              console.log('[logger] Found admin@medusa.com in auth_identity row:', row.id);
-              const delRes = await pgClient.query('DELETE FROM auth_identity WHERE id = $1', [row.id]);
-              console.log('[logger] Deleted auth_identity row:', delRes.rowCount);
+          // Also check for any auth_identity containing admin@medusa.com in JSON string
+          const authsResAll = await pgClient.query('SELECT * FROM auth_identity');
+          for (const row of authsResAll.rows) {
+            if (JSON.stringify(row).includes('admin@medusa.com') && !authIdsToDelete.includes(row.id)) {
+              authIdsToDelete.push(row.id);
+            }
+          }
+          console.log('[logger] Auth identities to delete:', authIdsToDelete);
+
+          // 3. Delete provider_identity records referencing these auth_identity IDs or admin@medusa.com
+          if (tables.includes('provider_identity')) {
+            try {
+              const provRes = await pgClient.query('SELECT * FROM provider_identity');
+              console.log('[logger] Existing Provider Identities:', JSON.stringify(provRes.rows));
+              for (const row of provRes.rows) {
+                const rowStr = JSON.stringify(row);
+                const matchesAuthId = authIdsToDelete.some(authId => rowStr.includes(authId));
+                const matchesEmail = rowStr.includes('admin@medusa.com');
+                if (matchesAuthId || matchesEmail) {
+                  console.log('[logger] Found admin/auth reference in provider_identity:', row.id);
+                  if (row.id) {
+                    await pgClient.query('DELETE FROM provider_identity WHERE id = $1', [row.id]);
+                  } else if (row.auth_identity_id) {
+                    await pgClient.query('DELETE FROM provider_identity WHERE auth_identity_id = $1', [row.auth_identity_id]);
+                  }
+                }
+              }
+            } catch (err) {
+              console.log('[logger] Failed to delete from provider_identity:', err.message);
+            }
+          }
+
+          // 4. Delete auth_identity records
+          for (const authId of authIdsToDelete) {
+            try {
+              await pgClient.query('DELETE FROM auth_identity WHERE id = $1', [authId]);
+              console.log('[logger] Deleted auth_identity:', authId);
+            } catch (err) {
+              console.log('[logger] Failed to delete auth_identity:', authId, err.message);
+            }
+          }
+
+          // 5. Delete user record
+          if (adminUserId) {
+            try {
+              const userDelRes = await pgClient.query("DELETE FROM \"user\" WHERE id = $1", [adminUserId]);
+              console.log('[logger] Deleted from user rows:', userDelRes.rowCount);
+            } catch (err) {
+              console.log('[logger] Failed to delete from user:', err.message);
+            }
+          } else {
+            try {
+              const userDelRes = await pgClient.query("DELETE FROM \"user\" WHERE email = 'admin@medusa.com'");
+              console.log('[logger] Fallback deleted from user rows:', userDelRes.rowCount);
+            } catch (err) {
+              console.log('[logger] Fallback delete from user failed:', err.message);
             }
           }
         } catch (dbErr) {
