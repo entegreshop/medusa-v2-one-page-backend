@@ -16,5 +16,8 @@ module.exports = defineConfig({
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
+  },
+  admin: {
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://fnjekbskvqux7jzy4rjs1yef.204.168.136.196.sslip.io",
   }
 })
