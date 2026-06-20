@@ -81,11 +81,14 @@ runStep('node', ['wait-for-db.js'], (code) => {
       process.exit(code);
     }
 
-    const fs = require('fs');
-    const path = require('path');
+    // Step 2b: Create Admin User (Ignore failure if user exists)
+    sendLog(`[logger] Ensuring admin user admin@medusa.com is created...\n`);
+    runStep('npx', ['medusa', 'user', '-e', 'admin@medusa.com', '-p', 'admin12345'], (userCode) => {
+      const fs = require('fs');
+      const path = require('path');
 
-    const rootPublicAdminIndex = path.join(__dirname, 'public', 'admin', 'index.html');
-    const compiledPublicAdminIndex = path.join(__dirname, '.medusa', 'server', 'public', 'admin', 'index.html');
+      const rootPublicAdminIndex = path.join(__dirname, 'public', 'admin', 'index.html');
+      const compiledPublicAdminIndex = path.join(__dirname, '.medusa', 'server', 'public', 'admin', 'index.html');
 
     function startServer() {
       const port = process.env.PORT || '3000';
@@ -132,4 +135,5 @@ runStep('node', ['wait-for-db.js'], (code) => {
       startServer();
     }
   });
+});
 });
