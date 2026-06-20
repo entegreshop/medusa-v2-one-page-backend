@@ -84,23 +84,42 @@ runStep('node', ['wait-for-db.js'], (code) => {
     // Step 2b: Reset old admin user to apply strong password and avoid browser warnings
     const { Client } = require('pg');
     const dbUrl = process.env.DATABASE_URL;
-    sendLog(`[logger] Resetting old admin user in database to apply strong password...\n`);
+    console.log('[logger] DATABASE_URL is defined. Connecting to check and reset admin user...');
 
     const pgClient = new Client({ connectionString: dbUrl });
     pgClient.connect()
       .then(async () => {
         try {
-          await pgClient.query("DELETE FROM auth_identity WHERE identifier = 'admin@medusa.com'");
-          await pgClient.query("DELETE FROM \"user\" WHERE email = 'admin@medusa.com'");
-          sendLog(`[logger] Old admin user deleted from database.\n`);
+          const tablesRes = await pgClient.query(`
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+          `);
+          const tables = tablesRes.rows.map(r => r.table_name);
+          console.log('[logger] Database Tables:', tables.join(', '));
+
+          if (tables.includes('user')) {
+            const users = await pgClient.query('SELECT id, email FROM "user"');
+            console.log('[logger] Existing Users:', JSON.stringify(users.rows));
+          }
+          if (tables.includes('auth_identity')) {
+            const auths = await pgClient.query('SELECT id, identifier FROM auth_identity');
+            console.log('[logger] Existing Auth Identities:', JSON.stringify(auths.rows));
+          }
+
+          console.log('[logger] Attempting to delete old admin@medusa.com...');
+          const authDelRes = await pgClient.query("DELETE FROM auth_identity WHERE identifier = 'admin@medusa.com'");
+          console.log('[logger] Deleted from auth_identity rows:', authDelRes.rowCount);
+          const userDelRes = await pgClient.query("DELETE FROM \"user\" WHERE email = 'admin@medusa.com'");
+          console.log('[logger] Deleted from user rows:', userDelRes.rowCount);
         } catch (dbErr) {
-          sendLog(`[logger] DB delete error (ignored): ${dbErr.message}\n`);
+          console.log('[logger] Database operations error:', dbErr.message);
         } finally {
           await pgClient.end();
         }
 
         // Now create the new user with strong password
-        sendLog(`[logger] Creating admin user admin@medusa.com with secure password...\n`);
+        console.log('[logger] Creating admin user admin@medusa.com with secure password...');
         runStep('npx', ['medusa', 'user', '-e', 'admin@medusa.com', '-p', 'ModaskopMedusa2026!'], (userCode) => {
           const fs = require('fs');
           const path = require('path');
