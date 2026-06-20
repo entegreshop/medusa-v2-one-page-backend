@@ -4,3 +4,6 @@ aptPkgs = []
 [phases.install]
 cmds = ["npm ci --no-audit --no-fund --prefer-offline"]
 
+[start]
+cmd = "cd apps/backend && npx medusa db:migrate && npx medusa start --port 3000"
+
