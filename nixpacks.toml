@@ -5,5 +5,5 @@ aptPkgs = []
 cmds = ["npm ci --no-audit --no-fund --prefer-offline"]
 
 [start]
-cmd = "cd apps/backend && npx medusa db:migrate && npx medusa start --port 3000"
+cmd = "cd apps/backend && node wait-for-db.js && npx medusa db:migrate && npx medusa start --port ${PORT:-3000}"
 
