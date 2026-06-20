@@ -81,14 +81,32 @@ runStep('node', ['wait-for-db.js'], (code) => {
       process.exit(code);
     }
 
-    // Step 2b: Create Admin User (Ignore failure if user exists)
-    sendLog(`[logger] Ensuring admin user admin@medusa.com is created...\n`);
-    runStep('npx', ['medusa', 'user', '-e', 'admin@medusa.com', '-p', 'admin12345'], (userCode) => {
-      const fs = require('fs');
-      const path = require('path');
+    // Step 2b: Reset old admin user to apply strong password and avoid browser warnings
+    const { Client } = require('pg');
+    const dbUrl = process.env.DATABASE_URL;
+    sendLog(`[logger] Resetting old admin user in database to apply strong password...\n`);
 
-      const rootPublicAdminIndex = path.join(__dirname, 'public', 'admin', 'index.html');
-      const compiledPublicAdminIndex = path.join(__dirname, '.medusa', 'server', 'public', 'admin', 'index.html');
+    const pgClient = new Client({ connectionString: dbUrl });
+    pgClient.connect()
+      .then(async () => {
+        try {
+          await pgClient.query("DELETE FROM auth_identity WHERE identifier = 'admin@medusa.com'");
+          await pgClient.query("DELETE FROM \"user\" WHERE email = 'admin@medusa.com'");
+          sendLog(`[logger] Old admin user deleted from database.\n`);
+        } catch (dbErr) {
+          sendLog(`[logger] DB delete error (ignored): ${dbErr.message}\n`);
+        } finally {
+          await pgClient.end();
+        }
+
+        // Now create the new user with strong password
+        sendLog(`[logger] Creating admin user admin@medusa.com with secure password...\n`);
+        runStep('npx', ['medusa', 'user', '-e', 'admin@medusa.com', '-p', 'ModaskopMedusa2026!'], (userCode) => {
+          const fs = require('fs');
+          const path = require('path');
+
+          const rootPublicAdminIndex = path.join(__dirname, 'public', 'admin', 'index.html');
+          const compiledPublicAdminIndex = path.join(__dirname, '.medusa', 'server', 'public', 'admin', 'index.html');
 
     function startServer() {
       const port = process.env.PORT || '3000';
@@ -134,6 +152,10 @@ runStep('node', ['wait-for-db.js'], (code) => {
       sendLog(`[logger] Root admin index.html found. Skipping build/copy.\n`);
       startServer();
     }
+        });
+      })
+      .catch((err) => {
+        sendLog(`[logger] pgClient connection error: ${err.message}\n`);
+      });
   });
-});
 });
