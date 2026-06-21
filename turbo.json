@@ -3,6 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["MEDUSA_BACKEND_URL"],
       "outputs": ["dist/**", ".next/**", ".medusa/**"]
     },
     "dev": {
