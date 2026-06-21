@@ -197,6 +197,79 @@ runStep('node', ['wait-for-db.js'], (code) => {
               console.log('[logger] Fallback delete from user failed:', err.message);
             }
           }
+
+          // 6. Create default publishable API key for storefront compatibility
+          try {
+            await logTableDetails('api_key');
+            await logTableDetails('publishable_api_key_sales_channel');
+            await logTableDetails('sales_channel');
+
+            if (tables.includes('api_key')) {
+              const keysRes = await pgClient.query("SELECT * FROM api_key WHERE token = 'pk_7587df1c043fb92eebc89c01e37c6e50ef92da4fdc68ab9a49a731594c3d7b0e'");
+              if (keysRes.rows.length === 0) {
+                console.log('[logger] Creating default publishable API key in database...');
+                const colsRes = await pgClient.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'api_key'");
+                const cols = colsRes.rows.map(c => c.column_name);
+                
+                const id = 'apk_default_storefront';
+                const token = 'pk_7587df1c043fb92eebc89c01e37c6e50ef92da4fdc68ab9a49a731594c3d7b0e';
+                const title = 'Default Storefront Key';
+                const type = 'publishable';
+                
+                const insertFields = [];
+                const insertValues = [];
+                const insertPlaceholders = [];
+                let idx = 1;
+                
+                if (cols.includes('id')) { insertFields.push('id'); insertValues.push(id); insertPlaceholders.push(`$${idx++}`); }
+                if (cols.includes('token')) { insertFields.push('token'); insertValues.push(token); insertPlaceholders.push(`$${idx++}`); }
+                if (cols.includes('title')) { insertFields.push('title'); insertValues.push(title); insertPlaceholders.push(`$${idx++}`); }
+                if (cols.includes('type')) { insertFields.push('type'); insertValues.push(type); insertPlaceholders.push(`$${idx++}`); }
+                if (cols.includes('created_by')) { insertFields.push('created_by'); insertValues.push(adminUserId || 'system'); insertPlaceholders.push(`$${idx++}`); }
+                
+                const q = `INSERT INTO api_key (${insertFields.join(', ')}) VALUES (${insertPlaceholders.join(', ')})`;
+                await pgClient.query(q, insertValues);
+                console.log('[logger] Default publishable API key created successfully.');
+                
+                // Link to default sales channel
+                if (tables.includes('sales_channel') && tables.includes('publishable_api_key_sales_channel')) {
+                  const scRes = await pgClient.query("SELECT id FROM sales_channel LIMIT 1");
+                  const scId = scRes.rows[0] ? scRes.rows[0].id : null;
+                  console.log('[logger] Default sales_channel id:', scId);
+                  
+                  if (scId) {
+                    const scColsRes = await pgClient.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'publishable_api_key_sales_channel'");
+                    const scCols = scColsRes.rows.map(c => c.column_name);
+                    
+                    const scInsertFields = [];
+                    const scInsertValues = [];
+                    const scInsertPlaceholders = [];
+                    let scIdx = 1;
+                    
+                    if (scCols.includes('publishable_api_key_id')) {
+                      scInsertFields.push('publishable_api_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
+                    } else if (scCols.includes('api_key_id')) {
+                      scInsertFields.push('api_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
+                    }
+                    
+                    if (scCols.includes('sales_channel_id')) {
+                      scInsertFields.push('sales_channel_id'); scInsertValues.push(scId); scInsertPlaceholders.push(`$${scIdx++}`);
+                    }
+                    
+                    if (scInsertFields.length > 0) {
+                      const scQ = `INSERT INTO publishable_api_key_sales_channel (${scInsertFields.join(', ')}) VALUES (${scInsertPlaceholders.join(', ')})`;
+                      await pgClient.query(scQ, scInsertValues);
+                      console.log('[logger] Linked publishable API key to sales channel.');
+                    }
+                  }
+                }
+              } else {
+                console.log('[logger] Default publishable API key already exists in database.');
+              }
+            }
+          } catch (keyErr) {
+            console.log('[logger] Failed to create default publishable key:', keyErr.message);
+          }
         } catch (dbErr) {
           console.log('[logger] Database operations error:', dbErr.message);
         } finally {

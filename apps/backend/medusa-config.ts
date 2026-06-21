@@ -11,6 +11,7 @@ module.exports = defineConfig({
     } : {},
     cookieOptions: {
       secure: false,
+      sameSite: "lax",
     },
     http: {
       storeCors: process.env.STORE_CORS!,
