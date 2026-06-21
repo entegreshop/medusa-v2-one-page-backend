@@ -9,12 +9,16 @@ module.exports = defineConfig({
       ssl: { rejectUnauthorized: false },
       connection: { ssl: { rejectUnauthorized: false } }
     } : {},
+    cookieOptions: {
+      secure: false,
+    },
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
       authCors: process.env.AUTH_CORS!,
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
+      trustProxy: true,
     }
   },
   admin: {
