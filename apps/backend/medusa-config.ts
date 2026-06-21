@@ -22,6 +22,6 @@ module.exports = defineConfig({
     }
   },
   admin: {
-    backendUrl: process.env.MEDUSA_BACKEND_URL || (process.env.NODE_ENV === "development" ? "http://localhost:9001" : "http://fnjekbskvqux7jzy4rjs1yef.204.168.136.196.sslip.io"),
+    backendUrl: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "http://fnjekbskvqux7jzy4rjs1yef.204.168.136.196.sslip.io" : "http://localhost:9001"),
   }
 })
