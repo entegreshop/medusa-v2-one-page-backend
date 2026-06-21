@@ -206,6 +206,8 @@ runStep('node', ['wait-for-db.js'], (code) => {
 
             if (tables.includes('api_key')) {
               const keysRes = await pgClient.query("SELECT * FROM api_key WHERE token = 'pk_7587df1c043fb92eebc89c01e37c6e50ef92da4fdc68ab9a49a731594c3d7b0e'");
+              const keyId = keysRes.rows[0] ? keysRes.rows[0].id : null;
+              
               if (keysRes.rows.length === 0) {
                 console.log('[logger] Creating default publishable API key in database...');
                 const colsRes = await pgClient.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'api_key'");
@@ -234,14 +236,22 @@ runStep('node', ['wait-for-db.js'], (code) => {
                 const q = `INSERT INTO api_key (${insertFields.join(', ')}) VALUES (${insertPlaceholders.join(', ')})`;
                 await pgClient.query(q, insertValues);
                 console.log('[logger] Default publishable API key created successfully.');
+              } else {
+                console.log('[logger] Default publishable API key already exists in database.');
+              }
+
+              // Ensure link to sales channel exists
+              if (tables.includes('sales_channel') && tables.includes('publishable_api_key_sales_channel')) {
+                const scRes = await pgClient.query("SELECT id FROM sales_channel LIMIT 1");
+                const scId = scRes.rows[0] ? scRes.rows[0].id : null;
+                const linkKeyId = keyId || 'apk_default_storefront';
+                console.log('[logger] Default sales_channel id:', scId);
                 
-                // Link to default sales channel
-                if (tables.includes('sales_channel') && tables.includes('publishable_api_key_sales_channel')) {
-                  const scRes = await pgClient.query("SELECT id FROM sales_channel LIMIT 1");
-                  const scId = scRes.rows[0] ? scRes.rows[0].id : null;
-                  console.log('[logger] Default sales_channel id:', scId);
-                  
-                  if (scId) {
+                if (scId) {
+                  const linksAll = await pgClient.query("SELECT * FROM publishable_api_key_sales_channel");
+                  const hasLink = linksAll.rows.some(row => JSON.stringify(row).includes(linkKeyId));
+                  if (!hasLink) {
+                    console.log('[logger] Creating link between publishable key and sales channel...');
                     const scColsRes = await pgClient.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'publishable_api_key_sales_channel'");
                     const scCols = scColsRes.rows.map(c => c.column_name);
                     
@@ -256,11 +266,11 @@ runStep('node', ['wait-for-db.js'], (code) => {
                     }
                     
                     if (scCols.includes('publishable_key_id')) {
-                      scInsertFields.push('publishable_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
+                      scInsertFields.push('publishable_key_id'); scInsertValues.push(linkKeyId); scInsertPlaceholders.push(`$${scIdx++}`);
                     } else if (scCols.includes('publishable_api_key_id')) {
-                      scInsertFields.push('publishable_api_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
+                      scInsertFields.push('publishable_api_key_id'); scInsertValues.push(linkKeyId); scInsertPlaceholders.push(`$${scIdx++}`);
                     } else if (scCols.includes('api_key_id')) {
-                      scInsertFields.push('api_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
+                      scInsertFields.push('api_key_id'); scInsertValues.push(linkKeyId); scInsertPlaceholders.push(`$${scIdx++}`);
                     }
                     
                     if (scCols.includes('sales_channel_id')) {
@@ -270,12 +280,12 @@ runStep('node', ['wait-for-db.js'], (code) => {
                     if (scInsertFields.length > 0) {
                       const scQ = `INSERT INTO publishable_api_key_sales_channel (${scInsertFields.join(', ')}) VALUES (${scInsertPlaceholders.join(', ')})`;
                       await pgClient.query(scQ, scInsertValues);
-                      console.log('[logger] Linked publishable API key to sales channel.');
+                      console.log('[logger] Linked publishable API key to sales channel successfully.');
                     }
+                  } else {
+                    console.log('[logger] Publishable API key is already linked to sales channel.');
                   }
                 }
-              } else {
-                console.log('[logger] Default publishable API key already exists in database.');
               }
             }
           } catch (keyErr) {
