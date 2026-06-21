@@ -250,7 +250,14 @@ runStep('node', ['wait-for-db.js'], (code) => {
                     const scInsertPlaceholders = [];
                     let scIdx = 1;
                     
-                    if (scCols.includes('publishable_api_key_id')) {
+                    const scLinkId = 'pksc_default_link';
+                    if (scCols.includes('id')) {
+                      scInsertFields.push('id'); scInsertValues.push(scLinkId); scInsertPlaceholders.push(`$${scIdx++}`);
+                    }
+                    
+                    if (scCols.includes('publishable_key_id')) {
+                      scInsertFields.push('publishable_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
+                    } else if (scCols.includes('publishable_api_key_id')) {
                       scInsertFields.push('publishable_api_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
                     } else if (scCols.includes('api_key_id')) {
                       scInsertFields.push('api_key_id'); scInsertValues.push(id); scInsertPlaceholders.push(`$${scIdx++}`);
