@@ -215,6 +215,8 @@ runStep('node', ['wait-for-db.js'], (code) => {
                 const token = 'pk_7587df1c043fb92eebc89c01e37c6e50ef92da4fdc68ab9a49a731594c3d7b0e';
                 const title = 'Default Storefront Key';
                 const type = 'publishable';
+                const salt = '';
+                const redacted = 'pk_758***b0e';
                 
                 const insertFields = [];
                 const insertValues = [];
@@ -225,6 +227,8 @@ runStep('node', ['wait-for-db.js'], (code) => {
                 if (cols.includes('token')) { insertFields.push('token'); insertValues.push(token); insertPlaceholders.push(`$${idx++}`); }
                 if (cols.includes('title')) { insertFields.push('title'); insertValues.push(title); insertPlaceholders.push(`$${idx++}`); }
                 if (cols.includes('type')) { insertFields.push('type'); insertValues.push(type); insertPlaceholders.push(`$${idx++}`); }
+                if (cols.includes('salt')) { insertFields.push('salt'); insertValues.push(salt); insertPlaceholders.push(`$${idx++}`); }
+                if (cols.includes('redacted')) { insertFields.push('redacted'); insertValues.push(redacted); insertPlaceholders.push(`$${idx++}`); }
                 if (cols.includes('created_by')) { insertFields.push('created_by'); insertValues.push(adminUserId || 'system'); insertPlaceholders.push(`$${idx++}`); }
                 
                 const q = `INSERT INTO api_key (${insertFields.join(', ')}) VALUES (${insertPlaceholders.join(', ')})`;
