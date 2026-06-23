@@ -72,18 +72,31 @@ async function sendNetgsmSms(usercode: string, password: string, header: string,
   }
 
   try {
-    const params = new URLSearchParams()
-    params.append("usercode", usercode)
-    params.append("password", password)
-    params.append("gsmno", cleanPhone)
-    params.append("message", message)
-    params.append("msgheader", header)
+    const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
+<mainbody>
+    <header>
+        <company dil="TR">Netgsm</company>
+        <usercode>${usercode}</usercode>
+        <password>${password}</password>
+        <msgheader>${header}</msgheader>
+    </header>
+    <body>
+        <msg>
+            <gsm>
+                <no>${cleanPhone}</no>
+            </gsm>
+            <msg>${message}</msg>
+        </msg>
+    </body>
+</mainbody>`;
 
-    const response = await fetch(`https://api.netgsm.com.tr/sms/send/get?${params.toString()}`, {
-      method: "GET",
+    const response = await fetch(`https://api.netgsm.com.tr/sms/send/xml`, {
+      method: "POST",
       headers: {
+        "Content-Type": "application/xml",
         "Accept": "text/html"
-      }
+      },
+      body: xmlPayload
     })
 
     const body = await response.text()
