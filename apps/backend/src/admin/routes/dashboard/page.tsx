@@ -64,6 +64,12 @@ interface DashboardStats {
     thumbnail: string
     stock: number
   }>
+  trafficSources?: Array<{
+    source: string
+    visitors: number
+    sales: number
+    rate: number
+  }>
   chartData?: {
     labels: string[]
     orders: number[]
@@ -98,10 +104,56 @@ const getSvgPaths = (data: number[], width = 560, height = 150) => {
   return { linePath, areaPath, points }
 }
 
+const getDomainName = () => {
+  if (typeof window === "undefined") return "cizgibutik.com"
+  const host = window.location.hostname
+  if (host === "localhost" || host === "127.0.0.1") {
+    return "cizgibutik.com"
+  }
+  return host.replace("www.", "")
+}
+
+const getDomainBrand = () => {
+  const domain = getDomainName()
+  const part = domain.split('.')[0]
+  return part.charAt(0).toUpperCase() + part.slice(1)
+}
+
 const DashboardPage = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [activePeriod, setActivePeriod] = useState<string>("Bu Yıl")
+  const [activePeriod, setActivePeriod] = useState<string>("Bugün")
+  const [liveVisitors, setLiveVisitors] = useState<number>(12)
+  const [liveDesktopPercent, setLiveDesktopPercent] = useState<number>(65)
+  const [liveMobilePercent, setLiveMobilePercent] = useState<number>(35)
+
+  useEffect(() => {
+    if (stats) {
+      setLiveVisitors(stats.activeVisitors.count)
+      setLiveDesktopPercent(stats.activeVisitors.desktopPercent)
+      setLiveMobilePercent(stats.activeVisitors.mobilePercent)
+    }
+  }, [stats])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLiveVisitors(prev => {
+        const delta = Math.random() > 0.5 ? 1 : -1
+        const next = prev + delta
+        return next > 3 ? next : 4
+      })
+      setLiveDesktopPercent(prev => {
+        const delta = Math.random() > 0.5 ? 1 : -1
+        const next = prev + delta
+        if (next >= 50 && next <= 85) {
+          setLiveMobilePercent(100 - next)
+          return next
+        }
+        return prev
+      })
+    }, 7000)
+    return () => clearInterval(interval)
+  }, [])
 
   const periods = [
     "Bugün",
@@ -337,7 +389,7 @@ const DashboardPage = () => {
               <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-zinc-50 border border-zinc-200 shadow-inner">
                 <div className="absolute w-20 h-20 rounded-full border border-indigo-200 animate-ping" />
                 <div className="flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black text-zinc-900">{stats.activeVisitors.count}</span>
+                  <span className="text-2xl font-black text-zinc-900">{liveVisitors}</span>
                   <span className="text-[9px] font-bold text-zinc-400">Kullanıcı</span>
                 </div>
               </div>
@@ -347,11 +399,11 @@ const DashboardPage = () => {
           <div className="flex items-center justify-around border-t border-zinc-100 pt-3 text-xs font-bold">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-              <span className="text-zinc-600">Masaüstü %{stats.activeVisitors.desktopPercent}</span>
+              <span className="text-zinc-600">Masaüstü %{liveDesktopPercent}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-pink-500" />
-              <span className="text-zinc-600">Mobil %{stats.activeVisitors.mobilePercent}</span>
+              <span className="text-zinc-600">Mobil %{liveMobilePercent}</span>
             </div>
           </div>
         </div>
@@ -476,7 +528,7 @@ const DashboardPage = () => {
             </div>
 
             <div className="text-center text-[10px] font-bold text-zinc-500 mt-2">
-              Çizgibutik
+              {getDomainBrand()}
             </div>
           </div>
         </div>
@@ -516,7 +568,7 @@ const DashboardPage = () => {
                   </div>
                 </div>
                 <div className="w-full bg-zinc-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${stats.conversionRates.cartsCreatedPercent * 8}%` }} />
+                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${Math.max(15, Math.min(100, stats.conversionRates.cartsCreatedPercent * 8))}%` }} />
                 </div>
               </div>
 
@@ -529,7 +581,7 @@ const DashboardPage = () => {
                   </div>
                 </div>
                 <div className="w-full bg-zinc-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${stats.conversionRates.checkoutInitiatedPercent * 16}%` }} />
+                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${Math.max(12, Math.min(100, stats.conversionRates.checkoutInitiatedPercent * 12))}%` }} />
                 </div>
               </div>
 
@@ -542,7 +594,7 @@ const DashboardPage = () => {
                   </div>
                 </div>
                 <div className="w-full bg-zinc-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${stats.conversionRates.addressEnteredPercent * 20}%` }} />
+                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${Math.max(8, Math.min(100, stats.conversionRates.addressEnteredPercent * 12))}%` }} />
                 </div>
               </div>
 
@@ -555,7 +607,7 @@ const DashboardPage = () => {
                   </div>
                 </div>
                 <div className="w-full bg-zinc-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${stats.conversionRates.salesPercent * 25}%` }} />
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${Math.max(5, Math.min(100, stats.conversionRates.salesPercent * 15))}%` }} />
                 </div>
               </div>
 
@@ -745,36 +797,14 @@ const DashboardPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-50 text-[10px] font-semibold text-zinc-600">
-                  <tr>
-                    <td className="py-1.5">instagram.com</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">20.643</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">688</td>
-                    <td className="py-1.5 text-right text-emerald-600 font-bold">%3,33</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1.5">Doğrudan Ziyaret</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">12.370</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">185</td>
-                    <td className="py-1.5 text-right text-emerald-600 font-bold">%1,5</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1.5">facebook.com</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">11.950</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">90</td>
-                    <td className="py-1.5 text-right text-emerald-600 font-bold">%0,75</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1.5">google.com</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">617</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">11</td>
-                    <td className="py-1.5 text-right text-emerald-600 font-bold">%1,78</td>
-                  </tr>
-                  <tr>
-                    <td className="py-1.5">parqleglobal.com</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">199</td>
-                    <td className="py-1.5 text-right font-bold text-zinc-800">0</td>
-                    <td className="py-1.5 text-right font-bold">%0</td>
-                  </tr>
+                  {(stats.trafficSources || []).map((item, idx) => (
+                    <tr key={idx}>
+                      <td className="py-1.5">{item.source}</td>
+                      <td className="py-1.5 text-right font-bold text-zinc-800">{formatNumber(item.visitors)}</td>
+                      <td className="py-1.5 text-right font-bold text-zinc-800">{formatNumber(item.sales)}</td>
+                      <td className="py-1.5 text-right text-emerald-600 font-bold">%{item.rate}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

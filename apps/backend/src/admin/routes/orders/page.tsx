@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react"
-import { defineWidgetConfig } from "@medusajs/admin-sdk"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { ShoppingBag, Adjustments, CheckCircle, XMark, Plus, Trash, ArrowPath, Pencil } from "@medusajs/icons"
-import { PosModal } from "../routes/orders/components/pos-modal"
+import { PosModal } from "./components/pos-modal"
 
 // Custom inline SVG icons for print options and statuses
 const EInvoiceIcon = () => (
@@ -183,22 +183,6 @@ interface CustomOrder {
   metadata?: Record<string, any>
 }
 
-// ==========================================
-// RİSKLİ MÜŞTERİ KONTROL FONKSİYONU
-// ==========================================
-const checkIsCustomerRisky = (phone?: string, email?: string, orderId?: string) => {
-  if (!phone && !email) return false;
-  
-  // Clean phone number (remove spaces, +90, etc)
-  const cleanPhone = phone ? phone.replace(/[^0-9]/g, '').slice(-10) : "";
-  const cleanEmail = email ? email.toLowerCase().trim() : "";
-
-  // Iterate over all orders directly from mappedRealOrders (assuming it's in scope, 
-  // but wait, we need to pass currentOrders to it, or defined it inside the component)
-  return false; // We will define the real logic inside the component
-}
-// ==========================================
-
 const SiparisYonetimiPage = () => {
   const [isPosOpen, setIsPosOpen] = useState(false)
   
@@ -228,7 +212,7 @@ const SiparisYonetimiPage = () => {
   const [activeTab, setActiveTab] = useState<string>("tum_siparisler")
 
   // Form Filter States
-  const [filterStatus, setFilterStatus] = useState("Yeni Sipariş, Hazırlanan Sipariş, Kargolanan Sipariş, Teslim Edilen Sipariş")
+  const [filterStatus, setFilterStatus] = useState("Onay Bekleyen, Hazırlanan, Kargolanan, Teslim Edilen")
   const [filterPlatform, setFilterPlatform] = useState("")
   const [filterStore, setFilterStore] = useState("")
   const [filterTag, setFilterTag] = useState("")
@@ -499,8 +483,60 @@ const SiparisYonetimiPage = () => {
     })
   }, [realOrders])
 
-  // Current orders list is now always real orders
-  const currentOrders = mappedRealOrders
+  const [localPosOrders, setLocalPosOrders] = useState<CustomOrder[]>([])
+
+  useEffect(() => {
+    try {
+      let stored;
+      try {
+          stored = JSON.parse(localStorage.getItem("pos_orders") || "[]");
+      } catch(parseErr) {
+          stored = [];
+          localStorage.removeItem("pos_orders");
+      }
+      if (!Array.isArray(stored)) {
+          stored = [];
+      }
+      // Filter out any broken data structures from previous attempts
+      const validStored = stored.filter((o: any) => o && o.display_id && o.customer && o.customer.first_name !== undefined)
+      setLocalPosOrders(validStored)
+    } catch (e) {
+      console.error("Local storage load error", e);
+    }
+  }, [realOrders])
+
+  const currentOrders = useMemo(() => {
+    return [...localPosOrders, ...mappedRealOrders]
+  }, [localPosOrders, mappedRealOrders])
+
+  // Risk analizi: Geçmiş siparişi Kapıda Ödemeli olup, İade/İptal olan müşteriler
+  const checkIsCustomerRisky = useCallback((phone: string, email: string, currentOrderId: string) => {
+    const cleanPhone = (phone || "").replace(/\s+/g, "");
+    const cleanEmail = (email || "").trim().toLowerCase();
+    
+    if (!cleanPhone && !cleanEmail) return false;
+    
+    const pastOrders = currentOrders.filter((o: any) => {
+      if (o.id === currentOrderId) return false;
+      const oPhone = (o.customer?.phone || "").replace(/\s+/g, "");
+      const oEmail = (o.customer?.email || "").trim().toLowerCase();
+      
+      const phoneMatch = cleanPhone && oPhone === cleanPhone;
+      const emailMatch = cleanEmail && oEmail === cleanEmail;
+      
+      return phoneMatch || emailMatch;
+    });
+    
+    if (pastOrders.length === 0) return false;
+
+    return pastOrders.some((o: any) => {
+      const paymentStr = String(o.payment_method || "") + " " + String(o.payment_option || "");
+      const isKapidaOdeme = /kap/i.test(paymentStr) || /delivery/i.test(paymentStr);
+      const isIade = o.status === "iade_edilen" || o.status === "iptal_edilen";
+      
+      return isKapidaOdeme && isIade;
+    });
+  }, [currentOrders]);
 
   // Tab Filtering logic
   const tabFilteredOrders = useMemo(() => {
@@ -683,7 +719,7 @@ const SiparisYonetimiPage = () => {
 
   // Clear filters
   const handleClearFilters = () => {
-    setFilterStatus("Yeni Sipariş, Hazırlanan Sipariş, Kargolanan Sipariş, Teslim Edilen Sipariş")
+    setFilterStatus("Onay Bekleyen, Hazırlanan, Kargolanan, Teslim Edilen")
     setFilterPlatform("")
     setFilterStore("")
     setFilterTag("")
@@ -770,7 +806,7 @@ const SiparisYonetimiPage = () => {
         })
       })
       if (res.ok && !skipRefresh) {
-        const refreshRes = await fetch("/admin/orders?limit=100&fields=*customer,*shipping_address,*billing_address,*items")
+        const refreshRes = await fetch("/admin/orders?limit=100&fields=id,status,created_at,email,display_id,payment_status,fulfillment_status,total,currency_code,*customer,*sales_channel,*payment_collections,*items,*shipping_address,*billing_address,metadata")
         const refreshData = await refreshRes.json()
         if (refreshData && refreshData.orders) setRealOrders(refreshData.orders)
       }
@@ -800,7 +836,7 @@ const SiparisYonetimiPage = () => {
           alert("Sipariş iptal edilirken hata oluştu.")
         }
       } catch (err) {
-        console.error(err)
+        alert("Bağlantı hatası.")
       }
   }
 
@@ -1252,16 +1288,6 @@ const SiparisYonetimiPage = () => {
 
   return (
     <div className="bg-zinc-50 min-h-screen text-ui-fg-base antialiased custom-admin-wrapper font-sans">
-      {successModal && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
-            <h3 className="font-bold text-lg text-zinc-900 mb-2">Başarılı</h3>
-            <p className="text-sm text-zinc-500 mb-6">{successModal}</p>
-            <button onClick={() => setSuccessModal(null)} className="w-full bg-zinc-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-zinc-800 transition-colors">Tamam</button>
-          </div>
-        </div>
-      )}
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -1280,14 +1306,14 @@ const SiparisYonetimiPage = () => {
       {/* TAB NAVIGATION PANEL */}
       <div className="bg-zinc-100 border-b border-zinc-200 px-8 py-1 flex items-center justify-center gap-x-6 overflow-x-auto no-scrollbar shadow-sm">
         {[
-          { key: "onay_bekleyen", label: "Onay Bekleyenler" },
-          { key: "hazirlanan", label: "Hazırlananlar", badge: preparingCount },
-          { key: "kargolanan", label: "Kargolananlar" },
-          { key: "teslim_edilen", label: "Teslim Edilenler" },
-          { key: "iade_edilen", label: "İade Edilenler" },
-          { key: "iptal_edilen", label: "İptal Edilenler" },
+          { key: "onay_bekleyen", label: "Onay Bekleyen" },
+          { key: "hazirlanan", label: "Hazırlanan", badge: preparingCount },
+          { key: "kargolanan", label: "Kargolanan" },
+          { key: "teslim_edilen", label: "Teslim Edilen" },
+          { key: "iade_edilen", label: "İade Edilen" },
+          { key: "iptal_edilen", label: "İptal Edilen" },
           { key: "tum_siparisler", label: "Tüm Siparişler" },
-          { key: "odeme_hatasi", label: "Ödeme Hatası Alınanlar" }
+          { key: "odeme_hatasi", label: "Ödeme Hatası" }
         ].map((tab) => (
           <button
             key={tab.key}
@@ -1362,8 +1388,8 @@ const SiparisYonetimiPage = () => {
                   <button 
                     onClick={() => {
                       if (selectedOrderIds.length === 0) {
-                        alert("Lütfen sipariş seçin.");
-                        return;
+                        alert("Lütfen sipariş seçin.")
+                        return
                       }
                       setStatusModalTargetIds(selectedOrderIds);
                       setNewStatusValue("onay_bekleyen");
@@ -1823,54 +1849,14 @@ const SiparisYonetimiPage = () => {
                             <div className="flex flex-col">
                               <div className="flex items-center gap-2">
                                 <span className="font-semibold text-zinc-800 capitalize">{order.customer.first_name} {order.customer.last_name}</span>
-                                {(() => {
-                                  // RISK KONTROLU
-                                  const phone = order.customer?.phone || "";
-                                  const email = order.customer?.email || "";
-                                  const ip = order.customer?.ip || "";
-                                  const fullName = `${order.customer?.first_name || ""} ${order.customer?.last_name || ""}`.toLowerCase().replace(/\s+/g, '');
-                                  
-                                  const cleanPhone = phone ? phone.replace(/[^0-9]/g, '').slice(-10) : "";
-                                  const cleanEmail = email ? email.toLowerCase().trim() : "";
-                                  const cleanIp = ip ? ip.trim() : "";
-                                  
-                                  let isRisky = false;
-                                  
-                                  if (cleanPhone || cleanEmail || cleanIp || fullName) {
-                                    for (const o of currentOrders) {
-                                      if (o.id === order.id) continue;
-                                      
-                                      // Gecmis siparis kapida odeme mi?
-                                      const isKapidaOdeme = o.payment_option === "cash_on_delivery" || o.payment_option === "card_on_delivery";
-                                      if (!isKapidaOdeme) continue;
-                                      
-                                      // Gecmis siparis iptal/iade edilmis mi?
-                                      const isCanceledOrReturned = o.status === "iptal_edilen" || o.status === "iade_edilen" || o.status === "odeme_hatasi";
-                                      if (!isCanceledOrReturned) continue;
-                                      
-                                      const oPhone = o.customer?.phone ? o.customer.phone.replace(/[^0-9]/g, '').slice(-10) : "";
-                                      const oEmail = o.customer?.email ? o.customer.email.toLowerCase().trim() : "";
-                                      const oIp = o.customer?.ip ? o.customer.ip.trim() : "";
-                                      const oFullName = `${o.customer?.first_name || ""} ${o.customer?.last_name || ""}`.toLowerCase().replace(/\s+/g, '');
-                                      
-                                      const phoneMatch = cleanPhone && oPhone && cleanPhone === oPhone;
-                                      const emailMatch = cleanEmail && oEmail && cleanEmail === oEmail;
-                                      const ipMatch = cleanIp && oIp && cleanIp === oIp && cleanIp !== "127.0.0.1";
-                                      const nameMatch = fullName && oFullName && fullName === oFullName;
-                                      
-                                      if (phoneMatch || emailMatch || ipMatch || nameMatch) {
-                                        isRisky = true;
-                                        break;
-                                      }
-                                    }
-                                  }
-
-                                  return isRisky ? (
-                                    <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-200 shadow-sm whitespace-nowrap animate-pulse">
-                                      RİSKLİ SİPARİŞ
-                                    </span>
-                                  ) : null;
-                                })()}
+                                {checkIsCustomerRisky(order.customer.phone, order.customer.email, order.id) && (
+                                  <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-200 shadow-sm whitespace-nowrap animate-pulse">
+                                    RİSKLİ SİPARİŞ
+                                  </span>
+                                )}
+                                <span className="text-[9px] text-gray-400">
+                                  [DBG: rsk={String(checkIsCustomerRisky(order.customer.phone, order.customer.email, order.id))} / cnt={currentOrders.length}]
+                                </span>
                               </div>
                               <span className="text-[11px] font-medium text-zinc-500 mt-0.5">{order.customer.phone}</span>
                             </div>
@@ -1884,27 +1870,32 @@ const SiparisYonetimiPage = () => {
                           <td className="py-3 px-4">
                             {order.status === "teslim_edilen" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-emerald-500 text-[11px] font-semibold text-emerald-500 leading-none">
-                                Teslim Edildi
+                                Teslim Edilen
                               </span>
                             )}
                             {order.status === "kargolanan" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-amber-500 text-[11px] font-semibold text-amber-500 leading-none">
-                                Kargolandı
+                                Kargolanan
                               </span>
                             )}
                             {order.status === "hazirlanan" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-blue-500 text-[11px] font-semibold text-blue-500 leading-none">
-                                Hazırlanıyor
+                                Hazırlanan
                               </span>
                             )}
                             {order.status === "onay_bekleyen" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-zinc-400 text-[11px] font-semibold text-zinc-500 leading-none">
-                                Onay Bekliyor
+                                Onay Bekleyen
                               </span>
                             )}
                             {order.status === "iptal_edilen" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-rose-500 text-[11px] font-semibold text-rose-500 leading-none">
-                                İptal Edildi
+                                İptal Edilen
+                              </span>
+                            )}
+                            {order.status === "iade_edilen" && (
+                              <span className="inline-flex items-center px-3 py-1 rounded border border-red-500 text-[11px] font-semibold text-red-500 leading-none">
+                                İade Edilen
                               </span>
                             )}
                             {order.status === "odeme_hatasi" && (
@@ -2046,12 +2037,12 @@ const SiparisYonetimiPage = () => {
                         }} className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium text-[11px] rounded shadow-sm">Düzenle</button>
                       ) : (
                         <>
-                          <button onClick={handleSaveProducts} className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-black text-xs rounded shadow-sm">Kaydet</button>
-                          <button onClick={() => setEditingProducts(false)} className="px-3 py-1.5 bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 font-bold text-xs rounded shadow-sm">İptal</button>
+                          <button onClick={handleSaveProducts} className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px] rounded shadow-sm">Kaydet</button>
+                          <button onClick={() => setEditingProducts(false)} className="px-3 py-1.5 bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 font-medium text-[11px] rounded shadow-sm">İptal</button>
                         </>
                       )}
-                      <button onClick={() => setShowProductSearchModal(true)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 font-black text-xs rounded shadow-sm">Ürün Ekle</button>
-                      <button className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs rounded shadow-sm">İade Oluştur</button>
+                      <button onClick={() => setShowProductSearchModal(true)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 font-bold text-[11px] rounded shadow-sm">Ürün Ekle</button>
+                      <button className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium text-[11px] rounded shadow-sm">İade Oluştur</button>
                     </div>
                   </div>
 
@@ -2739,11 +2730,12 @@ const SiparisYonetimiPage = () => {
                   onChange={(e) => setNewStatusValue(e.target.value)}
                   className="w-full border border-zinc-300 rounded px-3 py-2.5 text-[13px] font-bold text-zinc-800 focus:outline-none focus:border-blue-500 shadow-sm cursor-pointer"
                 >
-                  <option value="onay_bekleyen">Yeni Sipariş</option>
-                  <option value="hazirlanan">Hazırlanan Sipariş</option>
-                  <option value="kargolanan">Kargolanan Sipariş</option>
-                  <option value="teslim_edilen">Teslim Edilen Sipariş</option>
-                  <option value="iptal_edilen">İptal Edilen Sipariş</option>
+                  <option value="onay_bekleyen">Onay Bekleyen</option>
+                  <option value="hazirlanan">Hazırlanan</option>
+                  <option value="kargolanan">Kargolanan</option>
+                  <option value="teslim_edilen">Teslim Edilen</option>
+                  <option value="iade_edilen">İade Edilen</option>
+                  <option value="iptal_edilen">İptal Edilen</option>
                 </select>
               </div>
 
@@ -2775,7 +2767,7 @@ const SiparisYonetimiPage = () => {
                   }
                   setShowStatusModal(false);
                   
-                  const refreshRes = await fetch("/admin/orders?limit=100&fields=*customer,*shipping_address,*billing_address,*items")
+                  const refreshRes = await fetch("/admin/orders?limit=100&fields=id,status,created_at,email,display_id,payment_status,fulfillment_status,total,currency_code,*customer,*sales_channel,*payment_collections,*items,*shipping_address,*billing_address,metadata")
                   const refreshData = await refreshRes.json()
                   if (refreshData && refreshData.orders) setRealOrders(refreshData.orders)
 
@@ -3006,8 +2998,9 @@ const SiparisYonetimiPage = () => {
   )
 }
 
-export const config = defineWidgetConfig({
-  zone: "order.list.before",
+export const config = defineRouteConfig({
+  label: "Sipariş Yönetimi",
+  icon: ShoppingBag,
 })
 
 export default SiparisYonetimiPage
