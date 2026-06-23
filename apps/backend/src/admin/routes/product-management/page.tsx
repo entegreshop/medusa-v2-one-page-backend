@@ -14,6 +14,23 @@ const isVideoUrl = (url: string) => {
   return /\.(mp4|webm|mov|ogg|avi)($|\?)/i.test(url) || url.includes("/video")
 }
 
+const getStorefrontBaseUrl = () => {
+  if (typeof window === "undefined") return "http://localhost:8001"
+  const { hostname, protocol } = window.location
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:8001"
+  }
+  if (hostname.includes("sslip.io")) {
+    const parts = hostname.split(".")
+    if (parts.length > 2) {
+      parts[0] = "storefront"
+    }
+    return `${protocol}//${parts.join(".")}:8001`
+  }
+  const domain = hostname.replace("admin.", "www.").replace("backend.", "www.")
+  return `${protocol}//${domain}`
+}
+
 interface SelectedVariant {
   id?: string
   color: string
@@ -1394,7 +1411,7 @@ const IkasProductsPage = () => {
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:border-indigo-500 text-slate-800 transition-colors"
                   />
                   <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                    Ürün Web Adresi: <strong className="text-indigo-600">http://localhost:8001/{productHandle || "urun-linki"}</strong>
+                    Ürün Web Adresi: <strong className="text-indigo-600">{getStorefrontBaseUrl()}/{productHandle || "urun-linki"}</strong>
                   </p>
                 </div>
 

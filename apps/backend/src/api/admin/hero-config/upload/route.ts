@@ -48,15 +48,45 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     // Write file to storefront public uploads
     fs.writeFileSync(filePath, buffer)
 
-    // Get storefront URL from STORE_CORS if available, otherwise default to localhost:8001
+    // Dynamic storefront URL resolution
     let storefrontUrl = "http://localhost:8001"
-    if (process.env.STORE_CORS) {
+    const referer = req.headers.referer || ""
+    let isLocalRequest = true
+
+    if (referer) {
+      try {
+        const parsedReferer = new URL(referer)
+        const hostname = parsedReferer.hostname
+        if (hostname !== "localhost" && hostname !== "127.0.0.1") {
+          isLocalRequest = false
+        }
+        
+        // If sslip.io subdomain, map to storefront subdomain
+        if (hostname.includes("sslip.io")) {
+          const parts = hostname.split(".")
+          if (parts.length > 2) {
+            parts[0] = "storefront"
+          }
+          storefrontUrl = `${parsedReferer.protocol}//${parts.join(".")}:8001`
+        } else if (!isLocalRequest) {
+          // Custom domain fallback (e.g. replace admin.cizgibutik.com with cizgibutik.com)
+          const domain = hostname.replace("admin.", "www.").replace("backend.", "www.")
+          storefrontUrl = `${parsedReferer.protocol}//${domain}`
+        }
+      } catch (e) {
+        console.error("Error parsing referer in upload route:", e)
+      }
+    }
+
+    // Fallback to STORE_CORS if sslip.io/referer logic didn't override it and we are in production
+    if (storefrontUrl === "http://localhost:8001" && process.env.STORE_CORS) {
       const origins = process.env.STORE_CORS.split(",")
-      const localOrigin = origins.find(o => o.includes("localhost:8001") || o.includes("localhost:8000"))
-      if (localOrigin) {
-        storefrontUrl = localOrigin.trim()
-      } else if (origins.length > 0) {
-        storefrontUrl = origins[0].trim()
+      if (isLocalRequest) {
+        const localOrigin = origins.find(o => o.includes("localhost:8001") || o.includes("localhost:8000"))
+        if (localOrigin) storefrontUrl = localOrigin.trim()
+      } else {
+        const nonLocalOrigin = origins.find(o => !o.includes("localhost:") && !o.includes("127.0.0.1:"))
+        if (nonLocalOrigin) storefrontUrl = nonLocalOrigin.trim()
       }
     }
 
