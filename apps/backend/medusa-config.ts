@@ -14,11 +14,11 @@ module.exports = defineConfig({
       secret: process.env.COOKIE_SECRET || "supersecret",
       resave: false,
       saveUninitialized: false,
-      cookie: {
-        secure: false,
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60 * 1000,
-      }
+    },
+    cookieOptions: {
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
     },
     http: {
       storeCors: process.env.STORE_CORS! + (process.env.COOLIFY_URL ? `,${process.env.COOLIFY_URL},http://firsatbox.com,https://firsatbox.com` : ""),
