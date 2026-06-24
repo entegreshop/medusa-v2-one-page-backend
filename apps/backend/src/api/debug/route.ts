@@ -9,13 +9,17 @@ export const GET = (req: MedusaRequest, res: MedusaResponse) => {
   const rootUploads = path.join(cwd, 'uploads');
   const rootUploadsContents = fs.existsSync(rootUploads) ? fs.readdirSync(rootUploads) : [];
   
-  const staticPath = path.join(cwd, 'static');
-  const staticContents = fs.existsSync(staticPath) ? fs.readdirSync(staticPath) : [];
+  const medusaPublic = path.join(cwd, '.medusa', 'server', 'public', 'uploads');
+  const medusaPublicContents = fs.existsSync(medusaPublic) ? fs.readdirSync(medusaPublic) : [];
+
+  const justPublic = path.join(cwd, 'public', 'uploads');
+  const justPublicContents = fs.existsSync(justPublic) ? fs.readdirSync(justPublic) : [];
   
   res.json({
     cwd,
     cwdContents,
     rootUploadsContents,
-    staticContents
+    medusaPublicContents,
+    justPublicContents
   });
 }
