@@ -30,7 +30,7 @@ module.exports = defineConfig({
   },
   admin: {
     path: "/admin",
-    backendUrl: process.env.MEDUSA_BACKEND_URL || process.env.COOLIFY_URL || "http://localhost:9001",
+    backendUrl: "http://firsatbox.com",
   },
   modules: {
     [Modules.FILE]: {
