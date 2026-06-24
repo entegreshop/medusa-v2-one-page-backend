@@ -29,7 +29,7 @@ module.exports = defineConfig({
     }
   },
   admin: {
-    path: "/admin",
+    path: "/app",
     backendUrl: "http://firsatbox.com",
   },
   modules: {
