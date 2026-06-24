@@ -14,9 +14,9 @@ module.exports = defineConfig({
       sameSite: "lax",
     },
     http: {
-      storeCors: process.env.STORE_CORS!,
-      adminCors: process.env.ADMIN_CORS!,
-      authCors: process.env.AUTH_CORS!,
+      storeCors: process.env.STORE_CORS! + (process.env.COOLIFY_URL ? `,${process.env.COOLIFY_URL},http://firsatbox.com,https://firsatbox.com` : ""),
+      adminCors: process.env.ADMIN_CORS! + (process.env.COOLIFY_URL ? `,${process.env.COOLIFY_URL}` : ""),
+      authCors: process.env.AUTH_CORS! + (process.env.COOLIFY_URL ? `,${process.env.COOLIFY_URL},http://firsatbox.com,https://firsatbox.com` : ""),
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
