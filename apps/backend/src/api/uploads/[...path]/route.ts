@@ -5,9 +5,13 @@ import path from "path"
 export const GET = (req: MedusaRequest, res: MedusaResponse) => {
   const filePathParam = req.params.path || [];
   
-  // Base uploads folder
+  const staticDir = path.join(process.cwd(), "static");
   const uploadsDir = path.join(process.cwd(), "uploads");
-  const filePath = path.join(uploadsDir, ...filePathParam);
+  
+  let filePath = path.join(staticDir, ...filePathParam);
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join(uploadsDir, ...filePathParam);
+  }
   
   if (fs.existsSync(filePath)) {
     const stat = fs.statSync(filePath);
