@@ -122,6 +122,19 @@ runStep('node', ['wait-for-db.js'], (code) => {
           await logTableDetails('auth_identity');
           await logTableDetails('provider_identity');
 
+          // --- FIX IMAGE URLS ---
+          try {
+            console.log('[logger] Fixing image URLs in the database...');
+            const updateImagesRes = await pgClient.query(`
+              UPDATE image 
+              SET url = REPLACE(REPLACE(url, 'http://api.firsatbox.com', 'http://firsatbox.com'), 'http://localhost:9001', 'http://firsatbox.com')
+              WHERE url LIKE '%http://api.firsatbox.com%' OR url LIKE '%http://localhost:9001%'
+            `);
+            console.log(\`[logger] Fixed \${updateImagesRes.rowCount} image URLs.\`);
+          } catch (err) {
+            console.log('[logger] Failed to fix image URLs:', err.message);
+          }
+
           // 1. Get user ID of admin@medusa.com
           const adminUserRes = await pgClient.query("SELECT id FROM \"user\" WHERE email = 'admin@medusa.com'");
           const adminUserId = adminUserRes.rows[0] ? adminUserRes.rows[0].id : null;
