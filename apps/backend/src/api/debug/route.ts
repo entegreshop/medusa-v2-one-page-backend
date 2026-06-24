@@ -19,7 +19,7 @@ export const GET = (req: MedusaRequest, res: MedusaResponse) => {
   const staticContents = fs.existsSync(staticPath) ? fs.readdirSync(staticPath) : [];
   
   function findFile(dir, filename) {
-    let results = [];
+    let results: string[] = [];
     try {
       const list = fs.readdirSync(dir);
       list.forEach(file => {
