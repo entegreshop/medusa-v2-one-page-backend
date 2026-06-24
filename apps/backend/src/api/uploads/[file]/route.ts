@@ -3,14 +3,17 @@ import fs from "fs"
 import path from "path"
 
 export const GET = (req: MedusaRequest, res: MedusaResponse) => {
-  const filePathParam = req.params.path || [];
+  const fileParam = req.params.file;
+  if (!fileParam) {
+    return res.status(400).json({ message: "No file specified" });
+  }
   
   const staticDir = path.join(process.cwd(), "static");
   const uploadsDir = path.join(process.cwd(), "uploads");
   
-  let filePath = path.join(staticDir, ...filePathParam);
+  let filePath = path.join(staticDir, fileParam);
   if (!fs.existsSync(filePath)) {
-    filePath = path.join(uploadsDir, ...filePathParam);
+    filePath = path.join(uploadsDir, fileParam);
   }
   
   if (fs.existsSync(filePath)) {
@@ -34,7 +37,7 @@ export const GET = (req: MedusaRequest, res: MedusaResponse) => {
     readStream.pipe(res);
   } else {
     // If not found in uploads, check .medusa/server/public/uploads just in case
-    const fallbackPath = path.join(process.cwd(), ".medusa", "server", "public", "uploads", ...filePathParam);
+    const fallbackPath = path.join(process.cwd(), ".medusa", "server", "public", "uploads", fileParam);
     if (fs.existsSync(fallbackPath)) {
       const stat = fs.statSync(fallbackPath);
       res.writeHead(200, {
