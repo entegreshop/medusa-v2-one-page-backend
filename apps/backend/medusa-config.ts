@@ -1,4 +1,4 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
@@ -25,11 +25,19 @@ module.exports = defineConfig({
     backendUrl: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "http://fnjekbskvqux7jzy4rjs1yef.204.168.136.196.sslip.io" : "http://localhost:9001"),
   },
   modules: {
-    file: {
-      resolve: "@medusajs/file-local",
+    [Modules.FILE]: {
+      resolve: "@medusajs/file",
       options: {
-        upload_dir: "uploads",
-        backend_url: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "http://firsatbox.com/uploads" : "http://localhost:9001/uploads"),
+        providers: [
+          {
+            resolve: "@medusajs/file-local",
+            id: "local",
+            options: {
+              upload_dir: "uploads",
+              backend_url: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "http://firsatbox.com/uploads" : "http://localhost:9001/uploads"),
+            },
+          },
+        ],
       },
     },
   }
