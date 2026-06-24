@@ -6,7 +6,7 @@ async function fixAll() {
     await client.connect();
     
     // Fix image table
-    const resImage = await client.query("UPDATE image SET url = REPLACE(url, 'http://firsatbox.com:9001/static/', 'http://api.firsatbox.com/static/') RETURNING id, url");
+    const resImage = await client.query("UPDATE image SET url = REPLACE(url, 'http://api.firsatbox.com/static/', 'http://firsatbox.com/static/') RETURNING id, url");
     console.log(`Updated ${resImage.rowCount} images in image table.`);
     
     // Fix product metadata
@@ -17,8 +17,8 @@ async function fixAll() {
       let changed = false;
       let metadataStr = JSON.stringify(row.metadata);
       
-      if (metadataStr.includes('http://firsatbox.com:9001/static/')) {
-        metadataStr = metadataStr.replace(/http:\/\/firsatbox.com:9001\/static\//g, 'http://api.firsatbox.com/static/');
+      if (metadataStr.includes('http://api.firsatbox.com/static/')) {
+        metadataStr = metadataStr.replace(/http:\/\/api\.firsatbox\.com\/static\//g, 'http://firsatbox.com/static/');
         changed = true;
       }
       
