@@ -18,12 +18,37 @@ export const GET = (req: MedusaRequest, res: MedusaResponse) => {
   const staticPath = path.join(cwd, 'static');
   const staticContents = fs.existsSync(staticPath) ? fs.readdirSync(staticPath) : [];
   
+  function findFile(dir, filename) {
+    let results = [];
+    try {
+      const list = fs.readdirSync(dir);
+      list.forEach(file => {
+        file = path.join(dir, file);
+        try {
+          const stat = fs.statSync(file);
+          if (stat && stat.isDirectory()) {
+            if (!file.includes('node_modules') && !file.includes('.git')) {
+              results = results.concat(findFile(file, filename));
+            }
+          } else {
+            if (file.includes(filename)) results.push(file);
+          }
+        } catch (e) {}
+      });
+    } catch (e) {}
+    return results;
+  }
+  
+  const searchResults = findFile('/app', '1782311572736');
+
   res.json({
     cwd,
     cwdContents,
     rootUploadsContents,
     medusaPublicContents,
     justPublicContents,
-    staticContents
+    staticContents,
+    searchResults
   });
 }
+
