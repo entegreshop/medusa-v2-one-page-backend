@@ -23,5 +23,14 @@ module.exports = defineConfig({
   },
   admin: {
     backendUrl: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "http://fnjekbskvqux7jzy4rjs1yef.204.168.136.196.sslip.io" : "http://localhost:9001"),
-  }
+  },
+  modules: [
+    {
+      resolve: "@medusajs/file-local",
+      options: {
+        upload_dir: "uploads",
+        backend_url: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "http://firsatbox.com/uploads" : "http://localhost:9001/uploads"),
+      },
+    },
+  ]
 })
