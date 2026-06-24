@@ -48,7 +48,13 @@ export const GET = (req: MedusaRequest, res: MedusaResponse) => {
     medusaPublicContents,
     justPublicContents,
     staticContents,
-    searchResults
+    searchResults,
+    cors: {
+      admin: process.env.ADMIN_CORS,
+      store: process.env.STORE_CORS,
+      auth: process.env.AUTH_CORS,
+      coolify: process.env.COOLIFY_URL
+    }
   });
 }
 
