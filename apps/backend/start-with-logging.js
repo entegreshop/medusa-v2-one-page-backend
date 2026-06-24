@@ -130,7 +130,7 @@ runStep('node', ['wait-for-db.js'], (code) => {
               SET url = REPLACE(REPLACE(url, 'http://api.firsatbox.com', 'http://firsatbox.com'), 'http://localhost:9001', 'http://firsatbox.com')
               WHERE url LIKE '%http://api.firsatbox.com%' OR url LIKE '%http://localhost:9001%'
             `);
-            console.log(\`[logger] Fixed \${updateImagesRes.rowCount} image URLs.\`);
+            console.log(`[logger] Fixed ${updateImagesRes.rowCount} image URLs.`);
           } catch (err) {
             console.log('[logger] Failed to fix image URLs:', err.message);
           }
