@@ -18,22 +18,11 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const base64Data = base64.includes(",") ? base64.split(",")[1] : base64
     const buffer = Buffer.from(base64Data, "base64")
 
-    // Define the upload directory in the storefront public folder dynamically
-    let currentDir = process.cwd()
-    let uploadDir = ""
-    for (let i = 0; i < 5; i++) {
-      const checkParentStorefront = path.join(currentDir, "storefront")
-      if (fs.existsSync(checkParentStorefront)) {
-        uploadDir = path.join(checkParentStorefront, "public", "uploads")
-        break
-      }
-      currentDir = path.join(currentDir, "..")
-    }
+    // Define the upload directory.
+    // In production (Coolify Docker), the storefront doesn't exist in the same container.
+    // We must save files to the backend's "uploads" folder, which is served by our custom static route.
+    let uploadDir = path.join(process.cwd(), "uploads");
     
-    if (!uploadDir) {
-      // Fallback
-      uploadDir = path.join(process.cwd(), "..", "..", "..", "storefront", "public", "uploads")
-    }
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true })
