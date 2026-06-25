@@ -130,7 +130,17 @@ runStep('node', ['wait-for-db.js'], (code) => {
               SET url = REPLACE(REPLACE(url, 'http://api.firsatbox.com', 'http://firsatbox.com'), 'http://localhost:9001', 'http://firsatbox.com')
               WHERE url LIKE '%http://api.firsatbox.com%' OR url LIKE '%http://localhost:9001%'
             `);
-            console.log(`[logger] Fixed ${updateImagesRes.rowCount} image URLs.`);
+            const updateProductMetaRes = await pgClient.query(`
+              UPDATE product
+              SET metadata = REPLACE(REPLACE(metadata::text, 'http://api.firsatbox.com', 'http://firsatbox.com'), 'http://localhost:9001', 'http://firsatbox.com')::jsonb
+              WHERE metadata::text LIKE '%http://api.firsatbox.com%' OR metadata::text LIKE '%http://localhost:9001%'
+            `);
+            const updateVariantMetaRes = await pgClient.query(`
+              UPDATE product_variant
+              SET metadata = REPLACE(REPLACE(metadata::text, 'http://api.firsatbox.com', 'http://firsatbox.com'), 'http://localhost:9001', 'http://firsatbox.com')::jsonb
+              WHERE metadata::text LIKE '%http://api.firsatbox.com%' OR metadata::text LIKE '%http://localhost:9001%'
+            `);
+            console.log(`[logger] Fixed ${updateImagesRes.rowCount} image URLs, ${updateProductMetaRes.rowCount} product metadata, ${updateVariantMetaRes.rowCount} variant metadata.`);
           } catch (err) {
             console.log('[logger] Failed to fix image URLs:', err.message);
           }
