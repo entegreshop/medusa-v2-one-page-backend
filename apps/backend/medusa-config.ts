@@ -30,7 +30,7 @@ module.exports = defineConfig({
   },
   admin: {
     path: "/app",
-    backendUrl: "http://firsatbox.com",
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "https://firsatbox.com",
   },
   modules: {
     [Modules.FILE]: {
