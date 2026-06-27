@@ -762,6 +762,27 @@ const SiparisYonetimiPage = () => {
   // Generic Status Change
   const handleStatusChange = async (orderId: string, newStatus: string, skipRefresh: boolean = false) => {
     try {
+      // INTERLINE KARGO ENTEGRASYONU
+      if (newStatus === "kargolanan") {
+        try {
+          const interlineRes = await fetch("/admin/interline-action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ order_id: orderId })
+          });
+          const interlineData = await interlineRes.json();
+          if (!interlineRes.ok || !interlineData.success) {
+            alert(`İnterline Kargo Hatası (Sipariş ID: ${orderId}): ` + (interlineData.error || "Bilinmeyen API Hatası"));
+            return; // Hata varsa durumu değiştirmeyi durdur.
+          } else {
+            showSuccess(`İnterline Kargo'ya başarıyla aktarıldı. Barkod: ${interlineData.barcode}`);
+          }
+        } catch (err: any) {
+          alert("İnterline Kargo API çağrısı başarısız oldu: " + err.message);
+          return; // Hata durumunda devam etme
+        }
+      }
+
       const res = await fetch(`/admin/orders/${orderId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
