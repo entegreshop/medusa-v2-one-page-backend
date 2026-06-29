@@ -20,7 +20,7 @@ export interface InterlineConsignmentData {
 }
 
 export async function createInterlineConsignment(data: InterlineConsignmentData) {
-  const config = readConfig()
+  const config = await readConfig()
   if (!config.active) {
     return { success: false, error: "İnterline Kargo entegrasyonu aktif değil." }
   }
@@ -82,11 +82,11 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
   }
 }
 
-export async function getInterlineBarcode(barcode: string) {
-  const config = readConfig()
-  if (!config.active) return null
-
+export async function getInterlineConsignmentLabel(barcode: string) {
   try {
+    const config = await readConfig()
+    if (!config.active) return null
+
     const url = new URL(`${BASE_URL}/consignment/get_barcode`)
     url.searchParams.append("barcode", barcode)
     url.searchParams.append("ext", "pdf")

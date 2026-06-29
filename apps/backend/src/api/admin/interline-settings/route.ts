@@ -1,9 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import fs from "fs"
-import path from "path"
-import os from "os"
-
-const configFilePath = path.join(os.homedir(), ".xoox-interline-settings.json")
+import { Pool } from "pg"
 
 export interface InterlineConfig {
   active: boolean
@@ -16,18 +12,24 @@ export interface InterlineConfig {
 
 export const defaultData: InterlineConfig = {
   active: false,
-  authorization: "wPNB8Uz5bhSFEL7CDy9kRfdcX4T1ZjMtJAsvQOn6", // Default from PDF
+  authorization: "wPNB8Uz5bhSFEL7CDy9kRfdcX4T1ZjMtJAsvQOn6",
   from_name: "",
   branch_code: "",
   tax_office: "",
   tax_number: ""
 }
 
-export function readConfig(): InterlineConfig {
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/medusa"
+})
+
+export async function readConfig(): Promise<InterlineConfig> {
   try {
-    if (fs.existsSync(configFilePath)) {
-      const content = fs.readFileSync(configFilePath, "utf-8")
-      const parsed = JSON.parse(content)
+    // Ensure table exists (safe to run multiple times, though usually done during migrations)
+    await pool.query("CREATE TABLE IF NOT EXISTS interline_config (id serial PRIMARY KEY, data jsonb);")
+    const res = await pool.query("SELECT data FROM interline_config ORDER BY id DESC LIMIT 1")
+    if (res.rows.length > 0) {
+      const parsed = res.rows[0].data
       return {
         active: typeof parsed.active === "boolean" ? parsed.active : defaultData.active,
         authorization: parsed.authorization !== undefined ? parsed.authorization : defaultData.authorization,
@@ -38,30 +40,33 @@ export function readConfig(): InterlineConfig {
       }
     }
   } catch (err) {
-    console.error("Error reading Interline config in admin api:", err)
+    console.error("Error reading Interline config from DB:", err)
   }
   return defaultData
 }
 
-function writeConfig(data: any) {
+export async function writeConfig(data: any) {
   try {
-    fs.writeFileSync(configFilePath, JSON.stringify(data, null, 2), "utf-8")
+    await pool.query("CREATE TABLE IF NOT EXISTS interline_config (id serial PRIMARY KEY, data jsonb);")
+    await pool.query(
+      "INSERT INTO interline_config (data) VALUES ($1)",
+      [data]
+    )
     return true
   } catch (err) {
-    console.error("Error writing Interline config in admin api:", err)
+    console.error("Error writing Interline config to DB:", err)
     return false
   }
 }
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
-  const config = readConfig()
+  const config = await readConfig()
   res.json({ config })
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const body = req.body as any
-
-  const success = writeConfig({
+  const success = await writeConfig({
     active: body.active,
     authorization: body.authorization,
     from_name: body.from_name,
@@ -71,7 +76,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   })
 
   if (success) {
-    res.json({ success: true, config: readConfig() })
+    res.json({ success: true, config: await readConfig() })
   } else {
     res.status(500).json({ success: false, message: "Could not write configuration" })
   }
