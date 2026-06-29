@@ -168,10 +168,10 @@ interface CustomOrder {
   subtotal: number // TL
   vat_total: number // TL
   total: number // TL
-  payment_method: string // human readable e.g. "Kap─▒da Nakit ├ûdeme"
+  payment_method: string // human readable e.g. "Kapıda Nakit Ödeme"
   payment_option: "paytr" | "bank_transfer" | "cash_on_delivery" | "card_on_delivery"
   status: "onay_bekleyen" | "hazirlanan" | "kargolanan" | "teslim_edilen" | "iade_edilen" | "iptal_edilen" | "odeme_hatasi" | "tum_siparisler"
-  carrier_name: string // e.g. "KARGO─░ST", "INTERLINE KARGO"
+  carrier_name: string // e.g. "KARGOİST", "INTERLINE KARGO"
   carrier_barcode?: string
   created_at: string // format DD.MM.YYYY HH:MM
   admin_notes?: string
@@ -184,7 +184,7 @@ interface CustomOrder {
 }
 
 // ==========================================
-// R─░SKL─░ M├£┼ŞTER─░ KONTROL FONKS─░YONU
+// RİSKLİ MÜŞTERİ KONTROL FONKSİYONU
 // ==========================================
 const checkIsCustomerRisky = (phone?: string, email?: string, orderId?: string) => {
   if (!phone && !email) return false;
@@ -228,7 +228,7 @@ const SiparisYonetimiPage = () => {
   const [activeTab, setActiveTab] = useState<string>("tum_siparisler")
 
   // Form Filter States
-  const [filterStatus, setFilterStatus] = useState("Yeni Sipari┼ş, Haz─▒rlanan Sipari┼ş, Kargolanan Sipari┼ş, Teslim Edilen Sipari┼ş")
+  const [filterStatus, setFilterStatus] = useState("Yeni Sipariş, Hazırlanan Sipariş, Kargolanan Sipariş, Teslim Edilen Sipariş")
   const [filterPlatform, setFilterPlatform] = useState("")
   const [filterStore, setFilterStore] = useState("")
   const [filterTag, setFilterTag] = useState("")
@@ -285,7 +285,7 @@ const SiparisYonetimiPage = () => {
   const [productSearchResults, setProductSearchResults] = useState<any[]>([
     {
       id: "prod_dummy_1",
-      title: "Pembe Alo Arabiyeli Taytl─▒ Tak─▒m",
+      title: "Pembe Alo Arabiyeli Taytlı Takım",
       thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
       variants: [
         { id: "var_1", title: "S", sku: "LXS5SU5V0G", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -296,7 +296,7 @@ const SiparisYonetimiPage = () => {
     },
     {
       id: "prod_dummy_2",
-      title: "Kahve Alo Arabiyeli Taytl─▒ Tak─▒m",
+      title: "Kahve Alo Arabiyeli Taytlı Takım",
       thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
       variants: [
         { id: "var_5", title: "S", sku: "Y0O8X6OVU8", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -319,7 +319,7 @@ const SiparisYonetimiPage = () => {
       setProductSearchResults([
         {
           id: "prod_dummy_1",
-          title: "Pembe Alo Arabiyeli Taytl─▒ Tak─▒m",
+          title: "Pembe Alo Arabiyeli Taytlı Takım",
           thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
           variants: [
             { id: "var_1", title: "S", sku: "LXS5SU5V0G", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -330,7 +330,7 @@ const SiparisYonetimiPage = () => {
         },
         {
           id: "prod_dummy_2",
-          title: "Kahve Alo Arabiyeli Taytl─▒ Tak─▒m",
+          title: "Kahve Alo Arabiyeli Taytlı Takım",
           thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
           variants: [
             { id: "var_5", title: "S", sku: "Y0O8X6OVU8", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -408,24 +408,24 @@ const SiparisYonetimiPage = () => {
       const totalVal = (o.total || 0) / 100
 
       // Try to determine payment method name
-      let payMethod = "Kredi Kart─▒"
+      let payMethod = "Kredi Kartı"
       const metaOption = o.metadata?.payment_option
-      if (metaOption === "cash_on_delivery") payMethod = "Kap─▒da Nakit ├ûdeme"
-      else if (metaOption === "card_on_delivery") payMethod = "Kap─▒da Kredi Kart─▒ ile ├ûdeme"
+      if (metaOption === "cash_on_delivery") payMethod = "Kapıda Nakit Ödeme"
+      else if (metaOption === "card_on_delivery") payMethod = "Kapıda Kredi Kartı ile Ödeme"
       else if (metaOption === "bank_transfer") payMethod = "Havale / EFT"
       else if (metaOption === "paytr") payMethod = "PayTR"
 
       // Map shipping option/carrier
-      const carrierName = o.shipping_methods?.[0]?.name || "Di─şer Kargo"
+      const carrierName = o.shipping_methods?.[0]?.name || "Diğer Kargo"
 
       // Logs
       const logsMapped: OrderLog[] = []
       if (o.metadata?.logs) {
         logsMapped.push(...o.metadata.logs)
       } else {
-        logsMapped.push({ id: "real_l1", message: "Sipari┼ş olu┼şturuldu", created_at: new Date(o.created_at).toLocaleString('tr-TR') })
+        logsMapped.push({ id: "real_l1", message: "Sipariş oluşturuldu", created_at: new Date(o.created_at).toLocaleString('tr-TR') })
         if (o.fulfillment_status === "fulfilled" || o.fulfillment_status === "shipped") {
-          logsMapped.push({ id: "real_l2", message: "Sipari┼ş paketlendi ve kargoland─▒", created_at: new Date(o.updated_at).toLocaleString('tr-TR') })
+          logsMapped.push({ id: "real_l2", message: "Sipariş paketlendi ve kargolandı", created_at: new Date(o.updated_at).toLocaleString('tr-TR') })
         }
       }
 
@@ -444,9 +444,9 @@ const SiparisYonetimiPage = () => {
         display_id: o.display_id?.toString() || o.id.slice(-8),
         platform: o.metadata?.platform || getDomainBrand(),
         store: getDomainBrand(),
-        order_tag: o.metadata?.order_tag || "Se├ğilmedi",
+        order_tag: o.metadata?.order_tag || "Seçilmedi",
         customer: {
-          first_name: o.customer?.first_name || o.shipping_address?.first_name || "M├╝┼şteri",
+          first_name: o.customer?.first_name || o.shipping_address?.first_name || "Müşteri",
           last_name: o.customer?.last_name || o.shipping_address?.last_name || "",
           phone: o.customer?.phone || o.shipping_address?.phone || "",
           email: o.customer?.email || o.email || "",
@@ -462,7 +462,7 @@ const SiparisYonetimiPage = () => {
           city: o.shipping_address?.province || o.shipping_address?.city || "",
           district: o.shipping_address?.city || "",
           country_code: o.shipping_address?.country_code || "tr",
-          country_name: "T├╝rkiye",
+          country_name: "Türkiye",
           phone: o.shipping_address?.phone || ""
         },
         billing_address: {
@@ -473,7 +473,7 @@ const SiparisYonetimiPage = () => {
           city: o.billing_address?.province || o.billing_address?.city || "",
           district: o.billing_address?.city || "",
           country_code: o.billing_address?.country_code || "tr",
-          country_name: "T├╝rkiye",
+          country_name: "Türkiye",
           phone: o.billing_address?.phone || "",
           tc_no: o.metadata?.tc_no || "",
           tax_no: o.metadata?.tax_no || "",
@@ -518,7 +518,7 @@ const SiparisYonetimiPage = () => {
     })
   }, [currentOrders, activeTab])
 
-  // Count of "Haz─▒rlananlar" for the emerald tab badge
+  // Count of "Hazırlananlar" for the emerald tab badge
   const preparingCount = useMemo(() => {
     return currentOrders.filter(o => o.status === "hazirlanan").length
   }, [currentOrders])
@@ -538,13 +538,13 @@ const SiparisYonetimiPage = () => {
       // 2. Platform filter
       if (filterPlatform && o.platform.toLowerCase() !== filterPlatform.toLowerCase()) return false
 
-      // 3. Sipari┼ş No filter
+      // 3. Sipariş No filter
       if (filterOrderNo && !o.display_id.includes(filterOrderNo)) return false
 
-      // 4. M├╝┼şteri Ad─▒
+      // 4. Müşteri Adı
       if (filterCustomerFirstName && !o.customer.first_name.toLowerCase().includes(filterCustomerFirstName.toLowerCase())) return false
 
-      // 5. M├╝┼şteri Soyad─▒
+      // 5. Müşteri Soyadı
       if (filterCustomerLastName && !o.customer.last_name.toLowerCase().includes(filterCustomerLastName.toLowerCase())) return false
 
       // 6. Telefon
@@ -553,20 +553,20 @@ const SiparisYonetimiPage = () => {
       // 7. TC No
       if (filterTcNo && o.billing_address.tc_no !== filterTcNo) return false
 
-      // 8. Kargo Firmas─▒
+      // 8. Kargo Firması
       if (filterCarrier && o.carrier_name.toLowerCase() !== filterCarrier.toLowerCase()) return false
 
-      // 9. ├ûdeme Y├Ântemi
+      // 9. Ödeme Yöntemi
       if (filterPaymentMethod && o.payment_method.toLowerCase() !== filterPaymentMethod.toLowerCase()) return false
 
-      // 10. Tutar Aral─▒─ş─▒
+      // 10. Tutar Aralığı
       if (filterTotalMin && o.total < parseFloat(filterTotalMin)) return false
       if (filterTotalMax && o.total > parseFloat(filterTotalMax)) return false
 
-      // 11. ─░l
+      // 11. İl
       if (filterProvince && !o.shipping_address.city.toLowerCase().includes(filterProvince.toLowerCase())) return false
 
-      // 12. ├£r├╝n Ad─▒
+      // 12. Ürün Adı
       if (filterProductName) {
         const hasProduct = o.items.some(item => item.title.toLowerCase().includes(filterProductName.toLowerCase()))
         if (!hasProduct) return false
@@ -601,28 +601,28 @@ const SiparisYonetimiPage = () => {
       : filteredOrdersList;
 
     if (ordersToExport.length === 0) {
-      alert("D─▒┼şa aktar─▒lacak sipari┼ş bulunamad─▒.");
+      alert("Dışa aktarılacak sipariş bulunamadı.");
       return;
     }
 
     const headers = [
-      "Sipari┼ş No",
+      "Sipariş No",
       "Tarih",
-      "M├╝┼şteri Ad─▒",
-      "M├╝┼şteri Soyad─▒",
+      "Müşteri Adı",
+      "Müşteri Soyadı",
       "Telefon",
       "E-posta",
-      "├£ye No / Durum",
+      "Üye No / Durum",
       "Tutar",
-      "├ûdeme Y├Ântemi",
-      "Sipari┼ş Durumu",
-      "Kargo Firmas─▒",
+      "Ödeme Yöntemi",
+      "Sipariş Durumu",
+      "Kargo Firması",
       "Kargo Barkodu",
       "Adres Bilgisi",
-      "─░l",
-      "─░l├ğe",
+      "İl",
+      "İlçe",
       "Platform",
-      "Sipari┼ş Etiketi"
+      "Sipariş Etiketi"
     ];
 
     const rows = ordersToExport.map(o => {
@@ -632,12 +632,12 @@ const SiparisYonetimiPage = () => {
       
       let statusText: string = o.status;
       if (statusText === "onay_bekleyen") statusText = "Onay Bekliyor";
-      else if (statusText === "hazirlanan") statusText = "Haz─▒rlan─▒yor";
-      else if (statusText === "kargolanan") statusText = "Kargoland─▒";
+      else if (statusText === "hazirlanan") statusText = "Hazırlanıyor";
+      else if (statusText === "kargolanan") statusText = "Kargolandı";
       else if (statusText === "teslim_edilen") statusText = "Teslim Edildi";
-      else if (statusText === "iptal_edilen") statusText = "─░ptal Edildi";
-      else if (statusText === "iade_edilen") statusText = "─░ade Edildi";
-      else if (statusText === "odeme_hatasi") statusText = "├ûdeme Hatas─▒";
+      else if (statusText === "iptal_edilen") statusText = "İptal Edildi";
+      else if (statusText === "iade_edilen") statusText = "İade Edildi";
+      else if (statusText === "odeme_hatasi") statusText = "Ödeme Hatası";
 
       return [
         `"${getDomainPrefix()} ${o.display_id}"`,
@@ -650,7 +650,7 @@ const SiparisYonetimiPage = () => {
         `"${o.total.toFixed(2)} TL"`,
         `"${o.payment_method || ''}"`,
         `"${statusText}"`,
-        `"${o.carrier_name || 'Di─şer Kargo'}"`,
+        `"${o.carrier_name || 'Diğer Kargo'}"`,
         `"${o.carrier_barcode || ''}"`,
         `"${cleanAddress}"`,
         `"${cleanProvince}"`,
@@ -683,7 +683,7 @@ const SiparisYonetimiPage = () => {
 
   // Clear filters
   const handleClearFilters = () => {
-    setFilterStatus("Yeni Sipari┼ş, Haz─▒rlanan Sipari┼ş, Kargolanan Sipari┼ş, Teslim Edilen Sipari┼ş")
+    setFilterStatus("Yeni Sipariş, Hazırlanan Sipariş, Kargolanan Sipariş, Teslim Edilen Sipariş")
     setFilterPlatform("")
     setFilterStore("")
     setFilterTag("")
@@ -726,7 +726,7 @@ const SiparisYonetimiPage = () => {
         if (!target) return
         
         const updatedLogs = [
-          { id: `dl_${Date.now()}`, message: "admin teslim edildi olarak i┼şaretledi", created_at: timeStr },
+          { id: `dl_${Date.now()}`, message: "admin teslim edildi olarak işaretledi", created_at: timeStr },
           ...target.logs
         ]
 
@@ -749,14 +749,14 @@ const SiparisYonetimiPage = () => {
           const refreshData = await refreshRes.json()
           if (refreshData && refreshData.orders) {
             setRealOrders(refreshData.orders)
-            showSuccess("Sipari┼ş ba┼şar─▒yla teslim edildi olarak i┼şaretlendi.")
+            showSuccess("Sipariş başarıyla teslim edildi olarak işaretlendi.")
           }
         } else {
-          alert("Sipari┼ş g├╝ncellenirken hata olu┼ştu.")
+          alert("Sipariş güncellenirken hata oluştu.")
         }
       } catch (err) {
         console.error("Error updating order:", err)
-        alert("Ba─şlant─▒ hatas─▒.")
+        alert("Bağlantı hatası.")
       }
   }
   // Generic Status Change
@@ -800,9 +800,9 @@ const SiparisYonetimiPage = () => {
     }
   }
 
-  // Quick Action: ─░ptal Et (Cancel Order)
+  // Quick Action: İptal Et (Cancel Order)
   const handleCancelOrder = async (orderId: string) => {
-    if (!confirm("Bu sipari┼şi iptal etmek istedi─şinize emin misiniz?")) return
+    if (!confirm("Bu siparişi iptal etmek istediğinize emin misiniz?")) return
     const timeStr = new Date().toLocaleString("tr-TR", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
     try {
@@ -811,14 +811,14 @@ const SiparisYonetimiPage = () => {
           headers: { "Content-Type": "application/json" }
         })
         if (res.ok) {
-          showSuccess("Sipari┼ş ba┼şar─▒yla g├╝ncellendi.")
+          showSuccess("Sipariş başarıyla güncellendi.")
           const refreshRes = await fetch("/admin/orders?limit=100&fields=*customer,*shipping_address,*billing_address,*items")
           const refreshData = await refreshRes.json()
           if (refreshData && refreshData.orders) {
             setRealOrders(refreshData.orders)
           }
         } else {
-          alert("Sipari┼ş iptal edilirken hata olu┼ştu.")
+          alert("Sipariş iptal edilirken hata oluştu.")
         }
       } catch (err) {
         console.error(err)
@@ -969,7 +969,7 @@ const SiparisYonetimiPage = () => {
     const dummyProducts = [
       {
         id: "prod_dummy_1",
-        title: "Pembe Alo Arabiyeli Taytl─▒ Tak─▒m",
+        title: "Pembe Alo Arabiyeli Taytlı Takım",
         thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
         variants: [
           { id: "var_1", title: "S", sku: "LXS5SU5V0G", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -980,7 +980,7 @@ const SiparisYonetimiPage = () => {
       },
       {
         id: "prod_dummy_2",
-        title: "Kahve Alo Arabiyeli Taytl─▒ Tak─▒m",
+        title: "Kahve Alo Arabiyeli Taytlı Takım",
         thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
         variants: [
           { id: "var_5", title: "S", sku: "Y0O8X6OVU8", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -1040,7 +1040,7 @@ const SiparisYonetimiPage = () => {
       return o
     }))
     setShowProductSearchModal(false)
-    showSuccess("├£r├╝n sipari┼şe eklendi.")
+    showSuccess("Ürün siparişe eklendi.")
 
     try {
       await fetch(`/admin/orders/${selectedOrderId}`, {
@@ -1066,11 +1066,11 @@ const SiparisYonetimiPage = () => {
     const printWindow = window.open("", "_blank", `width=${width},height=${height},top=${top},left=${left}`)
     
     if (printWindow) {
-      if (type === "Kargo Fi┼şi") {
+      if (type === "Kargo Fişi") {
         printWindow.document.write(`
           <html>
             <head>
-              <title>${type} - Toplu Yazd─▒rma</title>
+              <title>${type} - Toplu Yazdırma</title>
               <style>
                 body { font-family: 'Times New Roman', serif; margin: 0; padding: 0; color: #000; box-sizing: border-box; }
                 .page-break-container { page-break-after: always; padding: 10px; }
@@ -1107,14 +1107,14 @@ const SiparisYonetimiPage = () => {
               <div class="page-break-container">
                 <div class="top-bar">
                   <div>${new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-                  <div class="no-print" style="cursor:pointer; text-decoration:underline;" onclick="window.print()">Yazd─▒r</div>
+                  <div class="no-print" style="cursor:pointer; text-decoration:underline;" onclick="window.print()">Yazdır</div>
                 </div>
                 
                 <div class="logo-container">
                   <div style="position: relative; display: inline-block;">
-                    <div class="logo-main">├ç ─░ Z G ─░</div>
+                    <div class="logo-main">Ç İ Z G İ</div>
                     <div style="position: absolute; top: 15px; left: 0; width: 100%; display: flex; justify-content: space-around; font-family: Arial; font-size: 10px; font-weight: bold;">
-                      <span>B</span><span>U</span><span>T</span><span>─░</span><span>K</span>
+                      <span>B</span><span>U</span><span>T</span><span>İ</span><span>K</span>
                     </div>
                   </div>
                 </div>
@@ -1155,7 +1155,7 @@ const SiparisYonetimiPage = () => {
 
                 <div class="bottom-info">
                   <div>${orderObj.payment_method}</div>
-                  <div>${orderObj.carrier_name || 'KARGO─░ST'}</div>
+                  <div>${orderObj.carrier_name || 'KARGOİST'}</div>
                 </div>
 
                 <div class="total-box">
@@ -1181,7 +1181,7 @@ const SiparisYonetimiPage = () => {
         printWindow.document.write(`
         <html>
           <head>
-            <title>${type} - Toplu Yazd─▒rma</title>
+            <title>${type} - Toplu Yazdırma</title>
             <style>
               body { font-family: 'Plus Jakarta Sans', Arial, sans-serif; padding: 0; margin: 0; color: #18181b; line-height: 1.5; }
               .page-break-container { page-break-after: always; padding: 40px; }
@@ -1206,7 +1206,7 @@ const SiparisYonetimiPage = () => {
               <div class="header">
                 <div>
                   <div class="title">${type}</div>
-                  <div style="font-size: 12px; font-weight: bold; color: #a1a1aa; margin-top: 4px;">Sipari┼ş Numaras─▒: ${orderObj.display_id}</div>
+                  <div style="font-size: 12px; font-weight: bold; color: #a1a1aa; margin-top: 4px;">Sipariş Numarası: ${orderObj.display_id}</div>
                 </div>
                 <div style="text-align: right;">
                   <div style="font-size: 18px; font-weight: 950; letter-spacing: -1px;">CIZGIBUTIK</div>
@@ -1216,15 +1216,15 @@ const SiparisYonetimiPage = () => {
               
               <div class="meta-box">
                 <div>
-                  <div class="meta-label">M├╝┼şteri ve Teslimat Bilgileri</div>
+                  <div class="meta-label">Müşteri ve Teslimat Bilgileri</div>
                   <div class="meta-val">${orderObj.customer.first_name} ${orderObj.customer.last_name}</div>
                   <div style="font-size: 12px; color: #52525b; margin-top: 4px;">${orderObj.shipping_address.address_1} ${orderObj.shipping_address.district} / ${orderObj.shipping_address.city}</div>
                   <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Tel: ${orderObj.customer.phone}</div>
                 </div>
                 <div>
-                  <div class="meta-label">├ûdeme & Kargo Detaylar─▒</div>
+                  <div class="meta-label">Ödeme & Kargo Detayları</div>
                   <div class="meta-val">${orderObj.payment_method}</div>
-                  <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Ta┼ş─▒y─▒c─▒ Firma: ${orderObj.carrier_name}</div>
+                  <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Taşıyıcı Firma: ${orderObj.carrier_name}</div>
                   <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Barkod No: ${orderObj.carrier_barcode || "-"}</div>
                 </div>
               </div>
@@ -1232,7 +1232,7 @@ const SiparisYonetimiPage = () => {
               <table>
                 <thead>
                   <tr>
-                    <th>├£r├╝n</th>
+                    <th>Ürün</th>
                     <th>SKU</th>
                     <th>Beden</th>
                     <th>Miktar</th>
@@ -1247,20 +1247,20 @@ const SiparisYonetimiPage = () => {
                       <td>${item.sku}</td>
                       <td>${item.size}</td>
                       <td>${item.quantity} Adet</td>
-                      <td>Ôé║ ${item.unit_price.toFixed(2)}</td>
-                      <td>Ôé║ ${(item.unit_price * item.quantity).toFixed(2)}</td>
+                      <td>₺ ${item.unit_price.toFixed(2)}</td>
+                      <td>₺ ${(item.unit_price * item.quantity).toFixed(2)}</td>
                     </tr>
                   `).join("")}
                 </tbody>
               </table>
 
               <div class="total-box">
-                <div>Ara Toplam: Ôé║ ${orderObj.subtotal.toFixed(2)}</div>
-                <div>KDV: Ôé║ ${orderObj.vat_total.toFixed(2)}</div>
-                <div class="grand-total">Genel Toplam: Ôé║ ${orderObj.total.toFixed(2)}</div>
+                <div>Ara Toplam: ₺ ${orderObj.subtotal.toFixed(2)}</div>
+                <div>KDV: ₺ ${orderObj.vat_total.toFixed(2)}</div>
+                <div class="grand-total">Genel Toplam: ₺ ${orderObj.total.toFixed(2)}</div>
               </div>
 
-              <button class="btn-print no-print" onclick="window.print()">Yazd─▒r</button>
+              <button class="btn-print no-print" onclick="window.print()">Yazdır</button>
             </div>
             `).join('')}
           </body>
@@ -1276,8 +1276,8 @@ const SiparisYonetimiPage = () => {
       {successModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">Ô£ô</div>
-            <h3 className="font-bold text-lg text-zinc-900 mb-2">Ba┼şar─▒l─▒</h3>
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
+            <h3 className="font-bold text-lg text-zinc-900 mb-2">Başarılı</h3>
             <p className="text-sm text-zinc-500 mb-6">{successModal}</p>
             <button onClick={() => setSuccessModal(null)} className="w-full bg-zinc-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-zinc-800 transition-colors">Tamam</button>
           </div>
@@ -1302,13 +1302,13 @@ const SiparisYonetimiPage = () => {
       <div className="bg-zinc-100 border-b border-zinc-200 px-8 py-1 flex items-center justify-center gap-x-6 overflow-x-auto no-scrollbar shadow-sm">
         {[
           { key: "onay_bekleyen", label: "Onay Bekleyenler" },
-          { key: "hazirlanan", label: "Haz─▒rlananlar", badge: preparingCount },
+          { key: "hazirlanan", label: "Hazırlananlar", badge: preparingCount },
           { key: "kargolanan", label: "Kargolananlar" },
           { key: "teslim_edilen", label: "Teslim Edilenler" },
-          { key: "iade_edilen", label: "─░ade Edilenler" },
-          { key: "iptal_edilen", label: "─░ptal Edilenler" },
-          { key: "tum_siparisler", label: "T├╝m Sipari┼şler" },
-          { key: "odeme_hatasi", label: "├ûdeme Hatas─▒ Al─▒nanlar" }
+          { key: "iade_edilen", label: "İade Edilenler" },
+          { key: "iptal_edilen", label: "İptal Edilenler" },
+          { key: "tum_siparisler", label: "Tüm Siparişler" },
+          { key: "odeme_hatasi", label: "Ödeme Hatası Alınanlar" }
         ].map((tab) => (
           <button
             key={tab.key}
@@ -1346,10 +1346,10 @@ const SiparisYonetimiPage = () => {
             </button>
 
             <div className="relative flex-1 max-w-md">
-              <span className="absolute inset-y-0 left-3 flex items-center text-zinc-400">­şöı</span>
+              <span className="absolute inset-y-0 left-3 flex items-center text-zinc-400">🔍</span>
               <input
                 type="text"
-                placeholder="H─▒zl─▒ ara..."
+                placeholder="Hızlı ara..."
                 value={quickSearch}
                 onChange={(e) => setQuickSearch(e.target.value)}
                 className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-4 py-2.5 text-xs font-medium focus:outline-none focus:border-zinc-300 focus:ring-4 focus:ring-zinc-100 text-zinc-800 transition-all shadow-sm"
@@ -1362,7 +1362,7 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setIsPosOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all whitespace-nowrap"
             >
-                H─▒zl─▒ Sat─▒┼ş (POS)
+                Hızlı Satış (POS)
             </button>
 
             <div className="relative">
@@ -1370,20 +1370,20 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setIsBulkActionMenuOpen(!isBulkActionMenuOpen)}
                 className="bg-white border border-zinc-200 px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 shadow-sm transition-all"
               >
-                ­şöğ Toplu ─░┼şlemler
+                🔧 Toplu İşlemler
                 <svg className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isBulkActionMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
               </button>
 
               {isBulkActionMenuOpen && (
                 <div className="absolute top-full mt-2 right-0 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible py-1 z-50 animate-fade-in">
                   <div className="px-4 py-2 border-b border-zinc-100 mb-1">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{selectedOrderIds.length} Sipari┼ş Se├ğili</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{selectedOrderIds.length} Sipariş Seçili</span>
                   </div>
                   
                   <button 
                     onClick={() => {
                       if (selectedOrderIds.length === 0) {
-                        alert("L├╝tfen sipari┼ş se├ğin.");
+                        alert("Lütfen sipariş seçin.");
                         return;
                       }
                       setStatusModalTargetIds(selectedOrderIds);
@@ -1393,32 +1393,32 @@ const SiparisYonetimiPage = () => {
                     }}
                     className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
                   >
-                    Durumu De─şi┼ştir
+                    Durumu Değiştir
                   </button>
 
-                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Fatura Yazd─▒r</button>
-                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Kargo Fi┼şi Yazd─▒r</button>
+                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Fatura Yazdır</button>
+                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Kargo Fişi Yazdır</button>
                   <button 
                     onClick={exportToExcel}
                     className="w-full text-left px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
                   >
-                    ­şôè {selectedOrderIds.length > 0 ? "Se├ğilenleri Excel'e Aktar" : "T├╝m├╝n├╝ Excel'e Aktar"}
+                    📊 {selectedOrderIds.length > 0 ? "Seçilenleri Excel'e Aktar" : "Tümünü Excel'e Aktar"}
                   </button>
-                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">Se├ğilenleri Sil</button>
+                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">Seçilenleri Sil</button>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* EXPANDABLE FILTER GRID (G├Ârsel 2) */}
+        {/* EXPANDABLE FILTER GRID (Görsel 2) */}
         {showFilters && (
           <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col gap-6 animate-fade-in border-l-4 border-l-violet-600">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               
               {/* Row 1 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Durumu</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Durumu</label>
                 <input
                   type="text"
                   value={filterStatus}
@@ -1434,41 +1434,41 @@ const SiparisYonetimiPage = () => {
                   onChange={(e) => setFilterPlatform(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hi├ğbiri se├ğilmedi</option>
+                  <option value="">Hiçbiri seçilmedi</option>
                   <option value="WhatsApp">WhatsApp</option>
                   <option value={getDomainBrand()}>{getDomainBrand()}</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ma─şaza</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Mağaza</label>
                 <select
                   value={filterStore}
                   onChange={(e) => setFilterStore(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hi├ğbiri se├ğilmedi</option>
+                  <option value="">Hiçbiri seçilmedi</option>
                   <option value={getDomainBrand().toLowerCase()}>{getDomainBrand()}</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Etiketi</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Etiketi</label>
                 <select
                   value={filterTag}
                   onChange={(e) => setFilterTag(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Se├ğilmedi</option>
+                  <option value="">Seçilmedi</option>
                 </select>
               </div>
 
               {/* Row 2 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş No</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş No</label>
                 <input
                   type="text"
-                  placeholder="Sipari┼ş No giriniz"
+                  placeholder="Sipariş No giriniz"
                   value={filterOrderNo}
                   onChange={(e) => setFilterOrderNo(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1476,7 +1476,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Tarihi</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Tarihi</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
@@ -1534,7 +1534,7 @@ const SiparisYonetimiPage = () => {
 
               {/* Row 3 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Tutar─▒</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Tutarı</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -1555,25 +1555,25 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├ûdeme Y├Ântemi</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ödeme Yöntemi</label>
                 <select
                   value={filterPaymentMethod}
                   onChange={(e) => setFilterPaymentMethod(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Se├ğilmedi</option>
-                  <option value="Kap─▒da Nakit ├ûdeme">Kap─▒da Nakit ├ûdeme</option>
-                  <option value="Kap─▒da Kredi Kart─▒ ile ├ûdeme">Kap─▒da Kredi Kart─▒ ile ├ûdeme</option>
+                  <option value="">Seçilmedi</option>
+                  <option value="Kapıda Nakit Ödeme">Kapıda Nakit Ödeme</option>
+                  <option value="Kapıda Kredi Kartı ile Ödeme">Kapıda Kredi Kartı ile Ödeme</option>
                   <option value="Havale / EFT">Havale / EFT</option>
                   <option value="PayTR">PayTR</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">M├╝┼şteri Ad─▒</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Müşteri Adı</label>
                 <input
                   type="text"
-                  placeholder="M├╝┼şteri ad─▒"
+                  placeholder="Müşteri adı"
                   value={filterCustomerFirstName}
                   onChange={(e) => setFilterCustomerFirstName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1581,10 +1581,10 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">M├╝┼şteri Soyad─▒</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Müşteri Soyadı</label>
                 <input
                   type="text"
-                  placeholder="M├╝┼şteri soyad─▒"
+                  placeholder="Müşteri soyadı"
                   value={filterCustomerLastName}
                   onChange={(e) => setFilterCustomerLastName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1596,7 +1596,7 @@ const SiparisYonetimiPage = () => {
                 <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Telefon</label>
                 <input
                   type="text"
-                  placeholder="Telefon numaras─▒"
+                  placeholder="Telefon numarası"
                   value={filterPhone}
                   onChange={(e) => setFilterPhone(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1604,7 +1604,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Vergi Numaras─▒</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Vergi Numarası</label>
                 <input
                   type="text"
                   value={filterTaxNo}
@@ -1635,7 +1635,7 @@ const SiparisYonetimiPage = () => {
 
               {/* Row 5 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£ye No</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Üye No</label>
                 <input
                   type="text"
                   value={filterMemberNo}
@@ -1645,19 +1645,19 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£lke</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ülke</label>
                 <select
                   value={filterCountry}
                   onChange={(e) => setFilterCountry(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hi├ğbiri se├ğilmedi</option>
-                  <option value="tr">T├╝rkiye</option>
+                  <option value="">Hiçbiri seçilmedi</option>
+                  <option value="tr">Türkiye</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">─░l</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">İl</label>
                 <input
                   type="text"
                   value={filterProvince}
@@ -1667,7 +1667,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n No</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün No</label>
                 <input
                   type="text"
                   value={filterProductNo}
@@ -1678,7 +1678,7 @@ const SiparisYonetimiPage = () => {
 
               {/* Row 6 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n Barkodu</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün Barkodu</label>
                 <input
                   type="text"
                   value={filterProductBarcode}
@@ -1688,7 +1688,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n Ad─▒</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün Adı</label>
                 <input
                   type="text"
                   value={filterProductName}
@@ -1698,18 +1698,18 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n Etiketleri</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün Etiketleri</label>
                 <select
                   value={filterProductTag}
                   onChange={(e) => setFilterProductTag(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Etiket Se├ğilmedi</option>
+                  <option value="">Etiket Seçilmedi</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Hediye ├çeki Kodu</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Hediye Çeki Kodu</label>
                 <input
                   type="text"
                   value={filterGiftCardCode}
@@ -1726,31 +1726,31 @@ const SiparisYonetimiPage = () => {
                   onChange={(e) => setFilterPromo(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Se├ğilmedi</option>
+                  <option value="">Seçilmedi</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Kargo Firmas─▒</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Kargo Firması</label>
                 <select
                   value={filterCarrier}
                   onChange={(e) => setFilterCarrier(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Se├ğilmedi</option>
-                  <option value="KARGO─░ST">Kargoist</option>
+                  <option value="">Seçilmedi</option>
+                  <option value="KARGOİST">Kargoist</option>
                   <option value="INTERLINE KARGO">Interline Kargo</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Geli┼şmi┼ş Arama</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Gelişmiş Arama</label>
                 <select
                   value={filterAdvancedSearch}
                   onChange={(e) => setFilterAdvancedSearch(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hi├ğbiri se├ğilmedi</option>
+                  <option value="">Hiçbiri seçilmedi</option>
                 </select>
               </div>
             </div>
@@ -1772,11 +1772,11 @@ const SiparisYonetimiPage = () => {
           </div>
         )}
 
-        {/* ORDER LIST TABLE (G├Ârsel 1) */}
+        {/* ORDER LIST TABLE (Görsel 1) */}
         {loading ? (
           <div className="bg-white border border-zinc-200 rounded-2xl p-16 flex flex-col items-center justify-center gap-3 shadow-sm">
             <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-bold text-zinc-500">Sipari┼ş verileri y├╝kleniyor...</span>
+            <span className="text-xs font-bold text-zinc-500">Sipariş verileri yükleniyor...</span>
           </div>
         ) : (
           <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
@@ -1792,20 +1792,20 @@ const SiparisYonetimiPage = () => {
                         className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800">Sipari┼ş Bilgileri</th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800">M├╝┼şteri Bilgileri</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800">Sipariş Bilgileri</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800">Müşteri Bilgileri</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Tutar</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Durum</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Kargo</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Tarih</th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800">Yazd─▒r</th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800 w-32">─░┼şlemler</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800">Yazdır</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800 w-32">İşlemler</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 text-zinc-700">
                   {filteredOrdersList.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-16 text-center text-zinc-400 font-bold">Aramaya uygun sipari┼ş kayd─▒ bulunmamaktad─▒r.</td>
+                      <td colSpan={9} className="py-16 text-center text-zinc-400 font-bold">Aramaya uygun sipariş kaydı bulunmamaktadır.</td>
                     </tr>
                   ) : (
                     filteredOrdersList.map((order, index) => {
@@ -1888,7 +1888,7 @@ const SiparisYonetimiPage = () => {
 
                                   return isRisky ? (
                                     <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-200 shadow-sm whitespace-nowrap animate-pulse">
-                                      R─░SKL─░ S─░PAR─░┼Ş
+                                      RİSKLİ SİPARİŞ
                                     </span>
                                   ) : null;
                                 })()}
@@ -1910,12 +1910,12 @@ const SiparisYonetimiPage = () => {
                             )}
                             {order.status === "kargolanan" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-amber-500 text-[11px] font-semibold text-amber-500 leading-none">
-                                Kargoland─▒
+                                Kargolandı
                               </span>
                             )}
                             {order.status === "hazirlanan" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-blue-500 text-[11px] font-semibold text-blue-500 leading-none">
-                                Haz─▒rlan─▒yor
+                                Hazırlanıyor
                               </span>
                             )}
                             {order.status === "onay_bekleyen" && (
@@ -1925,17 +1925,17 @@ const SiparisYonetimiPage = () => {
                             )}
                             {order.status === "iptal_edilen" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-rose-500 text-[11px] font-semibold text-rose-500 leading-none">
-                                ─░ptal Edildi
+                                İptal Edildi
                               </span>
                             )}
                             {order.status === "odeme_hatasi" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-red-600 text-[11px] font-semibold text-red-600 leading-none">
-                                ├ûdeme Hatas─▒
+                                Ödeme Hatası
                               </span>
                             )}
                           </td>
                           <td className="py-3 px-4 uppercase font-semibold text-[11px] text-zinc-800">
-                            {order.carrier_name || "KARGO─░ST"}
+                            {order.carrier_name || "KARGOİST"}
                           </td>
                           <td className="py-3 px-4 font-medium text-[11px] text-zinc-800">
                             {order.created_at}
@@ -1968,15 +1968,15 @@ const SiparisYonetimiPage = () => {
                                 )}
                               </button>
                               <button 
-                                title="Kargo Fi┼şi" 
-                                onClick={() => triggerPrintSimulation("Kargo Fi┼şi", order.id)}
+                                title="Kargo Fişi" 
+                                onClick={() => triggerPrintSimulation("Kargo Fişi", order.id)}
                                 className="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 bg-white hover:bg-zinc-50 shadow-sm"
                               >
                                 <TruckIcon />
                               </button>
                               <button 
-                                title="Paket Fi┼şi" 
-                                onClick={() => triggerPrintSimulation("Paket Fi┼şi", order.id)}
+                                title="Paket Fişi" 
+                                onClick={() => triggerPrintSimulation("Paket Fişi", order.id)}
                                 className="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 bg-white hover:bg-zinc-50 shadow-sm"
                               >
                                 <PackageIcon />
@@ -2024,44 +2024,716 @@ const SiparisYonetimiPage = () => {
 
       </div>
 
-`      {/* DETAIL VIEW MODAL DIALOG (G├Ârsel 3) */}
+      {/* DETAIL VIEW MODAL DIALOG (Görsel 3) */}
       {selectedOrderId && activeOrderDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedOrderId(null)} />
-          <div className="bg-[#f4f5f7] border border-[#d3d9df] shadow-2xl w-full max-w-[1400px] h-[95vh] flex flex-col overflow-hidden relative z-10 rounded-sm font-sans">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedOrderId(null)} />
+          <div className="bg-zinc-100 rounded-2xl border border-zinc-200 shadow-2xl w-full max-w-[1300px] h-[92vh] flex flex-col overflow-hidden animate-scale-up relative z-10">
             
-            {/* Header segment */}
-            <div className="bg-[#0b5ed7] text-white px-5 py-3 flex items-start justify-between shrink-0">
-              <div className="flex flex-col">
-                <span className="text-[14px] font-medium text-white mb-0.5">Sipari┼ş Y├Ânetimi</span>
-                <span className="text-[20px] font-bold tracking-tight">{activeOrderDetails.display_id} Nolu Sipari┼ş</span>
+            {/* Header segment with status and details */}
+            <div className="bg-[#0d6efd] text-white px-6 py-4 flex items-center justify-between shadow-md select-none shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold bg-white/20 px-2.5 py-1 rounded uppercase tracking-wider">Sipariş Yönetimi</span>
+                <span className="text-base font-bold tracking-tight">{activeOrderDetails.display_id} Nolu Sipariş</span>
               </div>
               <button 
                 onClick={() => setSelectedOrderId(null)} 
-                className="text-white hover:opacity-80 p-1">
-                <span className="font-bold text-xl leading-none">├ù</span>
+                className="text-white hover:opacity-85 p-1 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <XMark className="w-6 h-6" />
               </button>
             </div>
 
             {/* Main scrollable body grid */}
-            <div className="flex-1 p-4 overflow-y-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
+            <div className="flex-1 p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
               
               {/* Left Side elements */}
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-6">
                 
                 {/* 1. Products list table card */}
-                <div className="bg-white border border-[#d3d9df] rounded-sm shadow-none overflow-hidden">
-                  <div className="p-4 border-b border-[#d3d9df] flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full border border-emerald-500 flex items-center justify-center text-emerald-500 text-[10px]">Ô£ô</div>
-                      <h3 className="text-[14px] font-bold text-zinc-800">
-                        Teslim Edilen ├£r├╝nler ({activeOrderDetails.items.length})
+                <div className="bg-white border border-zinc-200 rounded shadow-none overflow-hidden">
+                  <div className="p-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+                    <div className="flex items-center gap-2 text-emerald-500">
+                      <CheckCircle className="w-5 h-5" />
+                      <h3 className="text-[12px] font-bold text-zinc-900 tracking-tight">
+                        Teslim Edilen Ürünler ({activeOrderDetails.items.length})
                       </h3>
                     </div>
                     <div className="flex gap-2">
                       {!editingProducts ? (
                         <button onClick={() => {
-                          setEditingProducts(true)
+                          setEditingProducts(true);
+                          setTempProducts(activeOrderDetails.items.map(i => ({ id: i.id, unit_price: i.unit_price, quantity: i.quantity })));
+                        }} className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium text-[11px] rounded shadow-sm">Düzenle</button>
+                      ) : (
+                        <>
+                          <button onClick={handleSaveProducts} className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-black text-xs rounded shadow-sm">Kaydet</button>
+                          <button onClick={() => setEditingProducts(false)} className="px-3 py-1.5 bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 font-bold text-xs rounded shadow-sm">İptal</button>
+                        </>
+                      )}
+                      <button onClick={() => setShowProductSearchModal(true)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 font-black text-xs rounded shadow-sm">Ürün Ekle</button>
+                      <button className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs rounded shadow-sm">İade Oluştur</button>
+                    </div>
+                  </div>
+
+                  <table className="w-full border-collapse text-left text-xs font-semibold text-zinc-700">
+                    <thead>
+                      <tr className="bg-zinc-50 border-b border-zinc-200 text-xs font-semibold text-zinc-600 uppercase tracking-wider">
+                        <th className="py-3 px-4">Ürün</th>
+                        <th className="py-3 px-4 text-right">Fiyat</th>
+                        <th className="py-3 px-4 text-center">KDV</th>
+                        <th className="py-3 px-4 text-center">Miktar</th>
+                        <th className="py-3 px-4 text-right">Tutar</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {activeOrderDetails.items.map((item) => (
+                        <tr key={item.id}>
+                          <td className="py-4 px-4 flex gap-3.5 items-start">
+                            <div className="w-12 h-16 bg-zinc-50 border border-zinc-150 rounded overflow-hidden flex-shrink-0 flex items-center justify-center text-xl select-none">
+                              {item.thumbnail ? (
+                                <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" style={{ imageRendering: "crisp-edges", WebkitFontSmoothing: "antialiased" }} />
+                              ) : (
+                                "👖"
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-zinc-900 text-[13px] leading-relaxed">{item.title}</span>
+                              <span className="text-[11px] text-zinc-500 mt-1 uppercase font-semibold">
+                                {item.sku ? `#${item.sku}` : ""} {item.barcode ? `- ${item.barcode}` : ""}
+                              </span>
+                              <span className="text-[11px] font-medium text-zinc-600 uppercase mt-0.5">BEDEN: {item.size}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right font-semibold text-zinc-800">
+                            {editingProducts ? (
+                              <input 
+                                type="number" 
+                                className="w-20 border rounded px-1.5 py-1 text-right text-[11px]"
+                                value={tempProducts.find(t => t.id === item.id)?.unit_price || 0}
+                                onChange={e => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setTempProducts(prev => prev.map(t => t.id === item.id ? { ...t, unit_price: val } : t))
+                                }}
+                              />
+                            ) : (
+                              <>{item.unit_price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</>
+                            )}
+                          </td>
+                          <td className="py-4 px-4 text-center text-zinc-500 font-bold">
+                            %{item.vat_rate}
+                          </td>
+                          <td className="py-4 px-4 text-center">
+                            {editingProducts ? (
+                              <input 
+                                type="number" 
+                                className="w-16 border rounded px-1.5 py-1 text-center text-[11px] mx-auto block"
+                                value={tempProducts.find(t => t.id === item.id)?.quantity || 1}
+                                onChange={e => {
+                                  const val = parseInt(e.target.value) || 1;
+                                  setTempProducts(prev => prev.map(t => t.id === item.id ? { ...t, quantity: val } : t))
+                                }}
+                              />
+                            ) : (
+                              <div className="flex flex-col leading-none">
+                                <span className="font-semibold text-zinc-900 text-[14px]">{item.quantity}</span>
+                                <span className="text-[10px] text-zinc-500 font-medium mt-1 uppercase tracking-wide">Adet</span>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-4 px-4 text-right font-semibold text-zinc-800">
+                            {editingProducts ? (
+                              <div className="flex items-center justify-end gap-3">
+                                <span>{((tempProducts.find(t => t.id === item.id)?.unit_price || 0) * (tempProducts.find(t => t.id === item.id)?.quantity || 0)).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                                <button
+                                  title="Ürünü Sil"
+                                  onClick={() => setTempProducts(prev => prev.filter(t => t.id !== item.id))}
+                                  className="w-6 h-6 flex items-center justify-center rounded bg-rose-50 hover:bg-rose-100 text-rose-500 transition-colors shrink-0"
+                                >
+                                  <Trash className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <>{(item.unit_price * item.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+
+                      {/* Display calculations */}
+                      <tr className="bg-zinc-50 font-semibold text-zinc-600 text-xs">
+                        <td colSpan={3} className="py-2.5 px-4">
+                          <div className="flex flex-col gap-1.5 text-[11px] font-medium text-zinc-600">
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input type="checkbox" className="w-3.5 h-3.5 rounded text-violet-600" />
+                              <span>Stok miktarını göster</span>
+                            </label>
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input type="checkbox" className="w-3.5 h-3.5 rounded text-violet-600" />
+                              <span>Desiyi göster</span>
+                            </label>
+                            <label className="flex items-center gap-1.5 cursor-pointer">
+                              <input type="checkbox" className="w-3.5 h-3.5 rounded text-violet-600" />
+                              <span>Özel kodları göster</span>
+                            </label>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-4 text-right">
+                          <div className="flex flex-col gap-1.5 text-xs font-semibold text-zinc-500">
+                            <span>Ara Toplam</span>
+                            <span>Genel Toplam</span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-semibold text-zinc-900">
+                          <div className="flex flex-col gap-1.5">
+                            <span>{activeOrderDetails.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                            <span>{activeOrderDetails.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 2. Admin note card */}
+                <div className="bg-white border border-zinc-200 rounded p-4 flex flex-col gap-2">
+                  <div className="flex justify-between items-center pb-2">
+                    <h3 className="text-[12px] font-bold text-zinc-800 tracking-tight">
+                      Yönetici Notu
+                    </h3>
+                    {!editingNotes ? (
+                      <button 
+                        onClick={() => { setEditingNotes(true); setTempNotesText(activeOrderDetails.admin_notes || ""); }}
+                        className="text-zinc-400 hover:text-zinc-600 border border-zinc-200 rounded p-1 bg-white"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={handleSaveNotes}
+                          className="text-[11px] font-bold text-emerald-600 hover:underline border border-emerald-200 bg-emerald-50 px-2 py-1 rounded"
+                        >
+                          Kaydet
+                        </button>
+                        <button 
+                          onClick={() => setEditingNotes(false)}
+                          className="text-[11px] font-semibold text-zinc-500 hover:underline border border-zinc-200 bg-zinc-50 px-2 py-1 rounded"
+                        >
+                          Vazgeç
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {editingNotes ? (
+                    <textarea 
+                      rows={2}
+                      value={tempNotesText}
+                      onChange={(e) => setTempNotesText(e.target.value)}
+                      className="w-full p-2 border border-zinc-300 rounded text-xs font-semibold text-zinc-800"
+                    />
+                  ) : (
+                    <div className="text-xs font-semibold text-zinc-800 tracking-tight bg-zinc-50 p-3 rounded border border-zinc-200 min-h-12">
+                      {activeOrderDetails.admin_notes || "Yönetici notu bulunmuyor."}
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. Customer, shipping & billing details cards grid */}
+                <div className="bg-white border border-zinc-200 rounded p-0 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-zinc-200">
+                  {/* Customer Block */}
+                  <div className="flex-1 p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+                      <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight">Müşteri</h4>
+                      <div className="flex items-center gap-1.5">
+                        <span className="border border-zinc-200 px-1.5 py-0.5 rounded text-[11px] font-semibold text-zinc-600 bg-white shadow-sm">
+                          {activeOrderDetails.customer.is_visitor ? "Ziyaretçi" : "Üye"}
+                        </span>
+                        {!editingCustomer ? (
+                          <button 
+                            onClick={() => {
+                              setEditingCustomer(true);
+                              setTempCustomer({ first_name: activeOrderDetails.customer.first_name, last_name: activeOrderDetails.customer.last_name, email: activeOrderDetails.customer.email, phone: activeOrderDetails.customer.phone });
+                            }}
+                            className="text-zinc-400 hover:text-zinc-600 border border-zinc-200 rounded p-1 shadow-sm bg-white"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <button onClick={handleSaveCustomer} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
+                            <button onClick={() => setEditingCustomer(false)} className="text-[10px] font-bold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-xs space-y-2 text-zinc-700 font-semibold">
+                      {!editingCustomer ? (
+                        <>
+                          <div className="font-semibold text-zinc-900 text-[13px] flex items-center gap-1.5">
+                            <span className="text-zinc-700 font-semibold">#{activeOrderDetails.customer.member_no.replace("U-", "")} -</span> 
+                            {activeOrderDetails.customer.first_name} {activeOrderDetails.customer.last_name}
+                            <button className="ml-1 opacity-70 hover:opacity-100 transition-opacity bg-zinc-900 p-0.5 rounded text-white shadow">
+                              <EyeIcon />
+                            </button>
+                          </div>
+                          <div className="text-xs font-semibold text-zinc-700 hover:underline cursor-pointer flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                            {activeOrderDetails.customer.email}
+                          </div>
+                          <div className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                            {activeOrderDetails.customer.phone}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.first_name} onChange={e => setTempCustomer({...tempCustomer, first_name: e.target.value})} placeholder="Ad" />
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.last_name} onChange={e => setTempCustomer({...tempCustomer, last_name: e.target.value})} placeholder="Soyad" />
+                          <input type="email" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.email} onChange={e => setTempCustomer({...tempCustomer, email: e.target.value})} placeholder="E-posta" />
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.phone} onChange={e => setTempCustomer({...tempCustomer, phone: e.target.value})} placeholder="Telefon" />
+                        </div>
+                      )}
+                      
+                      <div className="text-xs text-zinc-600 font-semibold flex items-center gap-1.5 mt-1">
+                        <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>
+                        <span className="font-mono text-xs">{activeOrderDetails.customer.ip}</span>
+                      </div>
+                      <div className="pt-2 flex gap-2 items-center justify-between">
+                        <span className="font-mono text-[11px] px-3 py-1 bg-zinc-100 border border-zinc-200 rounded flex-1 text-center">(B) 0.00 TL</span>
+                        <button className="bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-700 font-semibold text-[11px] py-1 px-3 rounded shadow-sm transition-colors">
+                          Yükle
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delivery Address Block */}
+                  <div className="flex-1 p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+                      <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight">Teslimat Bilgileri</h4>
+                      {!editingShipping ? (
+                        <button 
+                          onClick={() => {
+                            setEditingShipping(true);
+                            setTempShipping({ first_name: activeOrderDetails.shipping_address.first_name, last_name: activeOrderDetails.shipping_address.last_name, address_1: activeOrderDetails.shipping_address.address_1, district: activeOrderDetails.shipping_address.district, city: activeOrderDetails.shipping_address.city });
+                          }}
+                          className="text-zinc-400 hover:text-zinc-600 border border-zinc-200 rounded p-1 shadow-sm bg-white"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button onClick={handleSaveShipping} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
+                          <button onClick={() => setEditingShipping(false)} className="text-[10px] font-bold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs space-y-1.5 text-zinc-700 font-semibold">
+                      {!editingShipping ? (
+                        <>
+                          <div className="font-bold text-zinc-900 text-[13px]">{activeOrderDetails.shipping_address.first_name} {activeOrderDetails.shipping_address.last_name}</div>
+                          <p className="leading-relaxed text-xs mt-1 text-zinc-600 font-semibold">
+                            {activeOrderDetails.shipping_address.address_1}
+                          </p>
+                          <div className="text-xs text-zinc-600 font-semibold">{activeOrderDetails.shipping_address.district} / {activeOrderDetails.shipping_address.city} / {activeOrderDetails.shipping_address.country_name}</div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempShipping.first_name} onChange={e => setTempShipping({...tempShipping, first_name: e.target.value})} placeholder="Ad" />
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempShipping.last_name} onChange={e => setTempShipping({...tempShipping, last_name: e.target.value})} placeholder="Soyad" />
+                          <textarea rows={2} className="w-full border rounded p-1 text-[11px]" value={tempShipping.address_1} onChange={e => setTempShipping({...tempShipping, address_1: e.target.value})} placeholder="Açık Adres" />
+                          <div className="flex gap-2">
+                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempShipping.district} onChange={e => setTempShipping({...tempShipping, district: e.target.value})} placeholder="İlçe" />
+                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempShipping.city} onChange={e => setTempShipping({...tempShipping, city: e.target.value})} placeholder="İl" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Billing Address Block */}
+                  <div className="flex-1 p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+                      <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight">Fatura Bilgileri</h4>
+                      {!editingBilling ? (
+                        <button 
+                          onClick={() => {
+                            setEditingBilling(true);
+                            setTempBilling({ first_name: activeOrderDetails.billing_address.first_name, last_name: activeOrderDetails.billing_address.last_name, address_1: activeOrderDetails.billing_address.address_1, district: activeOrderDetails.billing_address.district, city: activeOrderDetails.billing_address.city, tc_no: activeOrderDetails.billing_address.tc_no || "" });
+                          }}
+                          className="text-zinc-400 hover:text-zinc-600 border border-zinc-200 rounded p-1 shadow-sm bg-white"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button onClick={handleSaveBilling} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
+                          <button onClick={() => setEditingBilling(false)} className="text-[10px] font-bold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs space-y-1.5 text-zinc-700 font-semibold">
+                      {!editingBilling ? (
+                        <>
+                          <div className="font-bold text-zinc-900 text-[13px]">{activeOrderDetails.billing_address.first_name} {activeOrderDetails.billing_address.last_name}</div>
+                          <p className="leading-relaxed text-xs mt-1 text-zinc-600 font-semibold">
+                            {activeOrderDetails.billing_address.address_1}
+                          </p>
+                          <div className="text-xs text-zinc-600 font-semibold">{activeOrderDetails.billing_address.district} / {activeOrderDetails.billing_address.city} / {activeOrderDetails.billing_address.country_name}</div>
+                          {activeOrderDetails.billing_address.tc_no && (
+                            <div className="text-xs font-bold text-zinc-600 mt-1">
+                              TC: {activeOrderDetails.billing_address.tc_no}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempBilling.first_name} onChange={e => setTempBilling({...tempBilling, first_name: e.target.value})} placeholder="Ad" />
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempBilling.last_name} onChange={e => setTempBilling({...tempBilling, last_name: e.target.value})} placeholder="Soyad" />
+                          <textarea rows={2} className="w-full border rounded p-1 text-[11px]" value={tempBilling.address_1} onChange={e => setTempBilling({...tempBilling, address_1: e.target.value})} placeholder="Açık Adres" />
+                          <div className="flex gap-2">
+                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempBilling.district} onChange={e => setTempBilling({...tempBilling, district: e.target.value})} placeholder="İlçe" />
+                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempBilling.city} onChange={e => setTempBilling({...tempBilling, city: e.target.value})} placeholder="İl" />
+                          </div>
+                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempBilling.tc_no} onChange={e => setTempBilling({...tempBilling, tc_no: e.target.value})} placeholder="TC Kimlik No (Opsiyonel)" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Chronological logs (Admin logs & Integration logs) */}
+                <div className="bg-white border border-zinc-200 rounded shadow-none overflow-hidden">
+                  <div className="p-4 border-b border-zinc-150 bg-white">
+                    <h3 className="text-[12px] font-bold text-zinc-800 tracking-tight">
+                      Yönetici Logları
+                    </h3>
+                  </div>
+                  <div className="divide-y divide-zinc-100 text-xs font-semibold text-zinc-700">
+                    {activeOrderDetails.logs.length === 0 ? (
+                      <div className="p-4 text-center text-zinc-400">Log kaydı bulunmuyor.</div>
+                    ) : (
+                      activeOrderDetails.logs.map((log) => (
+                        <div key={log.id} className="py-2.5 px-4 flex justify-between items-center hover:bg-zinc-50/50 transition-colors">
+                          <span className="text-zinc-800">{log.message}</span>
+                          <span className="text-[11px] text-zinc-400 font-bold">{log.created_at}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white border border-zinc-200 rounded shadow-none overflow-hidden">
+                  <div className="p-4 border-b border-zinc-150 bg-white">
+                    <h3 className="text-[12px] font-bold text-zinc-800 tracking-tight">
+                      Kargo Entegrasyon Logları
+                    </h3>
+                  </div>
+                  <div className="divide-y divide-zinc-100 text-xs font-semibold text-zinc-700">
+                    {activeOrderDetails.integration_logs.length === 0 ? (
+                      <div className="p-4 text-center text-zinc-400">Kargo entegrasyon log kaydı bulunmuyor.</div>
+                    ) : (
+                      activeOrderDetails.integration_logs.map((log) => (
+                        <div key={log.id} className="py-2.5 px-4 flex justify-between items-center hover:bg-zinc-50/50 transition-colors">
+                          <span className="text-emerald-700 font-bold">{log.message}</span>
+                          <span className="text-[11px] text-zinc-400 font-bold">{log.created_at}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Side Info Cards */}
+              <div className="flex flex-col gap-6">
+                
+                {/* Order Meta details block */}
+                <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col gap-4">
+                  <div className="flex justify-between items-start pb-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[16px] font-bold text-zinc-900 tracking-tight">{activeOrderDetails.display_id}</span>
+                      <span className="text-[14px] font-bold text-zinc-500">{activeOrderDetails.store}</span>
+                      <span className="text-[12px] font-bold text-zinc-400">{activeOrderDetails.created_at}</span>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <CizgiLogo />
+                      {activeOrderDetails.status === "teslim_edilen" && (
+                        <span className="px-2 py-0.5 rounded border border-emerald-500 bg-emerald-50 text-[11px] font-bold text-emerald-600 uppercase leading-normal">
+                          Teslim Edildi
+                        </span>
+                      )}
+                      {activeOrderDetails.status === "kargolanan" && (
+                        <span className="px-2 py-0.5 rounded border border-amber-500 bg-amber-50 text-[11px] font-bold text-amber-600 uppercase leading-normal">
+                          Kargolandı
+                        </span>
+                      )}
+                      {activeOrderDetails.status === "hazirlanan" && (
+                        <span className="px-2 py-0.5 rounded border border-blue-500 bg-blue-50 text-[11px] font-bold text-blue-600 uppercase leading-normal">
+                          Hazırlanıyor
+                        </span>
+                      )}
+                      {activeOrderDetails.status === "iptal_edilen" && (
+                        <span className="px-2 py-0.5 rounded border border-rose-500 bg-rose-50 text-[11px] font-bold text-rose-600 uppercase leading-normal">
+                          İptal Edildi
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-zinc-100" />
+
+                  <div className="text-xs space-y-3 font-semibold text-zinc-500">
+                    <div className="flex justify-between">
+                      <span>Ödeme Yöntemi</span>
+                      <span className="text-zinc-900 font-semibold">{activeOrderDetails.payment_method}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Sipariş Tutarı</span>
+                      <span className="text-zinc-900 font-bold">₺ {activeOrderDetails.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>KDV (Matrah)</span>
+                      <span className="text-zinc-900 font-bold">₺ {activeOrderDetails.vat_total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-zinc-100" />
+                  
+                  <div className="flex flex-col gap-2">
+                    <div className="text-[12px] font-bold text-zinc-800 tracking-tight">İndirimler</div>
+                    <div className="flex justify-between items-center text-xs font-semibold text-zinc-500">
+                      <div className="flex items-center gap-1.5">
+                        <GiftIcon />
+                        <span className="text-zinc-900 font-bold">%10 İNDİRİM</span>
+                      </div>
+                      <span className="text-zinc-900 font-bold">79.90 TL</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Carrier info block */}
+                <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col gap-4">
+                  <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight border-b border-zinc-100 pb-2">Kargo Bilgileri</h4>
+                  <div className="text-xs space-y-3 font-semibold text-zinc-500">
+                    <div className="flex justify-between">
+                      <span>Firma</span>
+                      <span className="text-zinc-900 font-bold uppercase">{activeOrderDetails.carrier_name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Barkod</span>
+                      <span className="text-zinc-900 font-bold font-mono">{activeOrderDetails.carrier_barcode || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Takip Kodu</span>
+                      <span className="text-zinc-900 font-bold font-mono">{activeOrderDetails.carrier_barcode || "-"}</span>
+                    </div>
+                    <div className="flex justify-end pt-1">
+                      <a href="#" className="text-blue-600 hover:underline text-[11px] truncate max-w-[250px]">
+                        https://webpostman.kargoist.com/t.php?t={activeOrderDetails.carrier_barcode}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dönüşüm Bilgileri block */}
+                <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col gap-4">
+                  <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight border-b border-zinc-100 pb-2">Dönüşüm Bilgileri</h4>
+                  <div className="text-xs space-y-3 font-semibold text-zinc-500 pb-2 border-b border-zinc-100">
+                    <div className="flex justify-between">
+                      <span>Trafik Kaynağı</span>
+                      <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.traffic_source as string || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Yönlendiren</span>
+                      <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.referrer as string || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Cihaz</span>
+                      <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.device_type as string || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Oturum Süresi</span>
+                      <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.session_duration as string || "-"}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 border-b border-zinc-100 pb-3">
+                    <div className="text-[11px] font-bold text-zinc-800 tracking-tight">UTM Bilgileri</div>
+                    <div className="grid grid-cols-2 gap-y-2 text-[11px]">
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400">source</span>
+                        <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.utm_source as string || "-"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400">medium</span>
+                        <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.utm_medium as string || "-"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400">campaign</span>
+                        <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.utm_campaign as string || "-"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-zinc-400">term</span>
+                        <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.utm_term as string || "-"}</span>
+                      </div>
+                      <div className="flex flex-col col-span-2">
+                        <span className="text-zinc-400">content</span>
+                        <span className="text-zinc-900 font-bold">{activeOrderDetails.metadata?.utm_content as string || "-"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {activeOrderDetails.metadata?.is_recovered_order && (
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <StarIcon />
+                      <span className="text-xs font-bold text-zinc-700">Kurtarılan Sipariş</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Other/Fatura Series block */}
+                <div className="bg-white border border-zinc-200 rounded p-5 shadow-none flex flex-col gap-4">
+                  <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+                    <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight">Diğer</h4>
+                    {!editingInvoiceSeries ? (
+                      <button 
+                        onClick={() => { setEditingInvoiceSeries(true); setTempInvoiceSeriesText(activeOrderDetails.invoice_series || "-"); }}
+                        className="text-zinc-400 hover:text-zinc-650"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <button onClick={handleSaveInvoiceSeries} className="text-[11px] font-bold text-emerald-600 hover:underline">Kaydet</button>
+                        <button onClick={() => setEditingInvoiceSeries(false)} className="text-[11px] font-semibold text-zinc-450 hover:underline">İptal</button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {editingInvoiceSeries ? (
+                    <input 
+                      type="text"
+                      value={tempInvoiceSeriesText}
+                      onChange={(e) => setTempInvoiceSeriesText(e.target.value)}
+                      className="w-full p-1.5 border border-zinc-300 rounded text-xs font-semibold text-zinc-800"
+                    />
+                  ) : (
+                    <div className="text-xs space-y-3 font-semibold text-zinc-500">
+                      <div className="flex justify-between">
+                        <span>Fatura Seri</span>
+                        <span className="text-zinc-900 font-bold">{activeOrderDetails.invoice_series || "-"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Fatura Ek Kodlar</span>
+                        <span className="text-zinc-900 font-bold">-</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Footer buttons row */}
+            <div className="bg-zinc-50 border-t border-zinc-200 px-6 py-4 flex items-center justify-between shrink-0 relative">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsActionMenuOpen(!isActionMenuOpen)}
+                    className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-semibold text-[12px] h-9 px-4 rounded flex items-center gap-1.5 transition-colors"
+                  >
+                    <span>İşlemler</span>
+                    <svg className={`w-3 h-3 text-zinc-500 transition-transform ${isActionMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {isActionMenuOpen && (
+                    <div className="absolute bottom-full mb-1 left-0 w-48 bg-white border border-zinc-200 rounded shadow-lg overflow-hidden py-1 z-10 animate-fade-in">
+                      <button className="w-full text-left px-4 py-2 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">Risk Kriterlerine Ekle</button>
+                      
+                      <button 
+                        onClick={() => {
+                          setStatusModalTargetIds([activeOrderDetails.id]);
+                          setNewStatusValue(activeOrderDetails.status);
+                          setShowStatusModal(true);
+                          setIsActionMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
+                      >
+                        Durumu Değiştir
+                      </button>
+
+                      <button className="w-full text-left px-4 py-2 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">SMS & E-Posta Gönder</button>
+                      <button className="w-full text-left px-4 py-2 text-[11px] font-medium text-zinc-700 hover:bg-zinc-50 transition-colors">Sözleşmeler</button>
+                    </div>
+                  )}
+                </div>
+                
+                {activeOrderDetails.status !== "kargolanan" && activeOrderDetails.status !== "teslim_edilen" && activeOrderDetails.status !== "iptal_edilen" && (
+                  <button 
+                    onClick={() => {}}
+                    className="bg-[#00c853] hover:bg-[#00b248] text-white font-semibold text-[13px] h-9 px-5 rounded transition-all cursor-pointer shadow-sm"
+                  >
+                    Siparişi Kargola
+                  </button>
+                )}
+
+                {activeOrderDetails.status !== "iptal_edilen" && (
+                  <button 
+                    onClick={() => handleCancelOrder(activeOrderDetails.id)}
+                    className="bg-[#ff4d4d] hover:bg-[#ff3333] text-white font-semibold text-[13px] h-9 px-5 rounded transition-all cursor-pointer shadow-sm"
+                  >
+                    Siparişi İptal Et
+                  </button>
+                )}
+              </div>
+
+              {/* Print buttons row */}
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => triggerPrintSimulation("e-Fatura", activeOrderDetails.id)}
+                  className="bg-zinc-100 border border-zinc-200 hover:bg-zinc-200 text-zinc-700 font-semibold text-[12px] h-9 px-4 rounded flex items-center gap-1.5 transition-colors"
+                >
+                  <span className="text-rose-600 font-bold">✕</span>
+                  <span>E-Fatura</span>
+                </button>
+                <button 
+                  onClick={() => triggerPrintSimulation("Fatura", activeOrderDetails.id)}
+                  className="bg-zinc-100 border border-zinc-200 hover:bg-zinc-200 text-zinc-700 font-semibold text-[12px] h-9 px-4 rounded flex items-center gap-1.5 transition-colors"
+                >
+                  <span className="text-rose-600 font-bold">✕</span>
+                  <span>Fatura</span>
+                </button>
+                <button 
+                  onClick={() => triggerPrintSimulation("Kargo Fişi", activeOrderDetails.id)}
+                  className="bg-zinc-100 border border-zinc-200 hover:bg-zinc-200 text-zinc-700 font-semibold text-[12px] h-9 px-4 rounded flex items-center gap-1.5 transition-colors"
+                >
+                  <span className="text-emerald-600 font-bold">✔</span>
+                  <span>Kargo Fişi</span>
+                </button>
+                <button 
+                  onClick={() => triggerPrintSimulation("Fiş", activeOrderDetails.id)}
+                  className="bg-zinc-100 border border-zinc-200 hover:bg-zinc-200 text-zinc-700 font-semibold text-[12px] h-9 px-4 rounded flex items-center gap-1.5 transition-colors"
+                >
+                  <span className="text-rose-600 font-bold">✕</span>
+                  <span>Fiş</span>
+                </button>
+                <button 
+                  onClick={() => triggerPrintSimulation("PDF", activeOrderDetails.id)}
+                  className="bg-zinc-100 border border-zinc-200 hover:bg-zinc-200 text-zinc-700 font-semibold text-[12px] h-9 px-4 rounded flex items-center gap-1.5 transition-colors"
+                >
+                  <span className="text-rose-600 font-bold">✕</span>
+                  <span>PDF</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
       {/* Inner Modal for Status Change */}
       {showStatusModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -2069,30 +2741,30 @@ const SiparisYonetimiPage = () => {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[420px] flex flex-col relative animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             {/* Header */}
             <div className="bg-[#0d6efd] text-white px-5 py-4 flex flex-col relative">
-              <span className="text-[12px] font-semibold text-blue-100 mb-0.5">Sipari┼ş ─░┼şlemleri</span>
-              <span className="text-[16px] font-bold tracking-tight">Sipari┼ş Durumunu De─şi┼ştir</span>
+              <span className="text-[12px] font-semibold text-blue-100 mb-0.5">Sipariş İşlemleri</span>
+              <span className="text-[16px] font-bold tracking-tight">Sipariş Durumunu Değiştir</span>
               <button 
                 onClick={() => setShowStatusModal(false)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-zinc-200 opacity-90 transition-opacity"
               >
-                <span className="text-xl font-bold">Ô£ò</span>
+                <span className="text-xl font-bold">✕</span>
               </button>
             </div>
             
             {/* Body */}
             <div className="p-6 flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-semibold text-zinc-500">Sipari┼ş Durumu</label>
+                <label className="text-[12px] font-semibold text-zinc-500">Sipariş Durumu</label>
                 <select 
                   value={newStatusValue}
                   onChange={(e) => setNewStatusValue(e.target.value)}
                   className="w-full border border-zinc-300 rounded px-3 py-2.5 text-[13px] font-bold text-zinc-800 focus:outline-none focus:border-blue-500 shadow-sm cursor-pointer"
                 >
-                  <option value="onay_bekleyen">Yeni Sipari┼ş</option>
-                  <option value="hazirlanan">Haz─▒rlanan Sipari┼ş</option>
-                  <option value="kargolanan">Kargolanan Sipari┼ş</option>
-                  <option value="teslim_edilen">Teslim Edilen Sipari┼ş</option>
-                  <option value="iptal_edilen">─░ptal Edilen Sipari┼ş</option>
+                  <option value="onay_bekleyen">Yeni Sipariş</option>
+                  <option value="hazirlanan">Hazırlanan Sipariş</option>
+                  <option value="kargolanan">Kargolanan Sipariş</option>
+                  <option value="teslim_edilen">Teslim Edilen Sipariş</option>
+                  <option value="iptal_edilen">İptal Edilen Sipariş</option>
                 </select>
               </div>
 
@@ -2104,7 +2776,7 @@ const SiparisYonetimiPage = () => {
                   className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <span className="text-[12px] font-semibold text-zinc-600 leading-snug">
-                  M├╝┼şteriye mobil uygulama bildirimleri
+                  Müşteriye mobil uygulama bildirimleri
                 </span>
               </label>
             </div>
@@ -2115,7 +2787,7 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setShowStatusModal(false)}
                 className="bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-bold text-[12px] h-9 px-5 rounded transition-colors"
               >
-                ─░ptal
+                İptal
               </button>
               <button
                 onClick={async () => {
@@ -2129,14 +2801,14 @@ const SiparisYonetimiPage = () => {
                   if (refreshData && refreshData.orders) setRealOrders(refreshData.orders)
 
                   if (statusModalTargetIds.length > 1) {
-                    showSuccess(`Tamamlanan sipari┼ş say─▒s─▒: ${statusModalTargetIds.length}`);
+                    showSuccess(`Tamamlanan sipariş sayısı: ${statusModalTargetIds.length}`);
                   } else {
-                    showSuccess("Sipari┼ş ba┼şar─▒yla g├╝ncellendi.");
+                    showSuccess("Sipariş başarıyla güncellendi.");
                   }
                 }}
                 className="bg-[#10B981] hover:bg-emerald-600 text-white font-bold text-[12px] h-9 px-6 rounded transition-colors shadow-sm flex items-center gap-1.5"
               >
-                <span className="text-sm">Ô£ö</span>
+                <span className="text-sm">✔</span>
                 <span>Kaydet</span>
               </button>
             </div>
@@ -2151,13 +2823,13 @@ const SiparisYonetimiPage = () => {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[420px] flex flex-col relative animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             {/* Header */}
             <div className="bg-white border-b border-zinc-100 px-5 py-4 flex items-center justify-between">
-              <span className="text-[15px] font-bold text-zinc-800">Yazd─▒r</span>
+              <span className="text-[15px] font-bold text-zinc-800">Yazdır</span>
             </div>
             
             {/* Body */}
             <div className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-semibold text-zinc-500">Yazd─▒rma ┼Şablonu</label>
+                <label className="text-[12px] font-semibold text-zinc-500">Yazdırma Şablonu</label>
                 <select 
                   value={printTemplate}
                   onChange={(e) => setPrintTemplate(e.target.value)}
@@ -2165,8 +2837,8 @@ const SiparisYonetimiPage = () => {
                 >
                   <option value="E-Fatura">E-Fatura</option>
                   <option value="Fatura">Fatura</option>
-                  <option value="Kargo Fi┼şi">Kargo Fi┼şi</option>
-                  <option value="Fi┼ş">Fi┼ş</option>
+                  <option value="Kargo Fişi">Kargo Fişi</option>
+                  <option value="Fiş">Fiş</option>
                   <option value="PDF">PDF</option>
                 </select>
               </div>
@@ -2178,18 +2850,18 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setShowPrintModal(false)}
                 className="bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-bold text-[12px] h-9 px-5 rounded transition-colors"
               >
-                ─░ptal
+                İptal
               </button>
               <button
                 onClick={() => {
                   // Simulate bulk print
                   triggerPrintSimulation(printTemplate, printModalTargetIds);
-                  alert(`${printModalTargetIds.length} adet sipari┼ş i├ğin ${printTemplate} yazd─▒rma i┼şlemi ba┼şlat─▒ld─▒.`);
+                  alert(`${printModalTargetIds.length} adet sipariş için ${printTemplate} yazdırma işlemi başlatıldı.`);
                   setShowPrintModal(false);
                 }}
                 className="bg-[#10B981] hover:bg-emerald-600 text-white font-bold text-[12px] h-9 px-6 rounded transition-colors shadow-sm"
               >
-                Yazd─▒r
+                Yazdır
               </button>
             </div>
           </div>
@@ -2210,7 +2882,7 @@ const SiparisYonetimiPage = () => {
             }}
             className="flex items-center gap-2 px-6 py-4 bg-[#7e22ce] hover:bg-purple-600 text-white font-bold text-xs transition-colors border-r border-zinc-700/50"
           >
-            <span className="text-[14px]">Ôİ░</span>
+            <span className="text-[14px]">☰</span>
             Durum ({selectedOrderIds.length})
           </button>
           
@@ -2222,14 +2894,14 @@ const SiparisYonetimiPage = () => {
             }}
             className="flex items-center gap-2 px-6 py-4 bg-[#b45309] hover:bg-amber-600 text-white font-bold text-xs transition-colors border-r border-zinc-700/50"
           >
-            <span className="text-[14px]">­şû¿´©Å</span>
-            Yazd─▒r ({selectedOrderIds.length})
+            <span className="text-[14px]">🖨️</span>
+            Yazdır ({selectedOrderIds.length})
           </button>
 
           <button 
             onClick={() => {
               triggerPrintSimulation("E-Fatura", selectedOrderIds);
-              showSuccess(`${selectedOrderIds.length} sipari┼ş i├ğin toplu E-Fatura kesme i┼şlemi ba┼şlat─▒ld─▒.`);
+              showSuccess(`${selectedOrderIds.length} sipariş için toplu E-Fatura kesme işlemi başlatıldı.`);
             }}
             className="flex items-center gap-2 px-6 py-4 bg-[#1e40af] hover:bg-blue-700 text-white font-bold text-xs transition-colors"
           >
@@ -2251,7 +2923,7 @@ const SiparisYonetimiPage = () => {
                 </svg>
               </div>
               <div className="flex flex-col gap-1.5">
-                <h3 className="text-[20px] font-bold text-zinc-800 tracking-tight">─░┼şlem Tamamland─▒!</h3>
+                <h3 className="text-[20px] font-bold text-zinc-800 tracking-tight">İşlem Tamamlandı!</h3>
                 <p className="text-[14px] font-medium text-zinc-500 mt-1">{successModal}</p>
               </div>
             </div>
@@ -2274,7 +2946,7 @@ const SiparisYonetimiPage = () => {
           <div className="bg-zinc-100 rounded-lg border border-zinc-200 shadow-2xl w-full max-w-[900px] h-[80vh] flex flex-col overflow-hidden relative z-10 animate-scale-up">
             
             <div className="bg-[#0d6efd] text-white px-5 py-3 flex items-center justify-between select-none shrink-0">
-              <h2 className="text-sm font-bold tracking-tight">├£r├╝nler</h2>
+              <h2 className="text-sm font-bold tracking-tight">Ürünler</h2>
               <button 
                 onClick={() => setShowProductSearchModal(false)} 
                 className="text-white hover:opacity-85 p-1 rounded-lg transition-colors"
@@ -2289,23 +2961,23 @@ const SiparisYonetimiPage = () => {
                 <input 
                   type="text" 
                   className="w-full pl-10 pr-4 py-2 border border-zinc-300 rounded focus:border-[#0d6efd] focus:ring-1 focus:ring-[#0d6efd] outline-none transition-shadow text-sm"
-                  placeholder="├£r├╝n Ara..."
+                  placeholder="Ürün Ara..."
                   value={productSearchQuery}
                   onChange={e => setProductSearchQuery(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSearchProducts()}
                 />
               </div>
               <div className="flex gap-2">
-                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>T├╝m Kategoriler</option></select>
-                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>T├╝m Markalar</option></select>
-                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>T├╝m Filtreler</option></select>
+                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Tüm Kategoriler</option></select>
+                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Tüm Markalar</option></select>
+                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Tüm Filtreler</option></select>
                 <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Yeniden Eskiye</option></select>
               </div>
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto">
               {searchingProducts ? (
-                <div className="flex justify-center py-10"><span className="text-zinc-500 font-medium text-sm">Aran─▒yor...</span></div>
+                <div className="flex justify-center py-10"><span className="text-zinc-500 font-medium text-sm">Aranıyor...</span></div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {productSearchResults.map(product => (
@@ -2315,13 +2987,13 @@ const SiparisYonetimiPage = () => {
                           {product.thumbnail ? (
                             <img src={product.thumbnail} alt={product.title} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl">­şæû</div>
+                            <div className="w-full h-full flex items-center justify-center text-4xl">👖</div>
                           )}
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                             <button 
                               onClick={() => handleAddProductToOrder(product, variant)}
                               className="w-12 h-12 bg-zinc-800 text-white rounded-full flex items-center justify-center hover:bg-zinc-700 hover:scale-110 transition-all shadow-lg"
-                              title="Sipari┼şe Ekle"
+                              title="Siparişe Ekle"
                             >
                               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                             </button>
@@ -2340,7 +3012,7 @@ const SiparisYonetimiPage = () => {
                     ))
                   ))}
                   {productSearchResults.length === 0 && !searchingProducts && productSearchQuery && (
-                    <div className="col-span-full text-center py-10 text-zinc-500 font-medium text-sm">Sonu├ğ bulunamad─▒.</div>
+                    <div className="col-span-full text-center py-10 text-zinc-500 font-medium text-sm">Sonuç bulunamadı.</div>
                   )}
                 </div>
               )}
