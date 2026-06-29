@@ -48,10 +48,21 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const lastName = order.shipping_address?.last_name || order.customer?.last_name || ""
     const fullName = `${firstName} ${lastName}`.trim()
     
-    const province = order.shipping_address?.province || "İstanbul"
-    const city = order.shipping_address?.city || "Merkez"
-    const address = order.shipping_address?.address_1 || ""
-    const phone = order.shipping_address?.phone || order.customer?.phone || ""
+    const toTurkishUpper = (str: string) => str.toLocaleUpperCase("tr-TR").trim()
+    
+    // Some stores put the province in the city field and vice versa, or leave one blank.
+    // We try to grab whatever is available and default to something that might work if empty.
+    let rawProvince = order.shipping_address?.province || "İstanbul"
+    let rawCity = order.shipping_address?.city || "Merkez"
+    
+    // In Medusa, sometimes city holds the province (e.g. Istanbul) and province holds the district.
+    // But usually city = district, province = state/province.
+    // Regardless, Interline strictly requires uppercase Turkish characters.
+    const province = toTurkishUpper(rawProvince)
+    const city = toTurkishUpper(rawCity)
+
+    const address = order.shipping_address?.address_1 || "Adres belirtilmemiş"
+    const phone = order.shipping_address?.phone || order.customer?.phone || "05555555555"
     const weight = metadata.weight ? parseInt(metadata.weight as string) : 1
 
     const consignmentData: InterlineConsignmentData = {
