@@ -65,10 +65,16 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
     })
 
     const result = await response.json()
-    if (result.error === false) {
+    if (result.error === false || result.error === "false") {
       return { success: true, barcode: result.barcode, record_id: result.record_id }
     } else {
-      return { success: false, error: result.message || "Bilinmeyen API Hatası" }
+      let errorMessage = result.message || "Bilinmeyen API Hatası";
+      if (result.result && Array.isArray(result.result)) {
+        errorMessage = result.result.join(" | ");
+      } else if (result.result && typeof result.result === "string" && result.error !== "false") {
+        errorMessage = result.result;
+      }
+      return { success: false, error: errorMessage }
     }
   } catch (error: any) {
     console.error("[Interline Cargo] API Error:", error)
