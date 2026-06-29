@@ -47,19 +47,17 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const firstName = order.shipping_address?.first_name || order.customer?.first_name || "Müşteri"
     const lastName = order.shipping_address?.last_name || order.customer?.last_name || ""
     const fullName = `${firstName} ${lastName}`.trim()
-    
     const toTurkishUpper = (str: string) => str.toLocaleUpperCase("tr-TR").trim()
     
-    // Some stores put the province in the city field and vice versa, or leave one blank.
-    // We try to grab whatever is available and default to something that might work if empty.
-    let rawProvince = order.shipping_address?.province || "İstanbul"
-    let rawCity = order.shipping_address?.city || "Merkez"
+    // In Medusa (Turkey), `city` is typically used for the Province (İl) 
+    // and `province` is used for the District/County (İlçe).
+    // Let's extract them correctly.
+    let rawCityAsProvince = order.shipping_address?.city || "İstanbul"
+    let rawProvinceAsCounty = order.shipping_address?.province || "Merkez"
     
-    // In Medusa, sometimes city holds the province (e.g. Istanbul) and province holds the district.
-    // But usually city = district, province = state/province.
-    // Regardless, Interline strictly requires uppercase Turkish characters.
-    const province = toTurkishUpper(rawProvince)
-    const city = toTurkishUpper(rawCity)
+    // Convert to uppercase just in case Interline's legacy system is picky.
+    const provinceName = toTurkishUpper(rawCityAsProvince)
+    const countyName = toTurkishUpper(rawProvinceAsCounty)
 
     const address = order.shipping_address?.address_1 || "Adres belirtilmemiş"
     const phone = order.shipping_address?.phone || order.customer?.phone || "05555555555"
@@ -67,8 +65,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
     const consignmentData: InterlineConsignmentData = {
       customer: fullName,
-      province_name: province,
-      county_name: city,
+      province_name: provinceName,
+      county_name: countyName,
       address: address,
       telephone: phone,
       quantity: 1,
