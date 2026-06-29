@@ -82,7 +82,7 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
   }
 }
 
-export async function getInterlineConsignmentLabel(barcode: string) {
+export async function getInterlineBarcode(barcode: string) {
   try {
     const config = await readConfig()
     if (!config.active) return null
