@@ -29,7 +29,7 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
     return { success: false, error: "İnterline API ayarları eksik (Authorization veya From)." }
   }
 
-  const formData = new FormData()
+  const formData = new URLSearchParams()
   formData.append("customer", data.customer)
   formData.append("province_name", data.province_name)
   formData.append("county_name", data.county_name)
@@ -58,7 +58,8 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
       method: "POST",
       headers: {
         "Authorization": config.authorization,
-        "From": config.from_name
+        "From": config.from_name,
+        "Content-Type": "application/x-www-form-urlencoded"
       },
       body: formData
     })
