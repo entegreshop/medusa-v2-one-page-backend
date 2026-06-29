@@ -168,10 +168,10 @@ interface CustomOrder {
   subtotal: number // TL
   vat_total: number // TL
   total: number // TL
-  payment_method: string // human readable e.g. "Kapıda Nakit Ödeme"
+  payment_method: string // human readable e.g. "Kap─▒da Nakit ├ûdeme"
   payment_option: "paytr" | "bank_transfer" | "cash_on_delivery" | "card_on_delivery"
   status: "onay_bekleyen" | "hazirlanan" | "kargolanan" | "teslim_edilen" | "iade_edilen" | "iptal_edilen" | "odeme_hatasi" | "tum_siparisler"
-  carrier_name: string // e.g. "KARGOİST", "INTERLINE KARGO"
+  carrier_name: string // e.g. "KARGO─░ST", "INTERLINE KARGO"
   carrier_barcode?: string
   created_at: string // format DD.MM.YYYY HH:MM
   admin_notes?: string
@@ -184,7 +184,7 @@ interface CustomOrder {
 }
 
 // ==========================================
-// RİSKLİ MÜŞTERİ KONTROL FONKSİYONU
+// R─░SKL─░ M├£┼ŞTER─░ KONTROL FONKS─░YONU
 // ==========================================
 const checkIsCustomerRisky = (phone?: string, email?: string, orderId?: string) => {
   if (!phone && !email) return false;
@@ -228,7 +228,7 @@ const SiparisYonetimiPage = () => {
   const [activeTab, setActiveTab] = useState<string>("tum_siparisler")
 
   // Form Filter States
-  const [filterStatus, setFilterStatus] = useState("Yeni Sipariş, Hazırlanan Sipariş, Kargolanan Sipariş, Teslim Edilen Sipariş")
+  const [filterStatus, setFilterStatus] = useState("Yeni Sipari┼ş, Haz─▒rlanan Sipari┼ş, Kargolanan Sipari┼ş, Teslim Edilen Sipari┼ş")
   const [filterPlatform, setFilterPlatform] = useState("")
   const [filterStore, setFilterStore] = useState("")
   const [filterTag, setFilterTag] = useState("")
@@ -285,7 +285,7 @@ const SiparisYonetimiPage = () => {
   const [productSearchResults, setProductSearchResults] = useState<any[]>([
     {
       id: "prod_dummy_1",
-      title: "Pembe Alo Arabiyeli Taytlı Takım",
+      title: "Pembe Alo Arabiyeli Taytl─▒ Tak─▒m",
       thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
       variants: [
         { id: "var_1", title: "S", sku: "LXS5SU5V0G", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -296,7 +296,7 @@ const SiparisYonetimiPage = () => {
     },
     {
       id: "prod_dummy_2",
-      title: "Kahve Alo Arabiyeli Taytlı Takım",
+      title: "Kahve Alo Arabiyeli Taytl─▒ Tak─▒m",
       thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
       variants: [
         { id: "var_5", title: "S", sku: "Y0O8X6OVU8", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -319,7 +319,7 @@ const SiparisYonetimiPage = () => {
       setProductSearchResults([
         {
           id: "prod_dummy_1",
-          title: "Pembe Alo Arabiyeli Taytlı Takım",
+          title: "Pembe Alo Arabiyeli Taytl─▒ Tak─▒m",
           thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
           variants: [
             { id: "var_1", title: "S", sku: "LXS5SU5V0G", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -330,7 +330,7 @@ const SiparisYonetimiPage = () => {
         },
         {
           id: "prod_dummy_2",
-          title: "Kahve Alo Arabiyeli Taytlı Takım",
+          title: "Kahve Alo Arabiyeli Taytl─▒ Tak─▒m",
           thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
           variants: [
             { id: "var_5", title: "S", sku: "Y0O8X6OVU8", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -408,24 +408,24 @@ const SiparisYonetimiPage = () => {
       const totalVal = (o.total || 0) / 100
 
       // Try to determine payment method name
-      let payMethod = "Kredi Kartı"
+      let payMethod = "Kredi Kart─▒"
       const metaOption = o.metadata?.payment_option
-      if (metaOption === "cash_on_delivery") payMethod = "Kapıda Nakit Ödeme"
-      else if (metaOption === "card_on_delivery") payMethod = "Kapıda Kredi Kartı ile Ödeme"
+      if (metaOption === "cash_on_delivery") payMethod = "Kap─▒da Nakit ├ûdeme"
+      else if (metaOption === "card_on_delivery") payMethod = "Kap─▒da Kredi Kart─▒ ile ├ûdeme"
       else if (metaOption === "bank_transfer") payMethod = "Havale / EFT"
       else if (metaOption === "paytr") payMethod = "PayTR"
 
       // Map shipping option/carrier
-      const carrierName = o.shipping_methods?.[0]?.name || "Diğer Kargo"
+      const carrierName = o.shipping_methods?.[0]?.name || "Di─şer Kargo"
 
       // Logs
       const logsMapped: OrderLog[] = []
       if (o.metadata?.logs) {
         logsMapped.push(...o.metadata.logs)
       } else {
-        logsMapped.push({ id: "real_l1", message: "Sipariş oluşturuldu", created_at: new Date(o.created_at).toLocaleString('tr-TR') })
+        logsMapped.push({ id: "real_l1", message: "Sipari┼ş olu┼şturuldu", created_at: new Date(o.created_at).toLocaleString('tr-TR') })
         if (o.fulfillment_status === "fulfilled" || o.fulfillment_status === "shipped") {
-          logsMapped.push({ id: "real_l2", message: "Sipariş paketlendi ve kargolandı", created_at: new Date(o.updated_at).toLocaleString('tr-TR') })
+          logsMapped.push({ id: "real_l2", message: "Sipari┼ş paketlendi ve kargoland─▒", created_at: new Date(o.updated_at).toLocaleString('tr-TR') })
         }
       }
 
@@ -444,9 +444,9 @@ const SiparisYonetimiPage = () => {
         display_id: o.display_id?.toString() || o.id.slice(-8),
         platform: o.metadata?.platform || getDomainBrand(),
         store: getDomainBrand(),
-        order_tag: o.metadata?.order_tag || "Seçilmedi",
+        order_tag: o.metadata?.order_tag || "Se├ğilmedi",
         customer: {
-          first_name: o.customer?.first_name || o.shipping_address?.first_name || "Müşteri",
+          first_name: o.customer?.first_name || o.shipping_address?.first_name || "M├╝┼şteri",
           last_name: o.customer?.last_name || o.shipping_address?.last_name || "",
           phone: o.customer?.phone || o.shipping_address?.phone || "",
           email: o.customer?.email || o.email || "",
@@ -462,7 +462,7 @@ const SiparisYonetimiPage = () => {
           city: o.shipping_address?.province || o.shipping_address?.city || "",
           district: o.shipping_address?.city || "",
           country_code: o.shipping_address?.country_code || "tr",
-          country_name: "Türkiye",
+          country_name: "T├╝rkiye",
           phone: o.shipping_address?.phone || ""
         },
         billing_address: {
@@ -473,7 +473,7 @@ const SiparisYonetimiPage = () => {
           city: o.billing_address?.province || o.billing_address?.city || "",
           district: o.billing_address?.city || "",
           country_code: o.billing_address?.country_code || "tr",
-          country_name: "Türkiye",
+          country_name: "T├╝rkiye",
           phone: o.billing_address?.phone || "",
           tc_no: o.metadata?.tc_no || "",
           tax_no: o.metadata?.tax_no || "",
@@ -518,7 +518,7 @@ const SiparisYonetimiPage = () => {
     })
   }, [currentOrders, activeTab])
 
-  // Count of "Hazırlananlar" for the emerald tab badge
+  // Count of "Haz─▒rlananlar" for the emerald tab badge
   const preparingCount = useMemo(() => {
     return currentOrders.filter(o => o.status === "hazirlanan").length
   }, [currentOrders])
@@ -538,13 +538,13 @@ const SiparisYonetimiPage = () => {
       // 2. Platform filter
       if (filterPlatform && o.platform.toLowerCase() !== filterPlatform.toLowerCase()) return false
 
-      // 3. Sipariş No filter
+      // 3. Sipari┼ş No filter
       if (filterOrderNo && !o.display_id.includes(filterOrderNo)) return false
 
-      // 4. Müşteri Adı
+      // 4. M├╝┼şteri Ad─▒
       if (filterCustomerFirstName && !o.customer.first_name.toLowerCase().includes(filterCustomerFirstName.toLowerCase())) return false
 
-      // 5. Müşteri Soyadı
+      // 5. M├╝┼şteri Soyad─▒
       if (filterCustomerLastName && !o.customer.last_name.toLowerCase().includes(filterCustomerLastName.toLowerCase())) return false
 
       // 6. Telefon
@@ -553,20 +553,20 @@ const SiparisYonetimiPage = () => {
       // 7. TC No
       if (filterTcNo && o.billing_address.tc_no !== filterTcNo) return false
 
-      // 8. Kargo Firması
+      // 8. Kargo Firmas─▒
       if (filterCarrier && o.carrier_name.toLowerCase() !== filterCarrier.toLowerCase()) return false
 
-      // 9. Ödeme Yöntemi
+      // 9. ├ûdeme Y├Ântemi
       if (filterPaymentMethod && o.payment_method.toLowerCase() !== filterPaymentMethod.toLowerCase()) return false
 
-      // 10. Tutar Aralığı
+      // 10. Tutar Aral─▒─ş─▒
       if (filterTotalMin && o.total < parseFloat(filterTotalMin)) return false
       if (filterTotalMax && o.total > parseFloat(filterTotalMax)) return false
 
-      // 11. İl
+      // 11. ─░l
       if (filterProvince && !o.shipping_address.city.toLowerCase().includes(filterProvince.toLowerCase())) return false
 
-      // 12. Ürün Adı
+      // 12. ├£r├╝n Ad─▒
       if (filterProductName) {
         const hasProduct = o.items.some(item => item.title.toLowerCase().includes(filterProductName.toLowerCase()))
         if (!hasProduct) return false
@@ -601,28 +601,28 @@ const SiparisYonetimiPage = () => {
       : filteredOrdersList;
 
     if (ordersToExport.length === 0) {
-      alert("Dışa aktarılacak sipariş bulunamadı.");
+      alert("D─▒┼şa aktar─▒lacak sipari┼ş bulunamad─▒.");
       return;
     }
 
     const headers = [
-      "Sipariş No",
+      "Sipari┼ş No",
       "Tarih",
-      "Müşteri Adı",
-      "Müşteri Soyadı",
+      "M├╝┼şteri Ad─▒",
+      "M├╝┼şteri Soyad─▒",
       "Telefon",
       "E-posta",
-      "Üye No / Durum",
+      "├£ye No / Durum",
       "Tutar",
-      "Ödeme Yöntemi",
-      "Sipariş Durumu",
-      "Kargo Firması",
+      "├ûdeme Y├Ântemi",
+      "Sipari┼ş Durumu",
+      "Kargo Firmas─▒",
       "Kargo Barkodu",
       "Adres Bilgisi",
-      "İl",
-      "İlçe",
+      "─░l",
+      "─░l├ğe",
       "Platform",
-      "Sipariş Etiketi"
+      "Sipari┼ş Etiketi"
     ];
 
     const rows = ordersToExport.map(o => {
@@ -632,12 +632,12 @@ const SiparisYonetimiPage = () => {
       
       let statusText: string = o.status;
       if (statusText === "onay_bekleyen") statusText = "Onay Bekliyor";
-      else if (statusText === "hazirlanan") statusText = "Hazırlanıyor";
-      else if (statusText === "kargolanan") statusText = "Kargolandı";
+      else if (statusText === "hazirlanan") statusText = "Haz─▒rlan─▒yor";
+      else if (statusText === "kargolanan") statusText = "Kargoland─▒";
       else if (statusText === "teslim_edilen") statusText = "Teslim Edildi";
-      else if (statusText === "iptal_edilen") statusText = "İptal Edildi";
-      else if (statusText === "iade_edilen") statusText = "İade Edildi";
-      else if (statusText === "odeme_hatasi") statusText = "Ödeme Hatası";
+      else if (statusText === "iptal_edilen") statusText = "─░ptal Edildi";
+      else if (statusText === "iade_edilen") statusText = "─░ade Edildi";
+      else if (statusText === "odeme_hatasi") statusText = "├ûdeme Hatas─▒";
 
       return [
         `"${getDomainPrefix()} ${o.display_id}"`,
@@ -650,7 +650,7 @@ const SiparisYonetimiPage = () => {
         `"${o.total.toFixed(2)} TL"`,
         `"${o.payment_method || ''}"`,
         `"${statusText}"`,
-        `"${o.carrier_name || 'Diğer Kargo'}"`,
+        `"${o.carrier_name || 'Di─şer Kargo'}"`,
         `"${o.carrier_barcode || ''}"`,
         `"${cleanAddress}"`,
         `"${cleanProvince}"`,
@@ -683,7 +683,7 @@ const SiparisYonetimiPage = () => {
 
   // Clear filters
   const handleClearFilters = () => {
-    setFilterStatus("Yeni Sipariş, Hazırlanan Sipariş, Kargolanan Sipariş, Teslim Edilen Sipariş")
+    setFilterStatus("Yeni Sipari┼ş, Haz─▒rlanan Sipari┼ş, Kargolanan Sipari┼ş, Teslim Edilen Sipari┼ş")
     setFilterPlatform("")
     setFilterStore("")
     setFilterTag("")
@@ -726,7 +726,7 @@ const SiparisYonetimiPage = () => {
         if (!target) return
         
         const updatedLogs = [
-          { id: `dl_${Date.now()}`, message: "admin teslim edildi olarak işaretledi", created_at: timeStr },
+          { id: `dl_${Date.now()}`, message: "admin teslim edildi olarak i┼şaretledi", created_at: timeStr },
           ...target.logs
         ]
 
@@ -749,14 +749,14 @@ const SiparisYonetimiPage = () => {
           const refreshData = await refreshRes.json()
           if (refreshData && refreshData.orders) {
             setRealOrders(refreshData.orders)
-            showSuccess("Sipariş başarıyla teslim edildi olarak işaretlendi.")
+            showSuccess("Sipari┼ş ba┼şar─▒yla teslim edildi olarak i┼şaretlendi.")
           }
         } else {
-          alert("Sipariş güncellenirken hata oluştu.")
+          alert("Sipari┼ş g├╝ncellenirken hata olu┼ştu.")
         }
       } catch (err) {
         console.error("Error updating order:", err)
-        alert("Bağlantı hatası.")
+        alert("Ba─şlant─▒ hatas─▒.")
       }
   }
   // Generic Status Change
@@ -800,9 +800,9 @@ const SiparisYonetimiPage = () => {
     }
   }
 
-  // Quick Action: İptal Et (Cancel Order)
+  // Quick Action: ─░ptal Et (Cancel Order)
   const handleCancelOrder = async (orderId: string) => {
-    if (!confirm("Bu siparişi iptal etmek istediğinize emin misiniz?")) return
+    if (!confirm("Bu sipari┼şi iptal etmek istedi─şinize emin misiniz?")) return
     const timeStr = new Date().toLocaleString("tr-TR", { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
     try {
@@ -811,14 +811,14 @@ const SiparisYonetimiPage = () => {
           headers: { "Content-Type": "application/json" }
         })
         if (res.ok) {
-          showSuccess("Sipariş başarıyla güncellendi.")
+          showSuccess("Sipari┼ş ba┼şar─▒yla g├╝ncellendi.")
           const refreshRes = await fetch("/admin/orders?limit=100&fields=*customer,*shipping_address,*billing_address,*items")
           const refreshData = await refreshRes.json()
           if (refreshData && refreshData.orders) {
             setRealOrders(refreshData.orders)
           }
         } else {
-          alert("Sipariş iptal edilirken hata oluştu.")
+          alert("Sipari┼ş iptal edilirken hata olu┼ştu.")
         }
       } catch (err) {
         console.error(err)
@@ -969,7 +969,7 @@ const SiparisYonetimiPage = () => {
     const dummyProducts = [
       {
         id: "prod_dummy_1",
-        title: "Pembe Alo Arabiyeli Taytlı Takım",
+        title: "Pembe Alo Arabiyeli Taytl─▒ Tak─▒m",
         thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
         variants: [
           { id: "var_1", title: "S", sku: "LXS5SU5V0G", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -980,7 +980,7 @@ const SiparisYonetimiPage = () => {
       },
       {
         id: "prod_dummy_2",
-        title: "Kahve Alo Arabiyeli Taytlı Takım",
+        title: "Kahve Alo Arabiyeli Taytl─▒ Tak─▒m",
         thumbnail: "https://medusa-public-images.s3.eu-west-1.amazonaws.com/sweatpants-gray-front.png",
         variants: [
           { id: "var_5", title: "S", sku: "Y0O8X6OVU8", inventory_quantity: 100, prices: [{ currency_code: "try", amount: 120000 }] },
@@ -1040,7 +1040,7 @@ const SiparisYonetimiPage = () => {
       return o
     }))
     setShowProductSearchModal(false)
-    showSuccess("Ürün siparişe eklendi.")
+    showSuccess("├£r├╝n sipari┼şe eklendi.")
 
     try {
       await fetch(`/admin/orders/${selectedOrderId}`, {
@@ -1066,11 +1066,11 @@ const SiparisYonetimiPage = () => {
     const printWindow = window.open("", "_blank", `width=${width},height=${height},top=${top},left=${left}`)
     
     if (printWindow) {
-      if (type === "Kargo Fişi") {
+      if (type === "Kargo Fi┼şi") {
         printWindow.document.write(`
           <html>
             <head>
-              <title>${type} - Toplu Yazdırma</title>
+              <title>${type} - Toplu Yazd─▒rma</title>
               <style>
                 body { font-family: 'Times New Roman', serif; margin: 0; padding: 0; color: #000; box-sizing: border-box; }
                 .page-break-container { page-break-after: always; padding: 10px; }
@@ -1107,14 +1107,14 @@ const SiparisYonetimiPage = () => {
               <div class="page-break-container">
                 <div class="top-bar">
                   <div>${new Date().toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-                  <div class="no-print" style="cursor:pointer; text-decoration:underline;" onclick="window.print()">Yazdır</div>
+                  <div class="no-print" style="cursor:pointer; text-decoration:underline;" onclick="window.print()">Yazd─▒r</div>
                 </div>
                 
                 <div class="logo-container">
                   <div style="position: relative; display: inline-block;">
-                    <div class="logo-main">Ç İ Z G İ</div>
+                    <div class="logo-main">├ç ─░ Z G ─░</div>
                     <div style="position: absolute; top: 15px; left: 0; width: 100%; display: flex; justify-content: space-around; font-family: Arial; font-size: 10px; font-weight: bold;">
-                      <span>B</span><span>U</span><span>T</span><span>İ</span><span>K</span>
+                      <span>B</span><span>U</span><span>T</span><span>─░</span><span>K</span>
                     </div>
                   </div>
                 </div>
@@ -1155,7 +1155,7 @@ const SiparisYonetimiPage = () => {
 
                 <div class="bottom-info">
                   <div>${orderObj.payment_method}</div>
-                  <div>${orderObj.carrier_name || 'KARGOİST'}</div>
+                  <div>${orderObj.carrier_name || 'KARGO─░ST'}</div>
                 </div>
 
                 <div class="total-box">
@@ -1181,7 +1181,7 @@ const SiparisYonetimiPage = () => {
         printWindow.document.write(`
         <html>
           <head>
-            <title>${type} - Toplu Yazdırma</title>
+            <title>${type} - Toplu Yazd─▒rma</title>
             <style>
               body { font-family: 'Plus Jakarta Sans', Arial, sans-serif; padding: 0; margin: 0; color: #18181b; line-height: 1.5; }
               .page-break-container { page-break-after: always; padding: 40px; }
@@ -1206,7 +1206,7 @@ const SiparisYonetimiPage = () => {
               <div class="header">
                 <div>
                   <div class="title">${type}</div>
-                  <div style="font-size: 12px; font-weight: bold; color: #a1a1aa; margin-top: 4px;">Sipariş Numarası: ${orderObj.display_id}</div>
+                  <div style="font-size: 12px; font-weight: bold; color: #a1a1aa; margin-top: 4px;">Sipari┼ş Numaras─▒: ${orderObj.display_id}</div>
                 </div>
                 <div style="text-align: right;">
                   <div style="font-size: 18px; font-weight: 950; letter-spacing: -1px;">CIZGIBUTIK</div>
@@ -1216,15 +1216,15 @@ const SiparisYonetimiPage = () => {
               
               <div class="meta-box">
                 <div>
-                  <div class="meta-label">Müşteri ve Teslimat Bilgileri</div>
+                  <div class="meta-label">M├╝┼şteri ve Teslimat Bilgileri</div>
                   <div class="meta-val">${orderObj.customer.first_name} ${orderObj.customer.last_name}</div>
                   <div style="font-size: 12px; color: #52525b; margin-top: 4px;">${orderObj.shipping_address.address_1} ${orderObj.shipping_address.district} / ${orderObj.shipping_address.city}</div>
                   <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Tel: ${orderObj.customer.phone}</div>
                 </div>
                 <div>
-                  <div class="meta-label">Ödeme & Kargo Detayları</div>
+                  <div class="meta-label">├ûdeme & Kargo Detaylar─▒</div>
                   <div class="meta-val">${orderObj.payment_method}</div>
-                  <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Taşıyıcı Firma: ${orderObj.carrier_name}</div>
+                  <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Ta┼ş─▒y─▒c─▒ Firma: ${orderObj.carrier_name}</div>
                   <div style="font-size: 12px; color: #52525b; margin-top: 4px;">Barkod No: ${orderObj.carrier_barcode || "-"}</div>
                 </div>
               </div>
@@ -1232,7 +1232,7 @@ const SiparisYonetimiPage = () => {
               <table>
                 <thead>
                   <tr>
-                    <th>Ürün</th>
+                    <th>├£r├╝n</th>
                     <th>SKU</th>
                     <th>Beden</th>
                     <th>Miktar</th>
@@ -1247,20 +1247,20 @@ const SiparisYonetimiPage = () => {
                       <td>${item.sku}</td>
                       <td>${item.size}</td>
                       <td>${item.quantity} Adet</td>
-                      <td>₺ ${item.unit_price.toFixed(2)}</td>
-                      <td>₺ ${(item.unit_price * item.quantity).toFixed(2)}</td>
+                      <td>Ôé║ ${item.unit_price.toFixed(2)}</td>
+                      <td>Ôé║ ${(item.unit_price * item.quantity).toFixed(2)}</td>
                     </tr>
                   `).join("")}
                 </tbody>
               </table>
 
               <div class="total-box">
-                <div>Ara Toplam: ₺ ${orderObj.subtotal.toFixed(2)}</div>
-                <div>KDV: ₺ ${orderObj.vat_total.toFixed(2)}</div>
-                <div class="grand-total">Genel Toplam: ₺ ${orderObj.total.toFixed(2)}</div>
+                <div>Ara Toplam: Ôé║ ${orderObj.subtotal.toFixed(2)}</div>
+                <div>KDV: Ôé║ ${orderObj.vat_total.toFixed(2)}</div>
+                <div class="grand-total">Genel Toplam: Ôé║ ${orderObj.total.toFixed(2)}</div>
               </div>
 
-              <button class="btn-print no-print" onclick="window.print()">Yazdır</button>
+              <button class="btn-print no-print" onclick="window.print()">Yazd─▒r</button>
             </div>
             `).join('')}
           </body>
@@ -1276,8 +1276,8 @@ const SiparisYonetimiPage = () => {
       {successModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">✓</div>
-            <h3 className="font-bold text-lg text-zinc-900 mb-2">Başarılı</h3>
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">Ô£ô</div>
+            <h3 className="font-bold text-lg text-zinc-900 mb-2">Ba┼şar─▒l─▒</h3>
             <p className="text-sm text-zinc-500 mb-6">{successModal}</p>
             <button onClick={() => setSuccessModal(null)} className="w-full bg-zinc-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-zinc-800 transition-colors">Tamam</button>
           </div>
@@ -1302,13 +1302,13 @@ const SiparisYonetimiPage = () => {
       <div className="bg-zinc-100 border-b border-zinc-200 px-8 py-1 flex items-center justify-center gap-x-6 overflow-x-auto no-scrollbar shadow-sm">
         {[
           { key: "onay_bekleyen", label: "Onay Bekleyenler" },
-          { key: "hazirlanan", label: "Hazırlananlar", badge: preparingCount },
+          { key: "hazirlanan", label: "Haz─▒rlananlar", badge: preparingCount },
           { key: "kargolanan", label: "Kargolananlar" },
           { key: "teslim_edilen", label: "Teslim Edilenler" },
-          { key: "iade_edilen", label: "İade Edilenler" },
-          { key: "iptal_edilen", label: "İptal Edilenler" },
-          { key: "tum_siparisler", label: "Tüm Siparişler" },
-          { key: "odeme_hatasi", label: "Ödeme Hatası Alınanlar" }
+          { key: "iade_edilen", label: "─░ade Edilenler" },
+          { key: "iptal_edilen", label: "─░ptal Edilenler" },
+          { key: "tum_siparisler", label: "T├╝m Sipari┼şler" },
+          { key: "odeme_hatasi", label: "├ûdeme Hatas─▒ Al─▒nanlar" }
         ].map((tab) => (
           <button
             key={tab.key}
@@ -1346,10 +1346,10 @@ const SiparisYonetimiPage = () => {
             </button>
 
             <div className="relative flex-1 max-w-md">
-              <span className="absolute inset-y-0 left-3 flex items-center text-zinc-400">🔍</span>
+              <span className="absolute inset-y-0 left-3 flex items-center text-zinc-400">­şöı</span>
               <input
                 type="text"
-                placeholder="Hızlı ara..."
+                placeholder="H─▒zl─▒ ara..."
                 value={quickSearch}
                 onChange={(e) => setQuickSearch(e.target.value)}
                 className="w-full bg-white border border-zinc-200 rounded-xl pl-9 pr-4 py-2.5 text-xs font-medium focus:outline-none focus:border-zinc-300 focus:ring-4 focus:ring-zinc-100 text-zinc-800 transition-all shadow-sm"
@@ -1362,7 +1362,7 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setIsPosOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all whitespace-nowrap"
             >
-                Hızlı Satış (POS)
+                H─▒zl─▒ Sat─▒┼ş (POS)
             </button>
 
             <div className="relative">
@@ -1370,20 +1370,20 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setIsBulkActionMenuOpen(!isBulkActionMenuOpen)}
                 className="bg-white border border-zinc-200 px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-700 hover:bg-zinc-50 flex items-center gap-1.5 shadow-sm transition-all"
               >
-                🔧 Toplu İşlemler
+                ­şöğ Toplu ─░┼şlemler
                 <svg className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${isBulkActionMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
               </button>
 
               {isBulkActionMenuOpen && (
                 <div className="absolute top-full mt-2 right-0 w-56 bg-white border border-zinc-200 rounded-xl shadow-lg overflow-visible py-1 z-50 animate-fade-in">
                   <div className="px-4 py-2 border-b border-zinc-100 mb-1">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{selectedOrderIds.length} Sipariş Seçili</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{selectedOrderIds.length} Sipari┼ş Se├ğili</span>
                   </div>
                   
                   <button 
                     onClick={() => {
                       if (selectedOrderIds.length === 0) {
-                        alert("Lütfen sipariş seçin.");
+                        alert("L├╝tfen sipari┼ş se├ğin.");
                         return;
                       }
                       setStatusModalTargetIds(selectedOrderIds);
@@ -1393,32 +1393,32 @@ const SiparisYonetimiPage = () => {
                     }}
                     className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
                   >
-                    Durumu Değiştir
+                    Durumu De─şi┼ştir
                   </button>
 
-                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Fatura Yazdır</button>
-                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Kargo Fişi Yazdır</button>
+                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Fatura Yazd─▒r</button>
+                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Kargo Fi┼şi Yazd─▒r</button>
                   <button 
                     onClick={exportToExcel}
                     className="w-full text-left px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
                   >
-                    📊 {selectedOrderIds.length > 0 ? "Seçilenleri Excel'e Aktar" : "Tümünü Excel'e Aktar"}
+                    ­şôè {selectedOrderIds.length > 0 ? "Se├ğilenleri Excel'e Aktar" : "T├╝m├╝n├╝ Excel'e Aktar"}
                   </button>
-                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">Seçilenleri Sil</button>
+                  <button className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">Se├ğilenleri Sil</button>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* EXPANDABLE FILTER GRID (Görsel 2) */}
+        {/* EXPANDABLE FILTER GRID (G├Ârsel 2) */}
         {showFilters && (
           <div className="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col gap-6 animate-fade-in border-l-4 border-l-violet-600">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               
               {/* Row 1 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Durumu</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Durumu</label>
                 <input
                   type="text"
                   value={filterStatus}
@@ -1434,41 +1434,41 @@ const SiparisYonetimiPage = () => {
                   onChange={(e) => setFilterPlatform(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hiçbiri seçilmedi</option>
+                  <option value="">Hi├ğbiri se├ğilmedi</option>
                   <option value="WhatsApp">WhatsApp</option>
                   <option value={getDomainBrand()}>{getDomainBrand()}</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Mağaza</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ma─şaza</label>
                 <select
                   value={filterStore}
                   onChange={(e) => setFilterStore(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hiçbiri seçilmedi</option>
+                  <option value="">Hi├ğbiri se├ğilmedi</option>
                   <option value={getDomainBrand().toLowerCase()}>{getDomainBrand()}</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Etiketi</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Etiketi</label>
                 <select
                   value={filterTag}
                   onChange={(e) => setFilterTag(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Seçilmedi</option>
+                  <option value="">Se├ğilmedi</option>
                 </select>
               </div>
 
               {/* Row 2 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş No</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş No</label>
                 <input
                   type="text"
-                  placeholder="Sipariş No giriniz"
+                  placeholder="Sipari┼ş No giriniz"
                   value={filterOrderNo}
                   onChange={(e) => setFilterOrderNo(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1476,7 +1476,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Tarihi</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Tarihi</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="date"
@@ -1534,7 +1534,7 @@ const SiparisYonetimiPage = () => {
 
               {/* Row 3 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipariş Tutarı</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Sipari┼ş Tutar─▒</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -1555,25 +1555,25 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ödeme Yöntemi</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├ûdeme Y├Ântemi</label>
                 <select
                   value={filterPaymentMethod}
                   onChange={(e) => setFilterPaymentMethod(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Seçilmedi</option>
-                  <option value="Kapıda Nakit Ödeme">Kapıda Nakit Ödeme</option>
-                  <option value="Kapıda Kredi Kartı ile Ödeme">Kapıda Kredi Kartı ile Ödeme</option>
+                  <option value="">Se├ğilmedi</option>
+                  <option value="Kap─▒da Nakit ├ûdeme">Kap─▒da Nakit ├ûdeme</option>
+                  <option value="Kap─▒da Kredi Kart─▒ ile ├ûdeme">Kap─▒da Kredi Kart─▒ ile ├ûdeme</option>
                   <option value="Havale / EFT">Havale / EFT</option>
                   <option value="PayTR">PayTR</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Müşteri Adı</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">M├╝┼şteri Ad─▒</label>
                 <input
                   type="text"
-                  placeholder="Müşteri adı"
+                  placeholder="M├╝┼şteri ad─▒"
                   value={filterCustomerFirstName}
                   onChange={(e) => setFilterCustomerFirstName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1581,10 +1581,10 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Müşteri Soyadı</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">M├╝┼şteri Soyad─▒</label>
                 <input
                   type="text"
-                  placeholder="Müşteri soyadı"
+                  placeholder="M├╝┼şteri soyad─▒"
                   value={filterCustomerLastName}
                   onChange={(e) => setFilterCustomerLastName(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1596,7 +1596,7 @@ const SiparisYonetimiPage = () => {
                 <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Telefon</label>
                 <input
                   type="text"
-                  placeholder="Telefon numarası"
+                  placeholder="Telefon numaras─▒"
                   value={filterPhone}
                   onChange={(e) => setFilterPhone(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-900 bg-white"
@@ -1604,7 +1604,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Vergi Numarası</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Vergi Numaras─▒</label>
                 <input
                   type="text"
                   value={filterTaxNo}
@@ -1635,7 +1635,7 @@ const SiparisYonetimiPage = () => {
 
               {/* Row 5 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Üye No</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£ye No</label>
                 <input
                   type="text"
                   value={filterMemberNo}
@@ -1645,19 +1645,19 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ülke</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£lke</label>
                 <select
                   value={filterCountry}
                   onChange={(e) => setFilterCountry(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hiçbiri seçilmedi</option>
-                  <option value="tr">Türkiye</option>
+                  <option value="">Hi├ğbiri se├ğilmedi</option>
+                  <option value="tr">T├╝rkiye</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">İl</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">─░l</label>
                 <input
                   type="text"
                   value={filterProvince}
@@ -1667,7 +1667,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün No</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n No</label>
                 <input
                   type="text"
                   value={filterProductNo}
@@ -1678,7 +1678,7 @@ const SiparisYonetimiPage = () => {
 
               {/* Row 6 */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün Barkodu</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n Barkodu</label>
                 <input
                   type="text"
                   value={filterProductBarcode}
@@ -1688,7 +1688,7 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün Adı</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n Ad─▒</label>
                 <input
                   type="text"
                   value={filterProductName}
@@ -1698,18 +1698,18 @@ const SiparisYonetimiPage = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Ürün Etiketleri</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">├£r├╝n Etiketleri</label>
                 <select
                   value={filterProductTag}
                   onChange={(e) => setFilterProductTag(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Etiket Seçilmedi</option>
+                  <option value="">Etiket Se├ğilmedi</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Hediye Çeki Kodu</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Hediye ├çeki Kodu</label>
                 <input
                   type="text"
                   value={filterGiftCardCode}
@@ -1726,31 +1726,31 @@ const SiparisYonetimiPage = () => {
                   onChange={(e) => setFilterPromo(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Seçilmedi</option>
+                  <option value="">Se├ğilmedi</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Kargo Firması</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Kargo Firmas─▒</label>
                 <select
                   value={filterCarrier}
                   onChange={(e) => setFilterCarrier(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Seçilmedi</option>
-                  <option value="KARGOİST">Kargoist</option>
+                  <option value="">Se├ğilmedi</option>
+                  <option value="KARGO─░ST">Kargoist</option>
                   <option value="INTERLINE KARGO">Interline Kargo</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Gelişmiş Arama</label>
+                <label className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Geli┼şmi┼ş Arama</label>
                 <select
                   value={filterAdvancedSearch}
                   onChange={(e) => setFilterAdvancedSearch(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
-                  <option value="">Hiçbiri seçilmedi</option>
+                  <option value="">Hi├ğbiri se├ğilmedi</option>
                 </select>
               </div>
             </div>
@@ -1772,11 +1772,11 @@ const SiparisYonetimiPage = () => {
           </div>
         )}
 
-        {/* ORDER LIST TABLE (Görsel 1) */}
+        {/* ORDER LIST TABLE (G├Ârsel 1) */}
         {loading ? (
           <div className="bg-white border border-zinc-200 rounded-2xl p-16 flex flex-col items-center justify-center gap-3 shadow-sm">
             <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-bold text-zinc-500">Sipariş verileri yükleniyor...</span>
+            <span className="text-xs font-bold text-zinc-500">Sipari┼ş verileri y├╝kleniyor...</span>
           </div>
         ) : (
           <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden">
@@ -1792,20 +1792,20 @@ const SiparisYonetimiPage = () => {
                         className="w-4 h-4 rounded border-zinc-300 text-violet-600 focus:ring-violet-500 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800">Sipariş Bilgileri</th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800">Müşteri Bilgileri</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800">Sipari┼ş Bilgileri</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800">M├╝┼şteri Bilgileri</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Tutar</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Durum</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Kargo</th>
                     <th className="py-3 px-4 font-semibold text-zinc-800">Tarih</th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800">Yazdır</th>
-                    <th className="py-3 px-4 font-semibold text-zinc-800 w-32">İşlemler</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800">Yazd─▒r</th>
+                    <th className="py-3 px-4 font-semibold text-zinc-800 w-32">─░┼şlemler</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-200 text-zinc-700">
                   {filteredOrdersList.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-16 text-center text-zinc-400 font-bold">Aramaya uygun sipariş kaydı bulunmamaktadır.</td>
+                      <td colSpan={9} className="py-16 text-center text-zinc-400 font-bold">Aramaya uygun sipari┼ş kayd─▒ bulunmamaktad─▒r.</td>
                     </tr>
                   ) : (
                     filteredOrdersList.map((order, index) => {
@@ -1888,7 +1888,7 @@ const SiparisYonetimiPage = () => {
 
                                   return isRisky ? (
                                     <span className="bg-red-100 text-red-600 text-[10px] font-bold px-1.5 py-0.5 rounded border border-red-200 shadow-sm whitespace-nowrap animate-pulse">
-                                      RİSKLİ SİPARİŞ
+                                      R─░SKL─░ S─░PAR─░┼Ş
                                     </span>
                                   ) : null;
                                 })()}
@@ -1910,12 +1910,12 @@ const SiparisYonetimiPage = () => {
                             )}
                             {order.status === "kargolanan" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-amber-500 text-[11px] font-semibold text-amber-500 leading-none">
-                                Kargolandı
+                                Kargoland─▒
                               </span>
                             )}
                             {order.status === "hazirlanan" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-blue-500 text-[11px] font-semibold text-blue-500 leading-none">
-                                Hazırlanıyor
+                                Haz─▒rlan─▒yor
                               </span>
                             )}
                             {order.status === "onay_bekleyen" && (
@@ -1925,17 +1925,17 @@ const SiparisYonetimiPage = () => {
                             )}
                             {order.status === "iptal_edilen" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-rose-500 text-[11px] font-semibold text-rose-500 leading-none">
-                                İptal Edildi
+                                ─░ptal Edildi
                               </span>
                             )}
                             {order.status === "odeme_hatasi" && (
                               <span className="inline-flex items-center px-3 py-1 rounded border border-red-600 text-[11px] font-semibold text-red-600 leading-none">
-                                Ödeme Hatası
+                                ├ûdeme Hatas─▒
                               </span>
                             )}
                           </td>
                           <td className="py-3 px-4 uppercase font-semibold text-[11px] text-zinc-800">
-                            {order.carrier_name || "KARGOİST"}
+                            {order.carrier_name || "KARGO─░ST"}
                           </td>
                           <td className="py-3 px-4 font-medium text-[11px] text-zinc-800">
                             {order.created_at}
@@ -1968,15 +1968,15 @@ const SiparisYonetimiPage = () => {
                                 )}
                               </button>
                               <button 
-                                title="Kargo Fişi" 
-                                onClick={() => triggerPrintSimulation("Kargo Fişi", order.id)}
+                                title="Kargo Fi┼şi" 
+                                onClick={() => triggerPrintSimulation("Kargo Fi┼şi", order.id)}
                                 className="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 bg-white hover:bg-zinc-50 shadow-sm"
                               >
                                 <TruckIcon />
                               </button>
                               <button 
-                                title="Paket Fişi" 
-                                onClick={() => triggerPrintSimulation("Paket Fişi", order.id)}
+                                title="Paket Fi┼şi" 
+                                onClick={() => triggerPrintSimulation("Paket Fi┼şi", order.id)}
                                 className="w-7 h-7 flex items-center justify-center rounded border border-zinc-300 bg-white hover:bg-zinc-50 shadow-sm"
                               >
                                 <PackageIcon />
@@ -2024,7 +2024,7 @@ const SiparisYonetimiPage = () => {
 
       </div>
 
-`      {/* DETAIL VIEW MODAL DIALOG (Görsel 3) */}
+`      {/* DETAIL VIEW MODAL DIALOG (G├Ârsel 3) */}
       {selectedOrderId && activeOrderDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedOrderId(null)} />
@@ -2033,13 +2033,13 @@ const SiparisYonetimiPage = () => {
             {/* Header segment */}
             <div className="bg-[#0b5ed7] text-white px-5 py-3 flex items-start justify-between shrink-0">
               <div className="flex flex-col">
-                <span className="text-[14px] font-medium text-white mb-0.5">Sipariş Yönetimi</span>
-                <span className="text-[20px] font-bold tracking-tight">{activeOrderDetails.display_id} Nolu Sipariş</span>
+                <span className="text-[14px] font-medium text-white mb-0.5">Sipari┼ş Y├Ânetimi</span>
+                <span className="text-[20px] font-bold tracking-tight">{activeOrderDetails.display_id} Nolu Sipari┼ş</span>
               </div>
               <button 
                 onClick={() => setSelectedOrderId(null)} 
                 className="text-white hover:opacity-80 p-1">
-                <span className="font-bold text-xl leading-none">×</span>
+                <span className="font-bold text-xl leading-none">├ù</span>
               </button>
             </div>
 
@@ -2053,9 +2053,9 @@ const SiparisYonetimiPage = () => {
                 <div className="bg-white border border-[#d3d9df] rounded-sm shadow-none overflow-hidden">
                   <div className="p-4 border-b border-[#d3d9df] flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full border border-emerald-500 flex items-center justify-center text-emerald-500 text-[10px]">✓</div>
+                      <div className="w-4 h-4 rounded-full border border-emerald-500 flex items-center justify-center text-emerald-500 text-[10px]">Ô£ô</div>
                       <h3 className="text-[14px] font-bold text-zinc-800">
-                        Teslim Edilen Ürünler ({activeOrderDetails.items.length})
+                        Teslim Edilen ├£r├╝nler ({activeOrderDetails.items.length})
                       </h3>
                     </div>
                     <div className="flex gap-2">
@@ -2069,30 +2069,30 @@ const SiparisYonetimiPage = () => {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[420px] flex flex-col relative animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             {/* Header */}
             <div className="bg-[#0d6efd] text-white px-5 py-4 flex flex-col relative">
-              <span className="text-[12px] font-semibold text-blue-100 mb-0.5">Sipariş İşlemleri</span>
-              <span className="text-[16px] font-bold tracking-tight">Sipariş Durumunu Değiştir</span>
+              <span className="text-[12px] font-semibold text-blue-100 mb-0.5">Sipari┼ş ─░┼şlemleri</span>
+              <span className="text-[16px] font-bold tracking-tight">Sipari┼ş Durumunu De─şi┼ştir</span>
               <button 
                 onClick={() => setShowStatusModal(false)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-zinc-200 opacity-90 transition-opacity"
               >
-                <span className="text-xl font-bold">✕</span>
+                <span className="text-xl font-bold">Ô£ò</span>
               </button>
             </div>
             
             {/* Body */}
             <div className="p-6 flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-semibold text-zinc-500">Sipariş Durumu</label>
+                <label className="text-[12px] font-semibold text-zinc-500">Sipari┼ş Durumu</label>
                 <select 
                   value={newStatusValue}
                   onChange={(e) => setNewStatusValue(e.target.value)}
                   className="w-full border border-zinc-300 rounded px-3 py-2.5 text-[13px] font-bold text-zinc-800 focus:outline-none focus:border-blue-500 shadow-sm cursor-pointer"
                 >
-                  <option value="onay_bekleyen">Yeni Sipariş</option>
-                  <option value="hazirlanan">Hazırlanan Sipariş</option>
-                  <option value="kargolanan">Kargolanan Sipariş</option>
-                  <option value="teslim_edilen">Teslim Edilen Sipariş</option>
-                  <option value="iptal_edilen">İptal Edilen Sipariş</option>
+                  <option value="onay_bekleyen">Yeni Sipari┼ş</option>
+                  <option value="hazirlanan">Haz─▒rlanan Sipari┼ş</option>
+                  <option value="kargolanan">Kargolanan Sipari┼ş</option>
+                  <option value="teslim_edilen">Teslim Edilen Sipari┼ş</option>
+                  <option value="iptal_edilen">─░ptal Edilen Sipari┼ş</option>
                 </select>
               </div>
 
@@ -2104,7 +2104,7 @@ const SiparisYonetimiPage = () => {
                   className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <span className="text-[12px] font-semibold text-zinc-600 leading-snug">
-                  Müşteriye mobil uygulama bildirimleri
+                  M├╝┼şteriye mobil uygulama bildirimleri
                 </span>
               </label>
             </div>
@@ -2115,7 +2115,7 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setShowStatusModal(false)}
                 className="bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-bold text-[12px] h-9 px-5 rounded transition-colors"
               >
-                İptal
+                ─░ptal
               </button>
               <button
                 onClick={async () => {
@@ -2129,14 +2129,14 @@ const SiparisYonetimiPage = () => {
                   if (refreshData && refreshData.orders) setRealOrders(refreshData.orders)
 
                   if (statusModalTargetIds.length > 1) {
-                    showSuccess(`Tamamlanan sipariş sayısı: ${statusModalTargetIds.length}`);
+                    showSuccess(`Tamamlanan sipari┼ş say─▒s─▒: ${statusModalTargetIds.length}`);
                   } else {
-                    showSuccess("Sipariş başarıyla güncellendi.");
+                    showSuccess("Sipari┼ş ba┼şar─▒yla g├╝ncellendi.");
                   }
                 }}
                 className="bg-[#10B981] hover:bg-emerald-600 text-white font-bold text-[12px] h-9 px-6 rounded transition-colors shadow-sm flex items-center gap-1.5"
               >
-                <span className="text-sm">✔</span>
+                <span className="text-sm">Ô£ö</span>
                 <span>Kaydet</span>
               </button>
             </div>
@@ -2151,13 +2151,13 @@ const SiparisYonetimiPage = () => {
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[420px] flex flex-col relative animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             {/* Header */}
             <div className="bg-white border-b border-zinc-100 px-5 py-4 flex items-center justify-between">
-              <span className="text-[15px] font-bold text-zinc-800">Yazdır</span>
+              <span className="text-[15px] font-bold text-zinc-800">Yazd─▒r</span>
             </div>
             
             {/* Body */}
             <div className="p-6 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-semibold text-zinc-500">Yazdırma Şablonu</label>
+                <label className="text-[12px] font-semibold text-zinc-500">Yazd─▒rma ┼Şablonu</label>
                 <select 
                   value={printTemplate}
                   onChange={(e) => setPrintTemplate(e.target.value)}
@@ -2165,8 +2165,8 @@ const SiparisYonetimiPage = () => {
                 >
                   <option value="E-Fatura">E-Fatura</option>
                   <option value="Fatura">Fatura</option>
-                  <option value="Kargo Fişi">Kargo Fişi</option>
-                  <option value="Fiş">Fiş</option>
+                  <option value="Kargo Fi┼şi">Kargo Fi┼şi</option>
+                  <option value="Fi┼ş">Fi┼ş</option>
                   <option value="PDF">PDF</option>
                 </select>
               </div>
@@ -2178,18 +2178,18 @@ const SiparisYonetimiPage = () => {
                 onClick={() => setShowPrintModal(false)}
                 className="bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-bold text-[12px] h-9 px-5 rounded transition-colors"
               >
-                İptal
+                ─░ptal
               </button>
               <button
                 onClick={() => {
                   // Simulate bulk print
                   triggerPrintSimulation(printTemplate, printModalTargetIds);
-                  alert(`${printModalTargetIds.length} adet sipariş için ${printTemplate} yazdırma işlemi başlatıldı.`);
+                  alert(`${printModalTargetIds.length} adet sipari┼ş i├ğin ${printTemplate} yazd─▒rma i┼şlemi ba┼şlat─▒ld─▒.`);
                   setShowPrintModal(false);
                 }}
                 className="bg-[#10B981] hover:bg-emerald-600 text-white font-bold text-[12px] h-9 px-6 rounded transition-colors shadow-sm"
               >
-                Yazdır
+                Yazd─▒r
               </button>
             </div>
           </div>
@@ -2210,7 +2210,7 @@ const SiparisYonetimiPage = () => {
             }}
             className="flex items-center gap-2 px-6 py-4 bg-[#7e22ce] hover:bg-purple-600 text-white font-bold text-xs transition-colors border-r border-zinc-700/50"
           >
-            <span className="text-[14px]">☰</span>
+            <span className="text-[14px]">Ôİ░</span>
             Durum ({selectedOrderIds.length})
           </button>
           
@@ -2222,14 +2222,14 @@ const SiparisYonetimiPage = () => {
             }}
             className="flex items-center gap-2 px-6 py-4 bg-[#b45309] hover:bg-amber-600 text-white font-bold text-xs transition-colors border-r border-zinc-700/50"
           >
-            <span className="text-[14px]">🖨️</span>
-            Yazdır ({selectedOrderIds.length})
+            <span className="text-[14px]">­şû¿´©Å</span>
+            Yazd─▒r ({selectedOrderIds.length})
           </button>
 
           <button 
             onClick={() => {
               triggerPrintSimulation("E-Fatura", selectedOrderIds);
-              showSuccess(`${selectedOrderIds.length} sipariş için toplu E-Fatura kesme işlemi başlatıldı.`);
+              showSuccess(`${selectedOrderIds.length} sipari┼ş i├ğin toplu E-Fatura kesme i┼şlemi ba┼şlat─▒ld─▒.`);
             }}
             className="flex items-center gap-2 px-6 py-4 bg-[#1e40af] hover:bg-blue-700 text-white font-bold text-xs transition-colors"
           >
@@ -2251,7 +2251,7 @@ const SiparisYonetimiPage = () => {
                 </svg>
               </div>
               <div className="flex flex-col gap-1.5">
-                <h3 className="text-[20px] font-bold text-zinc-800 tracking-tight">İşlem Tamamlandı!</h3>
+                <h3 className="text-[20px] font-bold text-zinc-800 tracking-tight">─░┼şlem Tamamland─▒!</h3>
                 <p className="text-[14px] font-medium text-zinc-500 mt-1">{successModal}</p>
               </div>
             </div>
@@ -2274,7 +2274,7 @@ const SiparisYonetimiPage = () => {
           <div className="bg-zinc-100 rounded-lg border border-zinc-200 shadow-2xl w-full max-w-[900px] h-[80vh] flex flex-col overflow-hidden relative z-10 animate-scale-up">
             
             <div className="bg-[#0d6efd] text-white px-5 py-3 flex items-center justify-between select-none shrink-0">
-              <h2 className="text-sm font-bold tracking-tight">Ürünler</h2>
+              <h2 className="text-sm font-bold tracking-tight">├£r├╝nler</h2>
               <button 
                 onClick={() => setShowProductSearchModal(false)} 
                 className="text-white hover:opacity-85 p-1 rounded-lg transition-colors"
@@ -2289,23 +2289,23 @@ const SiparisYonetimiPage = () => {
                 <input 
                   type="text" 
                   className="w-full pl-10 pr-4 py-2 border border-zinc-300 rounded focus:border-[#0d6efd] focus:ring-1 focus:ring-[#0d6efd] outline-none transition-shadow text-sm"
-                  placeholder="Ürün Ara..."
+                  placeholder="├£r├╝n Ara..."
                   value={productSearchQuery}
                   onChange={e => setProductSearchQuery(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleSearchProducts()}
                 />
               </div>
               <div className="flex gap-2">
-                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Tüm Kategoriler</option></select>
-                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Tüm Markalar</option></select>
-                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Tüm Filtreler</option></select>
+                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>T├╝m Kategoriler</option></select>
+                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>T├╝m Markalar</option></select>
+                <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>T├╝m Filtreler</option></select>
                 <select className="border border-zinc-300 rounded px-3 py-1.5 text-[11px] font-medium text-zinc-700 bg-zinc-50 flex-1"><option>Yeniden Eskiye</option></select>
               </div>
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto">
               {searchingProducts ? (
-                <div className="flex justify-center py-10"><span className="text-zinc-500 font-medium text-sm">Aranıyor...</span></div>
+                <div className="flex justify-center py-10"><span className="text-zinc-500 font-medium text-sm">Aran─▒yor...</span></div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {productSearchResults.map(product => (
@@ -2315,13 +2315,13 @@ const SiparisYonetimiPage = () => {
                           {product.thumbnail ? (
                             <img src={product.thumbnail} alt={product.title} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl">👖</div>
+                            <div className="w-full h-full flex items-center justify-center text-4xl">­şæû</div>
                           )}
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                             <button 
                               onClick={() => handleAddProductToOrder(product, variant)}
                               className="w-12 h-12 bg-zinc-800 text-white rounded-full flex items-center justify-center hover:bg-zinc-700 hover:scale-110 transition-all shadow-lg"
-                              title="Siparişe Ekle"
+                              title="Sipari┼şe Ekle"
                             >
                               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                             </button>
@@ -2340,7 +2340,7 @@ const SiparisYonetimiPage = () => {
                     ))
                   ))}
                   {productSearchResults.length === 0 && !searchingProducts && productSearchQuery && (
-                    <div className="col-span-full text-center py-10 text-zinc-500 font-medium text-sm">Sonuç bulunamadı.</div>
+                    <div className="col-span-full text-center py-10 text-zinc-500 font-medium text-sm">Sonu├ğ bulunamad─▒.</div>
                   )}
                 </div>
               )}
