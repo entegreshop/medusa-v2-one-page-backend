@@ -29,6 +29,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       fields: [
         "id",
         "display_id",
+        "total",
         "metadata",
         "shipping_address.*",
         "customer.*"
@@ -63,6 +64,17 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const phone = order.shipping_address?.phone || order.customer?.phone || "05555555555"
     const weight = metadata.weight ? parseInt(metadata.weight as string) : 1
 
+    // Determine payment method and amount
+    const paymentMethod = metadata.payment_method as string || "Kapıda Nakit"
+    // 3: Peşin Ödeme (Nakit Tahsilat), 6: Kapıda Kredi Kartı
+    const amountTypeId = paymentMethod === "Kapıda Kredi Kartı" ? 6 : 3
+    
+    // Format order.total (cents) to "XX.00" for Interline Cargo
+    // For example, 240001 cents -> "2400.01"
+    // If order.total is somehow undefined, default to "0.00"
+    const totalCents = order.total || 0
+    const formattedAmount = (totalCents / 100).toFixed(2)
+
     const consignmentData: InterlineConsignmentData = {
       customer: fullName,
       province_name: provinceName,
@@ -71,7 +83,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       telephone: phone,
       quantity: 1,
       consignment_type_id: 2, 
-      amount_type_id: 3, 
+      amount_type_id: amountTypeId, 
+      amount: formattedAmount,
       distribution_type_id: 1,
       order_number: order.display_id ? order.display_id.toString() : order.id,
       weight: weight

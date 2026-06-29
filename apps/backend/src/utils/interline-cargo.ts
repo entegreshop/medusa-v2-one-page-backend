@@ -13,6 +13,7 @@ export interface InterlineConsignmentData {
   quantity: number
   consignment_type_id: number // 1: Koli, 2: Paket, 3: Dosya
   amount_type_id: number // 2: Alıcı Ödemeli, 3: Peşin Ödeme
+  amount?: string // Tutar (Kuruş değeri "#.00" olarak gönderilmelidir.)
   distribution_type_id: number // 1: Ertesi Gün Teslimat, 2: Aynı Gün
   order_number: string
   weight?: number
@@ -47,6 +48,9 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
   formData.append("quantity", data.quantity.toString())
   formData.append("consignment_type_id", data.consignment_type_id.toString())
   formData.append("amount_type_id", data.amount_type_id.toString())
+  if (data.amount) {
+    formData.append("amount", data.amount)
+  }
   formData.append("distribution_type_id", data.distribution_type_id.toString())
   formData.append("order_number", data.order_number)
   
