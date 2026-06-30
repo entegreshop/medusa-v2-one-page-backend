@@ -112,6 +112,7 @@ const IkasProductsPage = () => {
         const res = await fetch("/admin/hero-config/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             filename: file.name,
             filetype: file.type,
@@ -221,6 +222,7 @@ const IkasProductsPage = () => {
         const res = await fetch("/admin/hero-config/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({
             filename: file.name,
             filetype: file.type,
@@ -448,6 +450,7 @@ const IkasProductsPage = () => {
             const res = await fetch("/admin/hero-config/upload", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
+              credentials: "include",
               body: JSON.stringify({
                 filename: file.name,
                 filetype: file.type,
