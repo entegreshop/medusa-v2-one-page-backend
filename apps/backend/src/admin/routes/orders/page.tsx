@@ -181,6 +181,7 @@ interface CustomOrder {
   invoice_date?: string
   e_invoice_date?: string
   metadata?: Record<string, any>
+  raw_date: number // for reliable sorting
 }
 
 const SiparisYonetimiPage = () => {
@@ -394,8 +395,8 @@ const SiparisYonetimiPage = () => {
       // Try to determine payment method name
       let payMethod = o.metadata?.payment_method || "Kredi Kartı"
       const metaOption = o.metadata?.payment_option
-      if (metaOption === "cash_on_delivery") payMethod = "Kapıda Nakit Ödeme"
-      else if (metaOption === "card_on_delivery") payMethod = "Kapıda Kredi Kartı ile Ödeme"
+      if (metaOption === "cash_on_delivery" || payMethod === "Kapıda Nakit") payMethod = "Kapıda Nakit Ödeme"
+      else if (metaOption === "card_on_delivery" || payMethod === "Kapıda Kredi Kartı") payMethod = "Kapıda Kredi Kartı ile Ödeme"
       else if (metaOption === "bank_transfer") payMethod = "Havale / EFT"
       else if (metaOption === "paytr") payMethod = "PayTR"
 
@@ -478,7 +479,8 @@ const SiparisYonetimiPage = () => {
         integration_logs: o.metadata?.integration_logs || [],
         invoice_series: o.metadata?.invoice_series || "-",
         invoice_date: o.metadata?.invoice_date || "",
-        e_invoice_date: o.metadata?.e_invoice_date || ""
+        e_invoice_date: o.metadata?.e_invoice_date || "",
+        raw_date: new Date(o.created_at).getTime()
       } as CustomOrder
     })
   }, [realOrders])
@@ -506,11 +508,10 @@ const SiparisYonetimiPage = () => {
   }, [realOrders])
 
   const currentOrders = useMemo(() => {
-    const combined = [...localPosOrders, ...mappedRealOrders]
+    const combined = [...localPosOrders.map((o: any) => ({ ...o, raw_date: o.raw_date || 0 })), ...mappedRealOrders]
     return combined.sort((a, b) => {
-      const idA = parseInt(a.display_id.replace(/\D/g, '') || "0", 10)
-      const idB = parseInt(b.display_id.replace(/\D/g, '') || "0", 10)
-      return idB - idA
+      // Sort strictly by raw_date descending
+      return b.raw_date - a.raw_date
     })
   }, [localPosOrders, mappedRealOrders])
 
