@@ -392,7 +392,7 @@ const SiparisYonetimiPage = () => {
       const totalVal = (o.total || 0) / 100
 
       // Try to determine payment method name
-      let payMethod = "Kredi Kartı"
+      let payMethod = o.metadata?.payment_method || "Kredi Kartı"
       const metaOption = o.metadata?.payment_option
       if (metaOption === "cash_on_delivery") payMethod = "Kapıda Nakit Ödeme"
       else if (metaOption === "card_on_delivery") payMethod = "Kapıda Kredi Kartı ile Ödeme"
