@@ -3,7 +3,9 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
-const configFilePath = path.join(os.homedir(), ".xoox-sms-settings.json")
+const configDir = path.join(process.cwd(), "uploads", "settings")
+if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true })
+const configFilePath = path.join(configDir, "sms-settings.json")
 
 interface SMSConfig {
   active: boolean

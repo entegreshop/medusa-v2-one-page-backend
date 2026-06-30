@@ -3,7 +3,9 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
-const configFilePath = path.join(os.homedir(), ".xoox-pixel-settings.json")
+const configDir = path.join(process.cwd(), "uploads", "settings")
+if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true })
+const configFilePath = path.join(configDir, "pixel-settings.json")
 
 interface PixelConfig {
   meta_pixel: {
