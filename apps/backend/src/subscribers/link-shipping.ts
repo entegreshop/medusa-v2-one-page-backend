@@ -1,45 +1,46 @@
 import { type SubscriberConfig, type SubscriberArgs } from "@medusajs/framework"
-import { Modules } from "@medusajs/framework/utils"
+import { Pool } from "pg"
 
 export default async function linkShippingProfile({ container }: SubscriberArgs) {
-  const query = container.resolve("query")
-  const productModule = container.resolve(Modules.PRODUCT)
-  const fulfillmentModule = container.resolve(Modules.FULFILLMENT)
+  console.log("Running fallback DB script to fix shipping profiles...")
+  
+  if (!process.env.DATABASE_URL) {
+    console.log("No DATABASE_URL found")
+    return
+  }
 
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+  
   try {
-    const { data: profiles } = await query.graph({
-      entity: "shipping_profile",
-      fields: ["id", "type"],
-    })
-
-    const defaultProfile = profiles.find((p) => p.type === "default")
-    if (!defaultProfile) {
+    const profileRes = await pool.query("SELECT id FROM shipping_profile WHERE type = 'default' LIMIT 1")
+    if (profileRes.rows.length === 0) {
       console.log("No default shipping profile found.")
       return
     }
+    const defaultProfileId = profileRes.rows[0].id
 
-    const { data: products } = await query.graph({
-      entity: "product",
-      fields: ["id", "shipping_profile.*"],
-    })
-
-    const missingProducts = products.filter((p) => !p.shipping_profile)
+    const productsRes = await pool.query("SELECT id FROM product WHERE deleted_at IS NULL")
     
-    if (missingProducts.length > 0) {
-      console.log(`Linking default shipping profile ${defaultProfile.id} to ${missingProducts.length} products...`)
-      const links = missingProducts.map((p) => ({
-        [Modules.PRODUCT]: { product_id: p.id },
-        [Modules.FULFILLMENT]: { shipping_profile_id: defaultProfile.id }
-      }))
+    for (const p of productsRes.rows) {
+      const linkRes = await pool.query(
+        "SELECT id FROM product_shipping_profile WHERE product_id = $1", 
+        [p.id]
+      )
       
-      const linkModule = container.resolve("link")
-      await linkModule.create(links)
-      console.log("Successfully linked shipping profiles!")
-    } else {
-      console.log("All products already have a shipping profile.")
+      if (linkRes.rows.length === 0) {
+        console.log(`Linking product ${p.id} to default profile...`)
+        const linkId = `prodsp_${Math.random().toString(36).substring(2, 15)}`
+        await pool.query(
+          "INSERT INTO product_shipping_profile (id, product_id, shipping_profile_id, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())",
+          [linkId, p.id, defaultProfileId]
+        )
+      }
     }
+    console.log("Successfully fixed shipping profiles via raw DB script!")
   } catch (error) {
-    console.error("Failed to link shipping profiles:", error)
+    console.error("Failed to fix shipping profiles:", error)
+  } finally {
+    pool.end()
   }
 }
 
