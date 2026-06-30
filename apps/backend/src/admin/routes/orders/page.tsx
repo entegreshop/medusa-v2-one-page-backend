@@ -346,7 +346,7 @@ const SiparisYonetimiPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch("/admin/orders?limit=100&fields=id,status,created_at,email,display_id,payment_status,fulfillment_status,total,currency_code,*customer,*sales_channel,*payment_collections,*items,*shipping_address,*billing_address,metadata")
+        const res = await fetch("/admin/orders?limit=100&order=-created_at&fields=id,status,created_at,email,display_id,payment_status,fulfillment_status,total,currency_code,*customer,*sales_channel,*payment_collections,*items,*shipping_address,*billing_address,metadata")
         if (res.ok) {
           const data = await res.json()
           if (data && data.orders) {
@@ -506,7 +506,12 @@ const SiparisYonetimiPage = () => {
   }, [realOrders])
 
   const currentOrders = useMemo(() => {
-    return [...localPosOrders, ...mappedRealOrders]
+    const combined = [...localPosOrders, ...mappedRealOrders]
+    return combined.sort((a, b) => {
+      const idA = parseInt(a.display_id.replace(/\D/g, '') || "0", 10)
+      const idB = parseInt(b.display_id.replace(/\D/g, '') || "0", 10)
+      return idB - idA
+    })
   }, [localPosOrders, mappedRealOrders])
 
   // Risk analizi: Geçmiş siparişi Kapıda Ödemeli olup, İade/İptal olan müşteriler
