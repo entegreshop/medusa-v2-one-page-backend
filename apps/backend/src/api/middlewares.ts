@@ -4,6 +4,13 @@ import express from "express"
 export default defineMiddlewares({
   routes: [
     {
+      method: "USE",
+      matcher: "/uploads",
+      middlewares: [
+        express.static("uploads")
+      ],
+    },
+    {
       method: ["POST"],
       matcher: "/admin/hero-config/upload",
       bodyParser: {

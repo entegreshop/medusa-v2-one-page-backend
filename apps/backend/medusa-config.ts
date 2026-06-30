@@ -41,8 +41,8 @@ module.exports = defineConfig({
             resolve: "@medusajs/file-local",
             id: "local",
             options: {
-              upload_dir: "static",
-              backend_url: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "http://firsatbox.com/static" : "http://localhost:9001/static"),
+              upload_dir: "uploads",
+              backend_url: process.env.MEDUSA_BACKEND_URL || (process.env.COOLIFY_URL ? "https://firsatbox.com/uploads" : "http://localhost:9001/uploads"),
             },
           },
         ],
