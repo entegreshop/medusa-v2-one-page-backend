@@ -19,7 +19,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     }
 
     const productsRes = await pool.query("SELECT id, title FROM product WHERE deleted_at IS NULL")
-    let linked = []
+    let linked: string[] = []
     
     for (const p of productsRes.rows) {
       const linkRes = await pool.query("SELECT id FROM product_shipping_profile WHERE product_id = $1", [p.id])
