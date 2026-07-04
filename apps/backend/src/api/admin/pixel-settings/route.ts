@@ -12,6 +12,7 @@ interface PixelConfig {
     active: boolean
     pixel_id: string
     access_token: string
+    test_event_code?: string
   }
   google_ads: {
     active: boolean
@@ -37,7 +38,8 @@ const defaultData: PixelConfig = {
   meta_pixel: {
     active: false,
     pixel_id: "",
-    access_token: ""
+    access_token: "",
+    test_event_code: ""
   },
   google_ads: {
     active: false,

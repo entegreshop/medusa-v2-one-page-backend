@@ -7,6 +7,7 @@ interface PixelConfig {
     active: boolean
     pixel_id: string
     access_token: string
+    test_event_code?: string
   }
   google_ads: {
     active: boolean
@@ -29,7 +30,7 @@ interface PixelConfig {
 }
 
 const initialConfig: PixelConfig = {
-  meta_pixel: { active: false, pixel_id: "", access_token: "" },
+  meta_pixel: { active: false, pixel_id: "", access_token: "", test_event_code: "" },
   google_ads: { active: false, conversion_id: "", conversion_label: "" },
   google_analytics: { active: false, measurement_id: "" },
   google_tag_manager: { active: false, gtm_id: "" },
@@ -329,6 +330,18 @@ const PixelSettingsPage = () => {
                     className="w-full p-3 rounded-lg border border-zinc-300 text-xs font-semibold text-zinc-800 resize-none focus:outline-none focus:border-violet-500"
                   />
                   <p className="text-[10px] text-zinc-400 font-semibold mt-0.5">Conversions API (CAPI) olaylarını sunucu tarafında tetiklemek için gereken erişim jetonu.</p>
+                </div>
+
+                <div className="flex flex-col gap-1.5 mt-2">
+                  <label className="text-[10px] font-extrabold text-zinc-500 uppercase">Test Kodu (Test Event Code) - İsteğe Bağlı</label>
+                  <input 
+                    type="text"
+                    placeholder="örn. TEST12345"
+                    value={config.meta_pixel.test_event_code || ""}
+                    onChange={(e) => setConfig({ ...config, meta_pixel: { ...config.meta_pixel, test_event_code: e.target.value } })}
+                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 text-xs font-bold text-zinc-900 focus:outline-none focus:border-violet-500"
+                  />
+                  <p className="text-[10px] text-zinc-400 font-semibold mt-0.5">Test olaylarınızı Meta Olay Yöneticisi'nde anlık görmek için Olayları Test Edin sekmesindeki TEST kodunu buraya girin.</p>
                 </div>
               </div>
 
