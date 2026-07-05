@@ -46,6 +46,8 @@ const PixelSettingsPage = () => {
   const [toastMessage, setToastMessage] = useState("")
   const [currentView, setCurrentView] = useState<ViewType>("list")
 
+
+
   useEffect(() => {
     const fetchConfig = async () => {
       try {
@@ -113,18 +115,18 @@ const PixelSettingsPage = () => {
         </div>
       )}
 
-      {/* DETAIL VIEW: BLACK NAVIGATION BAR */}
+      {/* DETAIL VIEW: LIGHT NAVIGATION BAR */}
       {currentView !== "list" && (
-        <div className="bg-zinc-950 text-white px-8 py-4 flex items-center justify-between shadow-md">
+        <div className="bg-white border-b border-zinc-200 text-zinc-900 px-8 py-4 flex items-center justify-between shadow-sm sticky top-0 z-10">
           <div className="flex items-center gap-x-2">
             <button 
               onClick={() => setCurrentView("list")}
-              className="text-zinc-400 hover:text-white transition-colors text-sm font-semibold"
+              className="text-zinc-500 hover:text-zinc-900 transition-colors text-sm font-semibold"
             >
               ← Piksel Ayarları
             </button>
-            <span className="text-zinc-600">/</span>
-            <span className="text-sm font-bold">
+            <span className="text-zinc-300">/</span>
+            <span className="text-sm font-bold text-zinc-800">
               {currentView === "meta_pixel" && "Meta Pixel & API"}
               {currentView === "google_ads" && "Google Ads Conversion"}
               {currentView === "google_analytics" && "Google Analytics (GA4)"}
@@ -135,7 +137,7 @@ const PixelSettingsPage = () => {
           <div className="flex items-center gap-x-3">
             <button 
               onClick={() => setCurrentView("list")}
-              className="px-4 py-1.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 text-xs font-semibold text-zinc-300 transition-colors"
+              className="px-4 py-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-xs font-semibold text-zinc-600 transition-colors"
             >
               Vazgeç
             </button>

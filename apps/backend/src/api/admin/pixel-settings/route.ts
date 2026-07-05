@@ -3,16 +3,13 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
-const configDir = path.join(process.cwd(), "uploads", "settings")
-if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true })
-const configFilePath = path.join(configDir, "pixel-settings.json")
+const configFilePath = path.join(os.homedir(), ".xoox-pixel-settings.json")
 
 interface PixelConfig {
   meta_pixel: {
     active: boolean
     pixel_id: string
     access_token: string
-    test_event_code?: string
   }
   google_ads: {
     active: boolean
@@ -38,8 +35,7 @@ const defaultData: PixelConfig = {
   meta_pixel: {
     active: false,
     pixel_id: "",
-    access_token: "",
-    test_event_code: ""
+    access_token: ""
   },
   google_ads: {
     active: false,
