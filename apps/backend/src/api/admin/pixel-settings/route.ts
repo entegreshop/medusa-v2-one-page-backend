@@ -10,6 +10,7 @@ interface PixelConfig {
     active: boolean
     pixel_id: string
     access_token: string
+    test_event_code?: string
   }
   google_ads: {
     active: boolean

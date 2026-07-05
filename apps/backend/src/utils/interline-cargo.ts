@@ -1,4 +1,4 @@
-import { readConfig } from "../api/admin/interline-settings/route"
+import { readConfig } from "../api/admin/shipping-settings/route"
 
 const BASE_URL = "https://webpostman.interlineexpress.com/restapi/client"
 
@@ -21,12 +21,18 @@ export interface InterlineConsignmentData {
 }
 
 export async function createInterlineConsignment(data: InterlineConsignmentData) {
-  const config = await readConfig()
-  if (!config.active) {
+  const globalConfig = await readConfig()
+  const interlineCarrier = globalConfig.carriers.find((c: any) => c.key === "interline")
+  
+  if (!interlineCarrier || !interlineCarrier.general.active || !interlineCarrier.api.apiActive) {
     return { success: false, error: "İnterline Kargo entegrasyonu aktif değil." }
   }
 
-  if (!config.authorization || !config.from_name) {
+  const authorization = interlineCarrier.api.apiAuthorization
+  const fromName = interlineCarrier.api.apiFrom
+  const configBranchCode = interlineCarrier.api.branchName
+
+  if (!authorization || !fromName) {
     return { success: false, error: "İnterline API ayarları eksik (Authorization veya From)." }
   }
 
@@ -40,7 +46,7 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
   if (data.telephone) formData.append("telephone", data.telephone)
   
   // Use config branch code if not provided
-  const branchCode = data.branch_code || config.branch_code
+  const branchCode = data.branch_code || configBranchCode
   if (branchCode) {
     formData.append("branch_code", branchCode)
   }
@@ -61,8 +67,8 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
     const response = await fetch(`${BASE_URL}/consignment/add`, {
       method: "POST",
       headers: {
-        "Authorization": config.authorization,
-        "From": config.from_name,
+        "Authorization": authorization,
+        "From": fromName,
         "Content-Type": "application/x-www-form-urlencoded"
       },
       body: formData
@@ -88,8 +94,13 @@ export async function createInterlineConsignment(data: InterlineConsignmentData)
 
 export async function getInterlineBarcode(barcode: string) {
   try {
-    const config = await readConfig()
-    if (!config.active) return null
+    const globalConfig = await readConfig()
+    const interlineCarrier = globalConfig.carriers.find((c: any) => c.key === "interline")
+    
+    if (!interlineCarrier || !interlineCarrier.general.active || !interlineCarrier.api.apiActive) return null
+
+    const authorization = interlineCarrier.api.apiAuthorization
+    const fromName = interlineCarrier.api.apiFrom
 
     const url = new URL(`${BASE_URL}/consignment/get_barcode`)
     url.searchParams.append("barcode", barcode)
@@ -99,8 +110,8 @@ export async function getInterlineBarcode(barcode: string) {
     const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
-        "Authorization": config.authorization,
-        "From": config.from_name
+        "Authorization": authorization,
+        "From": fromName
       }
     })
 
