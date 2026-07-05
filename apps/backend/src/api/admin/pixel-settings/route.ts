@@ -33,9 +33,10 @@ interface PixelConfig {
 
 const defaultData: PixelConfig = {
   meta_pixel: {
-    active: false,
-    pixel_id: "",
-    access_token: ""
+    active: true,
+    pixel_id: "238223493885423",
+    access_token: "EAAODcHOQT6cBRvQtAtcZAwZBZA6gDwvY0sWO8rQZBqguIonoD8dXVDMzE8HJybsXiWBEGGF3P8iiCetMhzg0ZCyaydt8DkNEzJhAAJ1CPadDZApzFSBVnxpk5POvWvwTX59IuMQt2QExZBjXv18CE60VdB0ZC5HiBzcfYNZCkRjflOwhiODnRDok2xMgnWXMUZBuu84gZDZD",
+    test_event_code: "TEST95614"
   },
   google_ads: {
     active: false,
@@ -43,8 +44,8 @@ const defaultData: PixelConfig = {
     conversion_label: ""
   },
   google_analytics: {
-    active: false,
-    measurement_id: ""
+    active: true,
+    measurement_id: "G-WFN2WZHYF9"
   },
   google_tag_manager: {
     active: false,
