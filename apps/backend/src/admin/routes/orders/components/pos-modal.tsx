@@ -252,7 +252,7 @@ export const PosModal = ({ isOpen, onOpenChange, onOrderCreated }: PosModalProps
                      const createdDraft = await createReq.json();
                      const draftOrderId = createdDraft.draft_order.id;
                      
-                     await fetch(`/admin/draft-orders/${draftOrderId}/convert-to-order`, { 
+                     await fetch(`/admin/draft-orders/${draftOrderId}/pay`, { 
                          method: 'POST',
                          headers: { 'Content-Type': 'application/json' }
                      });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { defineWidgetConfig } from "@medusajs/admin-sdk"
+import { defineRouteConfig } from "@medusajs/admin-sdk"
 import { ShoppingBag, Adjustments, CheckCircle, XMark, Plus, Trash, ArrowPath, Pencil } from "@medusajs/icons"
 import { PosModal } from "../routes/orders/components/pos-modal"
 
@@ -75,35 +75,11 @@ const StarIcon = () => (
   </svg>
 )
 
-const getDomainName = () => {
-  if (typeof window === "undefined") return "cizgibutik.com"
-  const host = window.location.hostname
-  if (host === "localhost" || host === "127.0.0.1") {
-    return "cizgibutik.com"
-  }
-  return host.replace("www.", "")
-}
-
-const getDomainPrefix = () => {
-  const domain = getDomainName()
-  const part = domain.split('.')[0]
-  return part.toUpperCase()
-}
-
-const getDomainBrand = () => {
-  const domain = getDomainName()
-  const part = domain.split('.')[0]
-  return part.charAt(0).toUpperCase() + part.slice(1)
-}
-
-const CizgiLogo = () => {
-  const prefix = getDomainPrefix()
-  return (
-    <svg width="60" height="20" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <text x="60" y="25" fontFamily="Arial, sans-serif" fontSize="18" fontWeight="900" fill="#18181b" textAnchor="middle" letterSpacing="1">{prefix}</text>
-    </svg>
-  )
-}
+const CizgiLogo = () => (
+  <svg width="40" height="20" viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <text x="50" y="25" fontFamily="Arial, sans-serif" fontSize="24" fontWeight="900" fill="#18181b" textAnchor="middle" letterSpacing="2">ÇİZGİ</text>
+  </svg>
+)
 
 // Main structure interface
 interface OrderItem {
@@ -127,9 +103,11 @@ interface OrderLog {
 interface CustomOrder {
   id: string
   display_id: string
-  platform: string
+  platform: "WhatsApp" | "Cizgibutik"
   store: string
   order_tag: string
+  discount_total?: any
+  discounts?: any[]
   customer: {
     first_name: string
     last_name: string
@@ -353,6 +331,11 @@ const SiparisYonetimiPage = () => {
   const [newStatusValue, setNewStatusValue] = useState("yeni_siparis")
   const [notifyCustomer, setNotifyCustomer] = useState(true)
 
+  // Shipment Modal State
+  const [showShipmentModal, setShowShipmentModal] = useState(false)
+  const [shipmentModalTargetIds, setShipmentModalTargetIds] = useState<string[]>([])
+  const [selectedCarrier, setSelectedCarrier] = useState("kargonova")
+
   // Print Modal State
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [printModalTargetIds, setPrintModalTargetIds] = useState<string[]>([])
@@ -362,7 +345,7 @@ const SiparisYonetimiPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch("/admin/orders?limit=100&fields=id,status,created_at,email,display_id,payment_status,fulfillment_status,total,currency_code,*customer,*sales_channel,*payment_collections,*items,*shipping_address,*billing_address,metadata")
+        const res = await fetch("/admin/orders?limit=100&order=-created_at&fields=id,status,created_at,email,display_id,payment_status,fulfillment_status,total,currency_code,*customer,*sales_channel,*payment_collections,*items,*shipping_address,*billing_address,metadata")
         if (res.ok) {
           const data = await res.json()
           if (data && data.orders) {
@@ -442,8 +425,8 @@ const SiparisYonetimiPage = () => {
       return {
         id: o.id,
         display_id: o.display_id?.toString() || o.id.slice(-8),
-        platform: o.metadata?.platform || getDomainBrand(),
-        store: getDomainBrand(),
+        platform: o.metadata?.platform || "Cizgibutik",
+        store: "Cizgibutik",
         order_tag: o.metadata?.order_tag || "Seçilmedi",
         customer: {
           first_name: o.customer?.first_name || o.shipping_address?.first_name || "Müşteri",
@@ -594,88 +577,6 @@ const SiparisYonetimiPage = () => {
     }
   }
 
-  // Excel Export handler
-  const exportToExcel = () => {
-    const ordersToExport = selectedOrderIds.length > 0 
-      ? currentOrders.filter(o => selectedOrderIds.includes(o.id))
-      : filteredOrdersList;
-
-    if (ordersToExport.length === 0) {
-      alert("Dışa aktarılacak sipariş bulunamadı.");
-      return;
-    }
-
-    const headers = [
-      "Sipariş No",
-      "Tarih",
-      "Müşteri Adı",
-      "Müşteri Soyadı",
-      "Telefon",
-      "E-posta",
-      "Üye No / Durum",
-      "Tutar",
-      "Ödeme Yöntemi",
-      "Sipariş Durumu",
-      "Kargo Firması",
-      "Kargo Barkodu",
-      "Adres Bilgisi",
-      "İl",
-      "İlçe",
-      "Platform",
-      "Sipariş Etiketi"
-    ];
-
-    const rows = ordersToExport.map(o => {
-      const cleanAddress = `${o.shipping_address?.address_1 || ""} ${o.shipping_address?.address_2 || ""}`.trim().replace(/[\r\n;]/g, " ");
-      const cleanProvince = `${o.shipping_address?.city || ""}`.trim().replace(/[\r\n;]/g, " ");
-      const cleanCity = `${o.shipping_address?.district || ""}`.trim().replace(/[\r\n;]/g, " ");
-      
-      let statusText: string = o.status;
-      if (statusText === "onay_bekleyen") statusText = "Onay Bekliyor";
-      else if (statusText === "hazirlanan") statusText = "Hazırlanıyor";
-      else if (statusText === "kargolanan") statusText = "Kargolandı";
-      else if (statusText === "teslim_edilen") statusText = "Teslim Edildi";
-      else if (statusText === "iptal_edilen") statusText = "İptal Edildi";
-      else if (statusText === "iade_edilen") statusText = "İade Edildi";
-      else if (statusText === "odeme_hatasi") statusText = "Ödeme Hatası";
-
-      return [
-        `"${getDomainPrefix()} ${o.display_id}"`,
-        `"${o.created_at || ''}"`,
-        `"${o.customer?.first_name || ''}"`,
-        `"${o.customer?.last_name || ''}"`,
-        `"${o.customer?.phone || ''}"`,
-        `"${o.customer?.email || ''}"`,
-        `"${o.customer?.member_no || 'Misafir'}"`,
-        `"${o.total.toFixed(2)} TL"`,
-        `"${o.payment_method || ''}"`,
-        `"${statusText}"`,
-        `"${o.carrier_name || 'Diğer Kargo'}"`,
-        `"${o.carrier_barcode || ''}"`,
-        `"${cleanAddress}"`,
-        `"${cleanProvince}"`,
-        `"${cleanCity}"`,
-        `"${o.platform || ''}"`,
-        `"${o.order_tag || ''}"`
-      ];
-    });
-
-    const csvContent = "\uFEFF" + [
-      headers.join(";"),
-      ...rows.map(r => r.join(";"))
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Siparisler_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setIsBulkActionMenuOpen(false);
-  };
-
   // Active Selected Order details object
   const activeOrderDetails = useMemo(() => {
     return currentOrders.find(o => o.id === selectedOrderId) || null
@@ -762,27 +663,6 @@ const SiparisYonetimiPage = () => {
   // Generic Status Change
   const handleStatusChange = async (orderId: string, newStatus: string, skipRefresh: boolean = false) => {
     try {
-      // INTERLINE KARGO ENTEGRASYONU
-      if (newStatus === "kargolanan") {
-        try {
-          const interlineRes = await fetch("/admin/interline-action", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ order_id: orderId })
-          });
-          const interlineData = await interlineRes.json();
-          if (!interlineRes.ok || !interlineData.success) {
-            alert(`İnterline Kargo Hatası (Sipariş ID: ${orderId}): ` + (interlineData.error || "Bilinmeyen API Hatası"));
-            return; // Hata varsa durumu değiştirmeyi durdur.
-          } else {
-            showSuccess(`İnterline Kargo'ya başarıyla aktarıldı. Barkod: ${interlineData.barcode}`);
-          }
-        } catch (err: any) {
-          alert("İnterline Kargo API çağrısı başarısız oldu: " + err.message);
-          return; // Hata durumunda devam etme
-        }
-      }
-
       const res = await fetch(`/admin/orders/${orderId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1169,7 +1049,7 @@ const SiparisYonetimiPage = () => {
                 </div>
 
                 <div class="footer">
-                  <div>https://www.${getDomainName()}/admin/orders/refund</div>
+                  <div>https://www.cizgibutik.com/admin/orders/refund</div>
                   <div>${idx + 1}/${ordersToPrint.length}</div>
                 </div>
               </div>
@@ -1271,8 +1151,25 @@ const SiparisYonetimiPage = () => {
     }
   }
 
+  useEffect(() => {
+    const hideDefaultUi = () => {
+       const widgetEl = document.getElementById('xoox-custom-orders-widget');
+       if (widgetEl && widgetEl.parentElement) {
+          const siblings = Array.from(widgetEl.parentElement.children);
+          siblings.forEach(sibling => {
+             if (sibling !== widgetEl) {
+                (sibling as HTMLElement).style.display = 'none';
+             }
+          });
+       }
+    };
+    hideDefaultUi();
+    const interval = setInterval(hideDefaultUi, 100);
+    return () => clearInterval(interval);
+  }, [])
+
   return (
-    <div className="bg-zinc-50 min-h-screen text-ui-fg-base antialiased custom-admin-wrapper font-sans">
+    <div id="xoox-custom-orders-widget" className="bg-zinc-50 min-h-screen text-ui-fg-base antialiased custom-admin-wrapper font-sans">
       {successModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
@@ -1290,9 +1187,6 @@ const SiparisYonetimiPage = () => {
         .no-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
-        }
-        .custom-admin-wrapper ~ * {
-          display: none !important;
         }
       `}</style>
 
@@ -1398,12 +1292,6 @@ const SiparisYonetimiPage = () => {
 
                   <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Fatura Yazdır</button>
                   <button className="w-full text-left px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 transition-colors">Toplu Kargo Fişi Yazdır</button>
-                  <button 
-                    onClick={exportToExcel}
-                    className="w-full text-left px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                  >
-                    📊 {selectedOrderIds.length > 0 ? "Seçilenleri Excel'e Aktar" : "Tümünü Excel'e Aktar"}
-                  </button>
                   <button className="w-full text-left px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors">Seçilenleri Sil</button>
                 </div>
               )}
@@ -1436,7 +1324,7 @@ const SiparisYonetimiPage = () => {
                 >
                   <option value="">Hiçbiri seçilmedi</option>
                   <option value="WhatsApp">WhatsApp</option>
-                  <option value={getDomainBrand()}>{getDomainBrand()}</option>
+                  <option value="Cizgibutik">Cizgibutik</option>
                 </select>
               </div>
 
@@ -1448,7 +1336,7 @@ const SiparisYonetimiPage = () => {
                   className="w-full px-3 py-2 rounded-lg border border-zinc-200 focus:outline-none focus:border-zinc-400 text-xs font-bold text-zinc-800 bg-white"
                 >
                   <option value="">Hiçbiri seçilmedi</option>
-                  <option value={getDomainBrand().toLowerCase()}>{getDomainBrand()}</option>
+                  <option value="cizgibutik">Cizgibutik</option>
                 </select>
               </div>
 
@@ -1834,7 +1722,7 @@ const SiparisYonetimiPage = () => {
                                 }}
                                 className="font-bold text-blue-600 hover:underline cursor-pointer flex items-center gap-1.5"
                               >
-                                <span className="text-[13px] font-black text-zinc-800 uppercase tracking-widest">{getDomainPrefix()}</span>
+                                <span className="text-[13px] font-black text-zinc-800 uppercase tracking-widest">ÇİZGİ</span>
                                 {order.display_id}
                               </span>
                               <span className="text-[11px] font-medium text-zinc-500 mt-0.5">{order.platform || "WhatsApp"}</span>
@@ -2031,14 +1919,14 @@ const SiparisYonetimiPage = () => {
           <div className="bg-zinc-100 rounded-2xl border border-zinc-200 shadow-2xl w-full max-w-[1300px] h-[92vh] flex flex-col overflow-hidden animate-scale-up relative z-10">
             
             {/* Header segment with status and details */}
-            <div className="bg-[#0d6efd] text-white px-6 py-4 flex items-center justify-between shadow-md select-none shrink-0">
+            <div className="bg-zinc-600 text-white px-6 py-4 flex items-center justify-between shadow-md select-none shrink-0">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold bg-white/20 px-2.5 py-1 rounded uppercase tracking-wider">Sipariş Yönetimi</span>
+                <span className="text-xs font-semibold uppercase tracking-wider opacity-90">Sipariş Yönetimi</span>
                 <span className="text-base font-bold tracking-tight">{activeOrderDetails.display_id} Nolu Sipariş</span>
               </div>
               <button 
                 onClick={() => setSelectedOrderId(null)} 
-                className="text-white hover:opacity-85 p-1 rounded-lg hover:bg-blue-700 transition-colors"
+                className="text-white hover:opacity-85 p-1 rounded-lg hover:bg-zinc-500 transition-colors"
               >
                 <XMark className="w-6 h-6" />
               </button>
@@ -2055,7 +1943,7 @@ const SiparisYonetimiPage = () => {
                   <div className="p-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
                     <div className="flex items-center gap-2 text-emerald-500">
                       <CheckCircle className="w-5 h-5" />
-                      <h3 className="text-[12px] font-bold text-zinc-900 tracking-tight">
+                      <h3 className="text-[14px] font-semibold text-zinc-900 tracking-tight">
                         Teslim Edilen Ürünler ({activeOrderDetails.items.length})
                       </h3>
                     </div>
@@ -2067,23 +1955,23 @@ const SiparisYonetimiPage = () => {
                         }} className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium text-[11px] rounded shadow-sm">Düzenle</button>
                       ) : (
                         <>
-                          <button onClick={handleSaveProducts} className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-black text-xs rounded shadow-sm">Kaydet</button>
-                          <button onClick={() => setEditingProducts(false)} className="px-3 py-1.5 bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 font-bold text-xs rounded shadow-sm">İptal</button>
+                          <button onClick={handleSaveProducts} className="px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 font-bold text-xs rounded shadow-sm">Kaydet</button>
+                          <button onClick={() => setEditingProducts(false)} className="px-3 py-1.5 bg-zinc-50 border border-zinc-200 text-zinc-600 hover:bg-zinc-100 font-medium text-xs rounded shadow-sm">İptal</button>
                         </>
                       )}
-                      <button onClick={() => setShowProductSearchModal(true)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 font-black text-xs rounded shadow-sm">Ürün Ekle</button>
-                      <button className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-bold text-xs rounded shadow-sm">İade Oluştur</button>
+                      <button onClick={() => setShowProductSearchModal(true)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 font-medium text-xs rounded shadow-sm">Ürün Ekle</button>
+                      <button className="px-3 py-1.5 bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-50 font-medium text-xs rounded shadow-sm">İade Oluştur</button>
                     </div>
                   </div>
 
-                  <table className="w-full border-collapse text-left text-xs font-semibold text-zinc-700">
+                  <table className="w-full border-collapse text-left text-[13px] text-zinc-700">
                     <thead>
-                      <tr className="bg-zinc-50 border-b border-zinc-200 text-xs font-semibold text-zinc-600 uppercase tracking-wider">
-                        <th className="py-3 px-4">Ürün</th>
-                        <th className="py-3 px-4 text-right">Fiyat</th>
-                        <th className="py-3 px-4 text-center">KDV</th>
-                        <th className="py-3 px-4 text-center">Miktar</th>
-                        <th className="py-3 px-4 text-right">Tutar</th>
+                      <tr className="bg-white border-b border-zinc-200 text-xs font-semibold text-zinc-500 tracking-wide">
+                        <th className="py-3 px-4 font-semibold">Ürün</th>
+                        <th className="py-3 px-4 text-center font-semibold">Fiyat</th>
+                        <th className="py-3 px-4 text-center font-semibold">KDV</th>
+                        <th className="py-3 px-4 text-center font-semibold">Miktar</th>
+                        <th className="py-3 px-4 text-right font-semibold">Tutar</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
@@ -2098,18 +1986,18 @@ const SiparisYonetimiPage = () => {
                               )}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-semibold text-zinc-900 text-[13px] leading-relaxed">{item.title}</span>
-                              <span className="text-[11px] text-zinc-500 mt-1 uppercase font-semibold">
+                              <span className="font-medium text-[#0a2540] text-[13px]">{item.title}</span>
+                              <span className="text-[12px] text-zinc-500 mt-1">
                                 {item.sku ? `#${item.sku}` : ""} {item.barcode ? `- ${item.barcode}` : ""}
                               </span>
-                              <span className="text-[11px] font-medium text-zinc-600 uppercase mt-0.5">BEDEN: {item.size}</span>
+                              <span className="text-[12px] text-zinc-600 mt-0.5">BEDEN: {item.size}</span>
                             </div>
                           </td>
-                          <td className="py-4 px-4 text-right font-semibold text-zinc-800">
+                          <td className="py-4 px-4 text-center text-zinc-800 text-[13px]">
                             {editingProducts ? (
                               <input 
                                 type="number" 
-                                className="w-20 border rounded px-1.5 py-1 text-right text-[11px]"
+                                className="w-20 border rounded px-1.5 py-1 text-center text-[13px]"
                                 value={tempProducts.find(t => t.id === item.id)?.unit_price || 0}
                                 onChange={e => {
                                   const val = parseFloat(e.target.value) || 0;
@@ -2120,14 +2008,14 @@ const SiparisYonetimiPage = () => {
                               <>{item.unit_price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</>
                             )}
                           </td>
-                          <td className="py-4 px-4 text-center text-zinc-500 font-bold">
+                          <td className="py-4 px-4 text-center text-zinc-500 text-[13px]">
                             %{item.vat_rate}
                           </td>
                           <td className="py-4 px-4 text-center">
                             {editingProducts ? (
                               <input 
                                 type="number" 
-                                className="w-16 border rounded px-1.5 py-1 text-center text-[11px] mx-auto block"
+                                className="w-16 border rounded px-1.5 py-1 text-center text-[13px] mx-auto block"
                                 value={tempProducts.find(t => t.id === item.id)?.quantity || 1}
                                 onChange={e => {
                                   const val = parseInt(e.target.value) || 1;
@@ -2135,13 +2023,13 @@ const SiparisYonetimiPage = () => {
                                 }}
                               />
                             ) : (
-                              <div className="flex flex-col leading-none">
-                                <span className="font-semibold text-zinc-900 text-[14px]">{item.quantity}</span>
-                                <span className="text-[10px] text-zinc-500 font-medium mt-1 uppercase tracking-wide">Adet</span>
+                              <div className="flex flex-col leading-tight items-center justify-center">
+                                <span className="text-zinc-800 text-[13px]">{item.quantity}</span>
+                                <span className="text-[11px] text-zinc-500">Adet</span>
                               </div>
                             )}
                           </td>
-                          <td className="py-4 px-4 text-right font-semibold text-zinc-800">
+                          <td className="py-4 px-4 text-right text-zinc-800 text-[13px]">
                             {editingProducts ? (
                               <div className="flex items-center justify-end gap-3">
                                 <span>{((tempProducts.find(t => t.id === item.id)?.unit_price || 0) * (tempProducts.find(t => t.id === item.id)?.quantity || 0)).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
@@ -2161,31 +2049,31 @@ const SiparisYonetimiPage = () => {
                       ))}
 
                       {/* Display calculations */}
-                      <tr className="bg-zinc-50 font-semibold text-zinc-600 text-xs">
-                        <td colSpan={3} className="py-2.5 px-4">
-                          <div className="flex flex-col gap-1.5 text-[11px] font-medium text-zinc-600">
+                      <tr className="bg-white border-t border-zinc-100 text-[13px] text-zinc-600">
+                        <td colSpan={3} className="py-4 px-4">
+                          <div className="flex flex-col gap-1.5 text-zinc-500">
                             <label className="flex items-center gap-1.5 cursor-pointer">
-                              <input type="checkbox" className="w-3.5 h-3.5 rounded text-violet-600" />
+                              <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 text-blue-600" />
                               <span>Stok miktarını göster</span>
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer">
-                              <input type="checkbox" className="w-3.5 h-3.5 rounded text-violet-600" />
+                              <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 text-blue-600" />
                               <span>Desiyi göster</span>
                             </label>
                             <label className="flex items-center gap-1.5 cursor-pointer">
-                              <input type="checkbox" className="w-3.5 h-3.5 rounded text-violet-600" />
+                              <input type="checkbox" className="w-3.5 h-3.5 rounded border-zinc-300 text-blue-600" />
                               <span>Özel kodları göster</span>
                             </label>
                           </div>
                         </td>
-                        <td className="py-2.5 px-4 text-right">
-                          <div className="flex flex-col gap-1.5 text-xs font-semibold text-zinc-500">
+                        <td className="py-4 px-4 text-right">
+                          <div className="flex flex-col gap-2 text-zinc-500">
                             <span>Ara Toplam</span>
                             <span>Genel Toplam</span>
                           </div>
                         </td>
-                        <td className="py-2.5 px-4 text-right font-semibold text-zinc-900">
-                          <div className="flex flex-col gap-1.5">
+                        <td className="py-4 px-4 text-right text-zinc-800">
+                          <div className="flex flex-col gap-2">
                             <span>{activeOrderDetails.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                             <span>{activeOrderDetails.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                           </div>
@@ -2243,11 +2131,11 @@ const SiparisYonetimiPage = () => {
                 {/* 3. Customer, shipping & billing details cards grid */}
                 <div className="bg-white border border-zinc-200 rounded p-0 flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-zinc-200">
                   {/* Customer Block */}
-                  <div className="flex-1 p-4 flex flex-col gap-3">
-                    <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
-                      <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight">Müşteri</h4>
+                  <div className="flex-1 p-4 flex flex-col gap-4">
+                    <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
+                      <h4 className="text-[14px] font-semibold text-[#0a2540] tracking-tight">Müşteri</h4>
                       <div className="flex items-center gap-1.5">
-                        <span className="border border-zinc-200 px-1.5 py-0.5 rounded text-[11px] font-semibold text-zinc-600 bg-white shadow-sm">
+                        <span className="border border-zinc-200 px-2 py-0.5 rounded text-[11px] font-medium text-zinc-600 bg-zinc-50">
                           {activeOrderDetails.customer.is_visitor ? "Ziyaretçi" : "Üye"}
                         </span>
                         {!editingCustomer ? (
@@ -2262,57 +2150,47 @@ const SiparisYonetimiPage = () => {
                           </button>
                         ) : (
                           <div className="flex items-center gap-1">
-                            <button onClick={handleSaveCustomer} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
-                            <button onClick={() => setEditingCustomer(false)} className="text-[10px] font-bold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
+                            <button onClick={handleSaveCustomer} className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
+                            <button onClick={() => setEditingCustomer(false)} className="text-[10px] font-medium text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="text-xs space-y-2 text-zinc-700 font-semibold">
+                    <div className="text-[13px] space-y-2.5 text-zinc-600">
                       {!editingCustomer ? (
                         <>
-                          <div className="font-semibold text-zinc-900 text-[13px] flex items-center gap-1.5">
-                            <span className="text-zinc-700 font-semibold">#{activeOrderDetails.customer.member_no.replace("U-", "")} -</span> 
+                          <div className="font-medium text-zinc-900 flex items-center gap-1.5">
                             {activeOrderDetails.customer.first_name} {activeOrderDetails.customer.last_name}
-                            <button className="ml-1 opacity-70 hover:opacity-100 transition-opacity bg-zinc-900 p-0.5 rounded text-white shadow">
-                              <EyeIcon />
-                            </button>
                           </div>
-                          <div className="text-xs font-semibold text-zinc-700 hover:underline cursor-pointer flex items-center gap-1.5">
-                            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                             {activeOrderDetails.customer.email}
                           </div>
-                          <div className="text-xs font-semibold text-zinc-700 flex items-center gap-1.5">
-                            <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                             {activeOrderDetails.customer.phone}
                           </div>
                         </>
                       ) : (
                         <div className="flex flex-col gap-2">
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.first_name} onChange={e => setTempCustomer({...tempCustomer, first_name: e.target.value})} placeholder="Ad" />
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.last_name} onChange={e => setTempCustomer({...tempCustomer, last_name: e.target.value})} placeholder="Soyad" />
-                          <input type="email" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.email} onChange={e => setTempCustomer({...tempCustomer, email: e.target.value})} placeholder="E-posta" />
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempCustomer.phone} onChange={e => setTempCustomer({...tempCustomer, phone: e.target.value})} placeholder="Telefon" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempCustomer.first_name} onChange={e => setTempCustomer({...tempCustomer, first_name: e.target.value})} placeholder="Ad" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempCustomer.last_name} onChange={e => setTempCustomer({...tempCustomer, last_name: e.target.value})} placeholder="Soyad" />
+                          <input type="email" className="w-full border rounded p-1.5 text-[12px]" value={tempCustomer.email} onChange={e => setTempCustomer({...tempCustomer, email: e.target.value})} placeholder="E-posta" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempCustomer.phone} onChange={e => setTempCustomer({...tempCustomer, phone: e.target.value})} placeholder="Telefon" />
                         </div>
                       )}
                       
-                      <div className="text-xs text-zinc-600 font-semibold flex items-center gap-1.5 mt-1">
-                        <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>
-                        <span className="font-mono text-xs">{activeOrderDetails.customer.ip}</span>
-                      </div>
-                      <div className="pt-2 flex gap-2 items-center justify-between">
-                        <span className="font-mono text-[11px] px-3 py-1 bg-zinc-100 border border-zinc-200 rounded flex-1 text-center">(B) 0.00 TL</span>
-                        <button className="bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-700 font-semibold text-[11px] py-1 px-3 rounded shadow-sm transition-colors">
-                          Yükle
-                        </button>
+                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-zinc-100">
+                        <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" /></svg>
+                        <span className="font-mono text-[12px]">{activeOrderDetails.customer.ip}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Delivery Address Block */}
-                  <div className="flex-1 p-4 flex flex-col gap-3">
-                    <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
-                      <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight">Teslimat Bilgileri</h4>
+                  <div className="flex-1 p-4 flex flex-col gap-4">
+                    <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
+                      <h4 className="text-[14px] font-semibold text-[#0a2540] tracking-tight">Teslimat Bilgileri</h4>
                       {!editingShipping ? (
                         <button 
                           onClick={() => {
@@ -2325,28 +2203,28 @@ const SiparisYonetimiPage = () => {
                         </button>
                       ) : (
                         <div className="flex items-center gap-1">
-                          <button onClick={handleSaveShipping} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
-                          <button onClick={() => setEditingShipping(false)} className="text-[10px] font-bold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
+                          <button onClick={handleSaveShipping} className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
+                          <button onClick={() => setEditingShipping(false)} className="text-[10px] font-medium text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
                         </div>
                       )}
                     </div>
-                    <div className="text-xs space-y-1.5 text-zinc-700 font-semibold">
+                    <div className="text-[13px] space-y-2 text-zinc-600">
                       {!editingShipping ? (
                         <>
-                          <div className="font-bold text-zinc-900 text-[13px]">{activeOrderDetails.shipping_address.first_name} {activeOrderDetails.shipping_address.last_name}</div>
-                          <p className="leading-relaxed text-xs mt-1 text-zinc-600 font-semibold">
+                          <div className="font-medium text-zinc-900">{activeOrderDetails.shipping_address.first_name} {activeOrderDetails.shipping_address.last_name}</div>
+                          <p className="leading-relaxed">
                             {activeOrderDetails.shipping_address.address_1}
                           </p>
-                          <div className="text-xs text-zinc-600 font-semibold">{activeOrderDetails.shipping_address.district} / {activeOrderDetails.shipping_address.city} / {activeOrderDetails.shipping_address.country_name}</div>
+                          <div>{activeOrderDetails.shipping_address.district} / {activeOrderDetails.shipping_address.city} / {activeOrderDetails.shipping_address.country_name}</div>
                         </>
                       ) : (
                         <div className="flex flex-col gap-2">
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempShipping.first_name} onChange={e => setTempShipping({...tempShipping, first_name: e.target.value})} placeholder="Ad" />
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempShipping.last_name} onChange={e => setTempShipping({...tempShipping, last_name: e.target.value})} placeholder="Soyad" />
-                          <textarea rows={2} className="w-full border rounded p-1 text-[11px]" value={tempShipping.address_1} onChange={e => setTempShipping({...tempShipping, address_1: e.target.value})} placeholder="Açık Adres" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempShipping.first_name} onChange={e => setTempShipping({...tempShipping, first_name: e.target.value})} placeholder="Ad" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempShipping.last_name} onChange={e => setTempShipping({...tempShipping, last_name: e.target.value})} placeholder="Soyad" />
+                          <textarea rows={2} className="w-full border rounded p-1.5 text-[12px]" value={tempShipping.address_1} onChange={e => setTempShipping({...tempShipping, address_1: e.target.value})} placeholder="Açık Adres" />
                           <div className="flex gap-2">
-                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempShipping.district} onChange={e => setTempShipping({...tempShipping, district: e.target.value})} placeholder="İlçe" />
-                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempShipping.city} onChange={e => setTempShipping({...tempShipping, city: e.target.value})} placeholder="İl" />
+                            <input type="text" className="w-1/2 border rounded p-1.5 text-[12px]" value={tempShipping.district} onChange={e => setTempShipping({...tempShipping, district: e.target.value})} placeholder="İlçe" />
+                            <input type="text" className="w-1/2 border rounded p-1.5 text-[12px]" value={tempShipping.city} onChange={e => setTempShipping({...tempShipping, city: e.target.value})} placeholder="İl" />
                           </div>
                         </div>
                       )}
@@ -2354,9 +2232,9 @@ const SiparisYonetimiPage = () => {
                   </div>
 
                   {/* Billing Address Block */}
-                  <div className="flex-1 p-4 flex flex-col gap-3">
-                    <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
-                      <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight">Fatura Bilgileri</h4>
+                  <div className="flex-1 p-4 flex flex-col gap-4">
+                    <div className="flex justify-between items-center border-b border-zinc-100 pb-3">
+                      <h4 className="text-[14px] font-semibold text-[#0a2540] tracking-tight">Fatura Bilgileri</h4>
                       {!editingBilling ? (
                         <button 
                           onClick={() => {
@@ -2369,35 +2247,35 @@ const SiparisYonetimiPage = () => {
                         </button>
                       ) : (
                         <div className="flex items-center gap-1">
-                          <button onClick={handleSaveBilling} className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
-                          <button onClick={() => setEditingBilling(false)} className="text-[10px] font-bold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
+                          <button onClick={handleSaveBilling} className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Kaydet</button>
+                          <button onClick={() => setEditingBilling(false)} className="text-[10px] font-medium text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">İptal</button>
                         </div>
                       )}
                     </div>
-                    <div className="text-xs space-y-1.5 text-zinc-700 font-semibold">
+                    <div className="text-[13px] space-y-2 text-zinc-600">
                       {!editingBilling ? (
                         <>
-                          <div className="font-bold text-zinc-900 text-[13px]">{activeOrderDetails.billing_address.first_name} {activeOrderDetails.billing_address.last_name}</div>
-                          <p className="leading-relaxed text-xs mt-1 text-zinc-600 font-semibold">
+                          <div className="font-medium text-zinc-900">{activeOrderDetails.billing_address.first_name} {activeOrderDetails.billing_address.last_name}</div>
+                          <p className="leading-relaxed">
                             {activeOrderDetails.billing_address.address_1}
                           </p>
-                          <div className="text-xs text-zinc-600 font-semibold">{activeOrderDetails.billing_address.district} / {activeOrderDetails.billing_address.city} / {activeOrderDetails.billing_address.country_name}</div>
+                          <div>{activeOrderDetails.billing_address.district} / {activeOrderDetails.billing_address.city} / {activeOrderDetails.billing_address.country_name}</div>
                           {activeOrderDetails.billing_address.tc_no && (
-                            <div className="text-xs font-bold text-zinc-600 mt-1">
-                              TC: {activeOrderDetails.billing_address.tc_no}
+                            <div className="mt-1">
+                              TCKN: {activeOrderDetails.billing_address.tc_no}
                             </div>
                           )}
                         </>
                       ) : (
                         <div className="flex flex-col gap-2">
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempBilling.first_name} onChange={e => setTempBilling({...tempBilling, first_name: e.target.value})} placeholder="Ad" />
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempBilling.last_name} onChange={e => setTempBilling({...tempBilling, last_name: e.target.value})} placeholder="Soyad" />
-                          <textarea rows={2} className="w-full border rounded p-1 text-[11px]" value={tempBilling.address_1} onChange={e => setTempBilling({...tempBilling, address_1: e.target.value})} placeholder="Açık Adres" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempBilling.first_name} onChange={e => setTempBilling({...tempBilling, first_name: e.target.value})} placeholder="Ad" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempBilling.last_name} onChange={e => setTempBilling({...tempBilling, last_name: e.target.value})} placeholder="Soyad" />
+                          <textarea rows={2} className="w-full border rounded p-1.5 text-[12px]" value={tempBilling.address_1} onChange={e => setTempBilling({...tempBilling, address_1: e.target.value})} placeholder="Açık Adres" />
                           <div className="flex gap-2">
-                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempBilling.district} onChange={e => setTempBilling({...tempBilling, district: e.target.value})} placeholder="İlçe" />
-                            <input type="text" className="w-1/2 border rounded p-1 text-[11px]" value={tempBilling.city} onChange={e => setTempBilling({...tempBilling, city: e.target.value})} placeholder="İl" />
+                            <input type="text" className="w-1/2 border rounded p-1.5 text-[12px]" value={tempBilling.district} onChange={e => setTempBilling({...tempBilling, district: e.target.value})} placeholder="İlçe" />
+                            <input type="text" className="w-1/2 border rounded p-1.5 text-[12px]" value={tempBilling.city} onChange={e => setTempBilling({...tempBilling, city: e.target.value})} placeholder="İl" />
                           </div>
-                          <input type="text" className="w-full border rounded p-1 text-[11px]" value={tempBilling.tc_no} onChange={e => setTempBilling({...tempBilling, tc_no: e.target.value})} placeholder="TC Kimlik No (Opsiyonel)" />
+                          <input type="text" className="w-full border rounded p-1.5 text-[12px]" value={tempBilling.tc_no} onChange={e => setTempBilling({...tempBilling, tc_no: e.target.value})} placeholder="TC Kimlik No (Opsiyonel)" />
                         </div>
                       )}
                     </div>
@@ -2407,18 +2285,18 @@ const SiparisYonetimiPage = () => {
                 {/* 4. Chronological logs (Admin logs & Integration logs) */}
                 <div className="bg-white border border-zinc-200 rounded shadow-none overflow-hidden">
                   <div className="p-4 border-b border-zinc-150 bg-white">
-                    <h3 className="text-[12px] font-bold text-zinc-800 tracking-tight">
+                    <h3 className="text-[14px] font-semibold text-[#0a2540] tracking-tight">
                       Yönetici Logları
                     </h3>
                   </div>
-                  <div className="divide-y divide-zinc-100 text-xs font-semibold text-zinc-700">
+                  <div className="divide-y divide-zinc-100 text-[13px] text-zinc-600">
                     {activeOrderDetails.logs.length === 0 ? (
                       <div className="p-4 text-center text-zinc-400">Log kaydı bulunmuyor.</div>
                     ) : (
                       activeOrderDetails.logs.map((log) => (
-                        <div key={log.id} className="py-2.5 px-4 flex justify-between items-center hover:bg-zinc-50/50 transition-colors">
+                        <div key={log.id} className="py-3 px-4 flex justify-between items-center hover:bg-zinc-50/50 transition-colors">
                           <span className="text-zinc-800">{log.message}</span>
-                          <span className="text-[11px] text-zinc-400 font-bold">{log.created_at}</span>
+                          <span className="text-[12px] text-zinc-400">{log.created_at}</span>
                         </div>
                       ))
                     )}
@@ -2451,92 +2329,124 @@ const SiparisYonetimiPage = () => {
               <div className="flex flex-col gap-6">
                 
                 {/* Order Meta details block */}
-                <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col gap-4">
-                  <div className="flex justify-between items-start pb-2">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[16px] font-bold text-zinc-900 tracking-tight">{activeOrderDetails.display_id}</span>
-                      <span className="text-[14px] font-bold text-zinc-500">{activeOrderDetails.store}</span>
-                      <span className="text-[12px] font-bold text-zinc-400">{activeOrderDetails.created_at}</span>
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <CizgiLogo />
+                {/* Header block (Order Info) */}
+                <div className="bg-white border border-zinc-200 rounded p-5 flex justify-between items-start">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[16px] text-[#0066cc] font-medium tracking-tight">{activeOrderDetails.display_id}</span>
+                    <span className="text-[14px] text-zinc-800 font-medium">{activeOrderDetails.customer?.first_name} {activeOrderDetails.customer?.last_name}</span>
+                    <span className="text-[13px] text-zinc-700">{activeOrderDetails.created_at}</span>
+                    <div className="mt-2">
                       {activeOrderDetails.status === "teslim_edilen" && (
-                        <span className="px-2 py-0.5 rounded border border-emerald-500 bg-emerald-50 text-[11px] font-bold text-emerald-600 uppercase leading-normal">
+                        <span className="inline-block px-3 py-1 rounded border border-emerald-500 text-[13px] font-medium text-emerald-600 bg-white">
                           Teslim Edildi
                         </span>
                       )}
                       {activeOrderDetails.status === "kargolanan" && (
-                        <span className="px-2 py-0.5 rounded border border-amber-500 bg-amber-50 text-[11px] font-bold text-amber-600 uppercase leading-normal">
+                        <span className="inline-block px-3 py-1 rounded border border-amber-500 text-[13px] font-medium text-amber-600 bg-white">
                           Kargolandı
                         </span>
                       )}
                       {activeOrderDetails.status === "hazirlanan" && (
-                        <span className="px-2 py-0.5 rounded border border-blue-500 bg-blue-50 text-[11px] font-bold text-blue-600 uppercase leading-normal">
+                        <span className="inline-block px-3 py-1 rounded border border-blue-500 text-[13px] font-medium text-blue-600 bg-white">
                           Hazırlanıyor
                         </span>
                       )}
                       {activeOrderDetails.status === "iptal_edilen" && (
-                        <span className="px-2 py-0.5 rounded border border-rose-500 bg-rose-50 text-[11px] font-bold text-rose-600 uppercase leading-normal">
+                        <span className="inline-block px-3 py-1 rounded border border-rose-500 text-[13px] font-medium text-rose-600 bg-white">
                           İptal Edildi
+                        </span>
+                      )}
+                      {activeOrderDetails.status === "onay_bekleyen" && (
+                        <span className="inline-block px-3 py-1 rounded border border-zinc-400 text-[13px] font-medium text-zinc-600 bg-white">
+                          Yeni Sipariş
                         </span>
                       )}
                     </div>
                   </div>
-
-                  <div className="h-px bg-zinc-100" />
-
-                  <div className="text-xs space-y-3 font-semibold text-zinc-500">
-                    <div className="flex justify-between">
-                      <span>Ödeme Yöntemi</span>
-                      <span className="text-zinc-900 font-semibold">{activeOrderDetails.payment_method}</span>
+                  <div className="flex flex-col items-end">
+                    <div className="w-10 h-10 bg-black flex items-center justify-center rotate-45 mb-2">
+                      <div className="w-6 h-6 border-2 border-white -rotate-45" />
                     </div>
-                    <div className="flex justify-between">
+                  </div>
+                </div>
+
+                {/* Financial block */}
+                <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col">
+                  <div className="text-[13px] space-y-3 text-zinc-600">
+                    <div className="flex justify-between items-center">
+                      <span>Ödeme</span>
+                      <span className="text-zinc-900 font-medium text-[14px]">{activeOrderDetails.payment_method}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
                       <span>Sipariş Tutarı</span>
-                      <span className="text-zinc-900 font-bold">₺ {activeOrderDetails.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</span>
+                      <span className="text-zinc-900 font-medium text-[14px]">{activeOrderDetails.total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>KDV (Matrah)</span>
-                      <span className="text-zinc-900 font-bold">₺ {activeOrderDetails.vat_total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })}</span>
+                    <div className="flex justify-between items-center">
+                      <span>KDV</span>
+                      <span className="text-zinc-900 font-medium text-[14px]">{activeOrderDetails.vat_total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                     </div>
                   </div>
 
-                  <div className="h-px bg-zinc-100" />
-                  
-                  <div className="flex flex-col gap-2">
-                    <div className="text-[12px] font-bold text-zinc-800 tracking-tight">İndirimler</div>
-                    <div className="flex justify-between items-center text-xs font-semibold text-zinc-500">
-                      <div className="flex items-center gap-1.5">
-                        <GiftIcon />
-                        <span className="text-zinc-900 font-bold">%10 İNDİRİM</span>
+                  {activeOrderDetails.discount_total > 0 && (
+                    <>
+                      <div className="h-px bg-zinc-100 my-4" />
+                      <div className="text-[13px] space-y-3 text-zinc-600">
+                        <div className="flex justify-between items-center">
+                          <span>İndirim ({activeOrderDetails.discounts?.[0]?.code || "Genel"})</span>
+                          <span className="text-zinc-900 font-medium text-[14px]">{activeOrderDetails.discount_total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                        </div>
                       </div>
-                      <span className="text-zinc-900 font-bold">79.90 TL</span>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Carrier info block */}
-                <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col gap-4">
-                  <h4 className="text-[12px] font-bold text-zinc-800 tracking-tight border-b border-zinc-100 pb-2">Kargo Bilgileri</h4>
-                  <div className="text-xs space-y-3 font-semibold text-zinc-500">
-                    <div className="flex justify-between">
-                      <span>Firma</span>
-                      <span className="text-zinc-900 font-bold uppercase">{activeOrderDetails.carrier_name}</span>
+                {(() => {
+                  let dCarrierName = activeOrderDetails.carrier_name || "DİĞER KARGO";
+                  let dBarcode = activeOrderDetails.carrier_barcode || "-";
+                  let dLink = `https://webpostman.kargoist.com/t.php?t=${dBarcode !== "-" ? dBarcode : ""}`;
+                  
+                  if (activeOrderDetails.metadata?.interline_barcode || activeOrderDetails.metadata?.selected_carrier === "interline") {
+                    dCarrierName = "Interline Express Kargo";
+                    dBarcode = activeOrderDetails.metadata?.interline_barcode || "-";
+                    dLink = dBarcode !== "-" ? `https://webpostman.interlineexpress.com/tracking?h=${dBarcode}` : "#";
+                  } else if (activeOrderDetails.metadata?.nova_barcode || activeOrderDetails.metadata?.selected_carrier === "kargonova") {
+                    dCarrierName = "Nova Kargo";
+                    dBarcode = activeOrderDetails.metadata?.nova_barcode || "-";
+                    dLink = dBarcode !== "-" ? `https://webpostman.interlineexpress.com/tracking?h=${dBarcode}` : "#"; // Varsayılan olarak aynı altyapıyı kullanır
+                  }
+
+                  const hasBarcode = dBarcode && dBarcode !== "-";
+
+                  return (
+                    <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col gap-4">
+                      <h4 className="text-[14px] font-semibold text-[#0a2540] tracking-tight">Kargo Bilgileri</h4>
+                      <div className="text-[13px] space-y-3 text-zinc-600">
+                        <div className="flex justify-between items-center">
+                          <span>Firma</span>
+                          <span className="text-zinc-900 font-medium">{dCarrierName}</span>
+                        </div>
+                        {hasBarcode && (
+                          <>
+                            <div className="flex justify-between items-center">
+                              <span>Barkod</span>
+                              <span className="text-zinc-900 font-medium">{dBarcode}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span>Takip Kodu</span>
+                              <span className="text-zinc-900 font-medium">{dBarcode}</span>
+                            </div>
+                            <div className="flex pt-1 mt-1 break-all">
+                              <a href={dLink} target="_blank" rel="noopener noreferrer" className="text-[#0066cc] hover:underline text-[13px]">
+                                {dLink}
+                              </a>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Barkod</span>
-                      <span className="text-zinc-900 font-bold font-mono">{activeOrderDetails.carrier_barcode || "-"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Takip Kodu</span>
-                      <span className="text-zinc-900 font-bold font-mono">{activeOrderDetails.carrier_barcode || "-"}</span>
-                    </div>
-                    <div className="flex justify-end pt-1">
-                      <a href="#" className="text-blue-600 hover:underline text-[11px] truncate max-w-[250px]">
-                        https://webpostman.kargoist.com/t.php?t={activeOrderDetails.carrier_barcode}
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Dönüşüm Bilgileri block */}
                 <div className="bg-white border border-zinc-200 rounded p-5 flex flex-col gap-4">
@@ -2674,7 +2584,11 @@ const SiparisYonetimiPage = () => {
                 
                 {activeOrderDetails.status !== "kargolanan" && activeOrderDetails.status !== "teslim_edilen" && activeOrderDetails.status !== "iptal_edilen" && (
                   <button 
-                    onClick={() => {}}
+                    onClick={() => {
+                      setShipmentModalTargetIds([activeOrderDetails.id]);
+                      setShowShipmentModal(true);
+                      setIsActionMenuOpen(false);
+                    }}
                     className="bg-[#00c853] hover:bg-[#00b248] text-white font-semibold text-[13px] h-9 px-5 rounded transition-all cursor-pointer shadow-sm"
                   >
                     Siparişi Kargola
@@ -2768,6 +2682,24 @@ const SiparisYonetimiPage = () => {
                 </select>
               </div>
 
+              {newStatusValue === "kargolanan" && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[12px] font-semibold text-zinc-500">Kargo Firması</label>
+                  <select 
+                    value={selectedCarrier}
+                    onChange={(e) => setSelectedCarrier(e.target.value)}
+                    className="w-full border border-zinc-300 rounded px-3 py-2.5 text-[13px] font-bold text-zinc-800 focus:outline-none focus:border-blue-500 shadow-sm cursor-pointer"
+                  >
+                    <option value="kargonova">Nova Kargo</option>
+                    <option value="interline">Interline Kargo</option>
+                    <option value="ptt">PTT Kargo</option>
+                    <option value="aras">Aras Kargo</option>
+                    <option value="yurtici">Yurtiçi Kargo</option>
+                    <option value="mng">MNG Kargo</option>
+                  </select>
+                </div>
+              )}
+
               <label className="flex items-center gap-2.5 cursor-pointer mt-1">
                 <input 
                   type="checkbox" 
@@ -2792,6 +2724,20 @@ const SiparisYonetimiPage = () => {
               <button
                 onClick={async () => {
                   for (const id of statusModalTargetIds) {
+                    if (newStatusValue === "kargolanan") {
+                      const orderToUpdate = realOrders.find(o => o.id === id);
+                      const oldMetadata = orderToUpdate?.metadata || {};
+                      await fetch(`/admin/orders/${id}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          metadata: {
+                            ...oldMetadata,
+                            selected_carrier: selectedCarrier
+                          }
+                        })
+                      });
+                    }
                     await handleStatusChange(id, newStatusValue, true);
                   }
                   setShowStatusModal(false);
@@ -2810,6 +2756,92 @@ const SiparisYonetimiPage = () => {
               >
                 <span className="text-sm">✔</span>
                 <span>Kaydet</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inner Modal for Shipment (Siparişi Kargola) */}
+      {showShipmentModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowShipmentModal(false)} />
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[420px] flex flex-col relative animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+            {/* Header */}
+            <div className="bg-[#0d6efd] text-white px-5 py-4 flex flex-col relative">
+              <span className="text-[12px] font-semibold text-blue-100 mb-0.5">Sipariş İşlemleri</span>
+              <span className="text-[16px] font-bold tracking-tight">Siparişleri Kargola</span>
+              <button 
+                onClick={() => setShowShipmentModal(false)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-zinc-200 opacity-90 transition-opacity"
+              >
+                <span className="text-xl font-bold">✕</span>
+              </button>
+            </div>
+            
+            {/* Body */}
+            <div className="p-6 flex flex-col gap-5">
+              <div className="flex border-b border-zinc-200">
+                <button className="flex-1 py-2 text-[13px] font-bold text-blue-600 border-b-2 border-blue-600">API ile Kargola</button>
+                <button className="flex-1 py-2 text-[13px] font-bold text-zinc-400 hover:text-zinc-600" onClick={() => alert("Manuel kargolama modülü hazırlanıyor.")}>Manuel Kargola</button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-[12px] font-semibold text-zinc-500">Kargo Firması</label>
+                <select 
+                  value={selectedCarrier}
+                  onChange={(e) => setSelectedCarrier(e.target.value)}
+                  className="w-full border border-zinc-300 rounded px-3 py-2.5 text-[13px] font-bold text-zinc-800 focus:outline-none focus:border-blue-500 shadow-sm cursor-pointer"
+                >
+                  <option value="kargonova">Nova Kargo</option>
+                  <option value="interline">Interline Kargo</option>
+                  <option value="ptt">PTT Kargo</option>
+                  <option value="aras">Aras Kargo</option>
+                  <option value="yurtici">Yurtiçi Kargo</option>
+                  <option value="mng">MNG Kargo</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-4 bg-zinc-50 border-t border-zinc-100 flex justify-end gap-2">
+              <button
+                onClick={() => setShowShipmentModal(false)}
+                className="bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-700 font-bold text-[12px] h-9 px-5 rounded transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                onClick={async () => {
+                  for (const id of shipmentModalTargetIds) {
+                    const orderToUpdate = realOrders.find(o => o.id === id);
+                    const oldMetadata = orderToUpdate?.metadata || {};
+                    // Update order metadata with selected carrier
+                    await fetch(`/admin/orders/${id}`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        metadata: {
+                          ...oldMetadata,
+                          selected_carrier: selectedCarrier
+                        }
+                      })
+                    });
+                    // Change status to kargolanan which triggers the subscriber
+                    await handleStatusChange(id, "kargolanan", true);
+                  }
+                  setShowShipmentModal(false);
+                  
+                  const refreshRes = await fetch("/admin/orders?limit=100&fields=*customer,*shipping_address,*billing_address,*items")
+                  const refreshData = await refreshRes.json()
+                  if (refreshData && refreshData.orders) setRealOrders(refreshData.orders)
+
+                  showSuccess("Siparişler başarıyla kargolandı.");
+                }}
+                className="bg-[#10B981] hover:bg-emerald-600 text-white font-bold text-[12px] h-9 px-6 rounded transition-colors shadow-sm flex items-center gap-1.5"
+              >
+                <span className="text-sm">✔</span>
+                <span>Kargola</span>
               </button>
             </div>
           </div>
@@ -3027,6 +3059,7 @@ const SiparisYonetimiPage = () => {
   )
 }
 
+import { defineWidgetConfig } from "@medusajs/admin-sdk"
 export const config = defineWidgetConfig({
   zone: "order.list.before",
 })
