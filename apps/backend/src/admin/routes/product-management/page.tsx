@@ -14,23 +14,6 @@ const isVideoUrl = (url: string) => {
   return /\.(mp4|webm|mov|ogg|avi)($|\?)/i.test(url) || url.includes("/video")
 }
 
-const getStorefrontBaseUrl = () => {
-  if (typeof window === "undefined") return "http://localhost:8001"
-  const { hostname, protocol } = window.location
-  if (hostname === "localhost" || hostname === "127.0.0.1") {
-    return "http://localhost:8001"
-  }
-  if (hostname.includes("sslip.io")) {
-    const parts = hostname.split(".")
-    if (parts.length > 2) {
-      parts[0] = "storefront"
-    }
-    return `${protocol}//${parts.join(".")}:8001`
-  }
-  const domain = hostname.replace("admin.", "www.").replace("backend.", "www.")
-  return `${protocol}//${domain}`
-}
-
 interface SelectedVariant {
   id?: string
   color: string
@@ -63,207 +46,34 @@ const IkasProductsPage = () => {
 
   // --- Search & Filters ---
   const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+
+  // --- Bulk Actions ---
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([])
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
+  const [bulkModalStep, setBulkModalStep] = useState<1 | 2>(1)
+  const [bulkActionType, setBulkActionType] = useState("")
+  const [bulkActionCategory, setBulkActionCategory] = useState("")
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   // --- Form States (IKAS Fields) ---
   const [productName, setProductName] = useState("")
-  const [productHandle, setProductHandle] = useState("")
   const [productType, setProductType] = useState("physical")
   const [generalPrice, setGeneralPrice] = useState("")
   const [generalDiscountedPrice, setGeneralDiscountedPrice] = useState("")
   const [generalCostPrice, setGeneralCostPrice] = useState("")
   
-  // --- Package Campaign Prices ---
-  const [packagePrices, setPackagePrices] = useState<string[]>([""])
-  
   const [images, setImages] = useState<ProductImage[]>([])
   const [brand, setBrand] = useState("")
   const [category, setCategory] = useState("")
   const [description, setDescription] = useState("")
+  const [seoTitle, setSeoTitle] = useState("")
+  const [seoDescription, setSeoDescription] = useState("")
+  const [seoKeywords, setSeoKeywords] = useState("")
+  const [canonicalUrl, setCanonicalUrl] = useState("")
+  const [seoUrl, setSeoUrl] = useState("")
   const [tags, setTags] = useState("")
-
-  // --- Carousel Images State ---
-  const [carouselImages, setCarouselImages] = useState<string[]>(["", "", ""])
-
-  // --- Reviews State ---
-  const [reviews, setReviews] = useState<any[]>([])
-  const [showReviewModal, setShowReviewModal] = useState(false)
-  const [editingReviewIndex, setEditingReviewIndex] = useState<number | null>(null)
-  
-  // Modal Fields State
-  const [reviewName, setReviewName] = useState("")
-  const [reviewColor, setReviewColor] = useState("")
-  const [reviewRating, setReviewRating] = useState(5)
-  const [reviewComment, setReviewComment] = useState("")
-  const [reviewMediaUrl, setReviewMediaUrl] = useState("")
-  const [reviewMediaType, setReviewMediaType] = useState<"image" | "video">("image")
-  const [reviewIsActive, setReviewIsActive] = useState(true)
-  const [reviewUploading, setReviewUploading] = useState(false)
-
-  const handleReviewMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-    const file = files[0]
-    setReviewUploading(true)
-    const reader = new FileReader()
-
-    reader.onload = async () => {
-      try {
-        const base64 = reader.result as string
-        const res = await fetch("/admin/hero-config/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            filename: file.name,
-            filetype: file.type,
-            base64
-          })
-        })
-        const data = await res.json()
-        if (data && data.success) {
-          setReviewMediaUrl(data.url)
-          if (isVideoUrl(data.url)) {
-            setReviewMediaType("video")
-          } else {
-            setReviewMediaType("image")
-          }
-        } else {
-          alert("Medya yüklenirken hata oluştu: " + (data.message || "Yükleme başarısız"))
-        }
-      } catch (err: any) {
-        alert("Medya yüklenirken hata oluştu: " + err.message)
-      } finally {
-        setReviewUploading(false)
-      }
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const handleSaveReview = () => {
-    if (!reviewName.trim()) return alert("Lütfen isim girin.")
-    if (!reviewComment.trim()) return alert("Lütfen yorum girin.")
-
-    const newReview = {
-      id: editingReviewIndex !== null && reviews[editingReviewIndex]?.id ? reviews[editingReviewIndex].id : `rev_${Date.now()}`,
-      name: reviewName,
-      color: reviewColor || "Standart",
-      rating: reviewRating,
-      comment: reviewComment,
-      image: reviewMediaUrl,
-      media_type: reviewMediaType,
-      is_active: reviewIsActive,
-      created_at: editingReviewIndex !== null && reviews[editingReviewIndex]?.created_at ? reviews[editingReviewIndex].created_at : new Date().toISOString()
-    }
-
-    setReviews(prev => {
-      const updated = [...prev]
-      if (editingReviewIndex !== null) {
-        updated[editingReviewIndex] = newReview
-      } else {
-        updated.push(newReview)
-      }
-      return updated
-    })
-
-    setShowReviewModal(false)
-    setEditingReviewIndex(null)
-    setReviewName("")
-    setReviewColor("")
-    setReviewRating(5)
-    setReviewComment("")
-    setReviewMediaUrl("")
-    setReviewMediaType("image")
-    setReviewIsActive(true)
-  }
-
-  const handleRemoveReview = (index: number) => {
-    if (confirm("Bu yorumu silmek istediğinize emin misiniz?")) {
-      setReviews(prev => prev.filter((_, i) => i !== index))
-    }
-  }
-
-  const handleEditReviewClick = (index: number) => {
-    const rev = reviews[index]
-    if (!rev) return
-    setEditingReviewIndex(index)
-    setReviewName(rev.name || "")
-    setReviewColor(rev.color || "")
-    setReviewRating(rev.rating || 5)
-    setReviewComment(rev.comment || "")
-    setReviewMediaUrl(rev.image || "")
-    setReviewMediaType(rev.media_type || "image")
-    setReviewIsActive(rev.is_active !== undefined ? rev.is_active : true)
-    setShowReviewModal(true)
-  }
-
-  const handleAddReviewClick = () => {
-    setEditingReviewIndex(null)
-    setReviewName("")
-    setReviewColor(selectedColors[0] || "Standart")
-    setReviewRating(5)
-    setReviewComment("")
-    setReviewMediaUrl("")
-    setReviewMediaType("image")
-    setReviewIsActive(true)
-    setShowReviewModal(true)
-  }
-
-  const handleCarouselImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
-
-    const file = files[0]
-    setUploading(true)
-    const reader = new FileReader()
-
-    reader.onload = async () => {
-      try {
-        const base64 = reader.result as string
-        const res = await fetch("/admin/hero-config/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            filename: file.name,
-            filetype: file.type,
-            base64
-          })
-        })
-        const data = await res.json()
-        if (data && data.success) {
-          setCarouselImages(prev => {
-            const updated = [...prev]
-            updated[idx] = data.url
-            return updated
-          })
-          
-          setImages(prev => {
-            if (prev.some(img => img.url === data.url)) return prev
-            return [...prev, {
-              url: data.url,
-              filename: data.filename || file.name,
-              type: "image"
-            }]
-          })
-        } else {
-          alert("Görsel yüklenirken hata oluştu: " + (data.message || "Yükleme başarısız"))
-        }
-      } catch (err: any) {
-        alert("Görsel yüklenirken hata oluştu: " + err.message)
-      } finally {
-        setUploading(false)
-      }
-    }
-    reader.readAsDataURL(file)
-  }
-
-  const handleRemoveCarouselImage = (idx: number) => {
-    setCarouselImages(prev => {
-      const updated = [...prev]
-      updated[idx] = ""
-      return updated
-    })
-  }
 
   // --- Variant Options ---
   const [isVariantProduct, setIsVariantProduct] = useState(true)
@@ -332,11 +142,11 @@ const IkasProductsPage = () => {
     setLoading(true)
     try {
       const [productsRes, priceListsRes, categoriesRes, collectionsRes, inventoryItemsRes] = await Promise.all([
-        fetch("/admin/products?limit=100&order=-created_at&fields=id,title,handle,metadata,description,thumbnail,images,collection_id,categories.id,categories.name,options.id,options.title,options.values.id,options.values.value,variants.id,variants.title,variants.sku,variants.barcode,variants.manage_inventory,variants.prices.amount,variants.prices.currency_code,variants.metadata,variants.inventory_items.inventory_item_id,variants.options.id,variants.options.value,variants.options.option_id").then(res => res.json()).catch(() => ({ products: [] })),
+        fetch("/admin/products?limit=3000&order=-created_at&fields=id,title,description,thumbnail,images,collection_id,categories.id,categories.name,options.id,options.title,options.values.id,options.values.value,variants.id,variants.title,variants.sku,variants.barcode,variants.manage_inventory,variants.prices.amount,variants.prices.currency_code,variants.metadata,variants.inventory_items.inventory_item_id,variants.options.id,variants.options.value,variants.options.option_id").then(res => res.json()).catch(() => ({ products: [] })),
         fetch("/admin/price-lists?fields=id,title,type,status,prices.id,prices.amount,prices.currency_code,prices.price_set.variant.id").then(res => res.json()).catch(() => ({ price_lists: [] })),
         fetch("/admin/product-categories").then(res => res.json()).catch(() => ({ product_categories: [] })),
         fetch("/admin/collections").then(res => res.json()).catch(() => ({ collections: [] })),
-        fetch("/admin/inventory-items?limit=500").then(res => res.json()).catch(() => ({ inventory_items: [] }))
+        fetch("/admin/inventory-items?limit=3000").then(res => res.json()).catch(() => ({ inventory_items: [] }))
       ])
 
       const inventoryItemsMap = new Map<string, number>()
@@ -351,7 +161,7 @@ const IkasProductsPage = () => {
         if (prod.variants) {
           prod.variants = prod.variants.map((v: any) => {
             const inventoryItemId = v.inventory_items?.[0]?.inventory_item_id
-            const stock = inventoryItemId ? (inventoryItemsMap.get(inventoryItemId) ?? 100) : 100
+            const stock = inventoryItemId ? (inventoryItemsMap.get(inventoryItemId) ?? v.metadata?.stock ?? 0) : (v.metadata?.stock ?? 0)
             return {
               ...v,
               inventory_quantity: stock
@@ -386,15 +196,10 @@ const IkasProductsPage = () => {
 
   // --- Helper to Slugify Handle ---
   const slugify = (text: string) => {
-    const trMap: Record<string, string> = {
-      'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u',
-      'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u'
-    }
-    let str = text.toString().toLowerCase().trim()
-    for (const key in trMap) {
-      str = str.replaceAll(key, trMap[key])
-    }
-    return str
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
       .replace(/\s+/g, "-")
       .replace(/[^\w\-]+/g, "")
       .replace(/\-\-+/g, "-")
@@ -450,7 +255,6 @@ const IkasProductsPage = () => {
             const res = await fetch("/admin/hero-config/upload", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              credentials: "include",
               body: JSON.stringify({
                 filename: file.name,
                 filetype: file.type,
@@ -520,6 +324,7 @@ const IkasProductsPage = () => {
 
   // --- Find Discounted Price for a Variant in Medusa Price Lists ---
   const getSalePriceForVariant = (variantId: string) => {
+    // Find active overrides in Type=sale price lists
     for (const plist of priceLists) {
       if (plist.type === "sale" && plist.prices) {
         const pMatch = plist.prices.find((p: any) => p.variant_id === variantId && p.currency_code === "try")
@@ -534,12 +339,10 @@ const IkasProductsPage = () => {
   // --- Reset Form for Create ---
   const initCreateMode = () => {
     setProductName("")
-    setProductHandle("")
     setProductType("physical")
     setGeneralPrice("")
     setGeneralDiscountedPrice("")
     setGeneralCostPrice("")
-    setPackagePrices([""])
     setImages([])
     setBrand("")
     setCategory("")
@@ -553,8 +356,6 @@ const IkasProductsPage = () => {
     setCheckedIndices([])
     setIsVariantProduct(true)
     setEditingProductId(null)
-    setCarouselImages(["", "", ""])
-    setReviews([])
     setView("create")
   }
 
@@ -563,14 +364,15 @@ const IkasProductsPage = () => {
     setLoading(true)
     setEditingProductId(prod.id)
     setProductName(prod.title || "")
-    setProductHandle(prod.handle || "")
     setDescription(prod.description || "")
     setCategory(prod.categories?.[0]?.id || "")
     setBrand(prod.collection_id || "")
     
+    // Detach options
     const colorOpt = prod.options?.find((o: any) => o.title.toLowerCase() === "renk")
     const sizeOpt = prod.options?.find((o: any) => o.title.toLowerCase() === "beden")
 
+    // Set Images with variant color mapping
     const prodImages = prod.images?.map((img: any) => {
       const isVideo = isVideoUrl(img.url)
       const matchingVariant = prod.variants?.find((v: any) => v.metadata?.image === img.url)
@@ -583,31 +385,6 @@ const IkasProductsPage = () => {
       }
     }) || []
     setImages(prodImages)
-    
-    // Load Reviews from metadata
-    const metadataReviews = prod.metadata?.reviews as any[] | undefined
-    if (metadataReviews && Array.isArray(metadataReviews)) {
-      setReviews(metadataReviews)
-    } else {
-      setReviews([])
-    }
-    
-    // Load Carousel Images from metadata first, fallback to slice(1, 4)
-    const metadataCarousel = prod.metadata?.carousel_images as string[] | undefined
-    if (metadataCarousel && Array.isArray(metadataCarousel)) {
-      const initialCarousel = ["", "", ""]
-      metadataCarousel.forEach((url: string, i: number) => {
-        if (i < 3) initialCarousel[i] = url
-      })
-      setCarouselImages(initialCarousel)
-    } else {
-      const carouselUrls = prod.images?.slice(1, 4).map((img: any) => img.url) || []
-      const initialCarousel = ["", "", ""]
-      carouselUrls.forEach((url: string, i: number) => {
-        if (i < 3) initialCarousel[i] = url
-      })
-      setCarouselImages(initialCarousel)
-    }
     
     const colors = colorOpt?.values?.map((v: any) => typeof v === "string" ? v : v.value) || []
     const sizes = sizeOpt?.values?.map((v: any) => typeof v === "string" ? v : v.value) || []
@@ -630,10 +407,12 @@ const IkasProductsPage = () => {
 
     setIsVariantProduct(prod.options?.length > 0)
 
+    // Load variants details
     const loadedVariants: SelectedVariant[] = prod.variants?.map((v: any) => {
       const originalPrice = (v.prices?.find((p: any) => p.currency_code === "try")?.amount || 0) / 100
       const salePrice = getSalePriceForVariant(v.id) || originalPrice
 
+      // Option values
       const cVal = v.options?.find((o: any) => o.option_id === colorOpt?.id)?.value || "Standart"
       const sVal = v.options?.find((o: any) => o.option_id === sizeOpt?.id)?.value || "Standart"
 
@@ -646,11 +425,12 @@ const IkasProductsPage = () => {
         costPrice: (v.metadata?.cost_price || 0).toString(),
         sku: v.sku || "",
         barcode: v.barcode || "",
-        stock: (v.inventory_quantity || 100).toString(),
+        stock: (v.inventory_quantity ?? v.metadata?.stock ?? 0).toString(), // Fallback quantity
         image: v.metadata?.image || prod.thumbnail || ""
       }
     }) || []
 
+    // Set general values from the first variant as a baseline default
     if (prod.variants?.length > 0) {
       const v = prod.variants[0]
       const op = (v.prices?.find((p: any) => p.currency_code === "try")?.amount || 0) / 100
@@ -659,23 +439,6 @@ const IkasProductsPage = () => {
       setGeneralDiscountedPrice(sp.toString())
       setGeneralCostPrice((v.metadata?.cost_price || 0).toString())
     }
-
-    let loadedPrices: string[] = [""]
-    if (Array.isArray(prod.metadata?.package_prices)) {
-      loadedPrices = prod.metadata.package_prices.map((p: any) => p?.toString() || "")
-    } else {
-      const fallbackPrices: string[] = []
-      for (let i = 1; i <= 10; i++) {
-        const val = prod.metadata?.[`package_price_${i}`]
-        if (val !== undefined && val !== null) {
-          fallbackPrices.push(val.toString())
-        }
-      }
-      if (fallbackPrices.length > 0) {
-        loadedPrices = fallbackPrices
-      }
-    }
-    setPackagePrices(loadedPrices)
 
     setVariantsTable(loadedVariants)
     setCheckedIndices([])
@@ -693,128 +456,98 @@ const IkasProductsPage = () => {
       let url = "/admin/products"
       let method = "POST"
       
-      // Prepare ordered product images
-      const finalGlobalImages: string[] = []
-      
-      // 1. The first image (mockup catalog image)
-      if (images.length > 0 && images[0]?.url) {
-        finalGlobalImages.push(images[0].url)
-      } else if (carouselImages.some(url => !!url)) {
-        finalGlobalImages.push(carouselImages.find(url => !!url) || "")
-      }
-
-      // 2. The 3 carousel images (placed in indices 1, 2, 3)
-      carouselImages.forEach(url => {
-        if (url && !finalGlobalImages.includes(url)) {
-          finalGlobalImages.push(url)
-        }
-      })
-
-      // 3. Variant images
+      // Collect all variant images and uploaded images to construct product media
       const variantImages: string[] = []
-      variantsTable.forEach(v => {
-        if (v.image && !variantImages.includes(v.image)) {
-          variantImages.push(v.image)
-        }
-      })
+      if (isVariantProduct) {
+        variantsTable.forEach(v => {
+          if (v.image && !variantImages.includes(v.image)) {
+            variantImages.push(v.image)
+          }
+        })
+      }
+      const globalImages = images.map(img => img.url)
+      const uniqueImageUrls = Array.from(new Set([...globalImages, ...variantImages]))
 
-      // 4. Any remaining images in the pool
-      images.forEach(img => {
-        if (img.url && !finalGlobalImages.includes(img.url) && !variantImages.includes(img.url)) {
-          finalGlobalImages.push(img.url)
-        }
-      })
-
-      const uniqueImageUrls = Array.from(new Set([
-        ...finalGlobalImages,
-        ...variantImages
-      ])).filter(url => !!url)
-
+      // Determine Medusa V2 Payload
       const payload: any = {
         title: productName,
-        handle: productHandle || slugify(productName),
         description: description,
         status: "published",
         thumbnail: uniqueImageUrls[0] || "",
         images: uniqueImageUrls.map(url => ({ url })),
         collection_id: brand || undefined,
-        categories: category ? [{ id: category }] : [],
-        metadata: {
-          carousel_images: carouselImages,
-          reviews: reviews,
-          package_prices: packagePrices.map(p => parseFloat(p)).filter(p => !isNaN(p))
-        }
+        categories: category ? [{ id: category }] : []
       }
 
-      if (view !== "edit") {
-        if (isVariantProduct) {
-          payload.options = [
-            { title: "Renk", values: selectedColors.length > 0 ? selectedColors : ["Standart"] },
-            { title: "Beden", values: selectedSizes.length > 0 ? selectedSizes : ["Standart"] }
-          ]
-          payload.variants = variantsTable.map(v => ({
-            title: `${v.color} / ${v.size}`,
-            sku: v.sku,
-            barcode: v.barcode || undefined,
+      if (isVariantProduct) {
+        payload.options = [
+          { title: "Renk", values: selectedColors.length > 0 ? selectedColors : ["Standart"] },
+          { title: "Beden", values: selectedSizes.length > 0 ? selectedSizes : ["Standart"] }
+        ]
+        payload.variants = variantsTable.map(v => ({
+          title: `${v.color} / ${v.size}`,
+          sku: v.sku,
+          barcode: v.barcode || undefined,
+          manage_inventory: true,
+          options: {
+            "Renk": v.color,
+            "Beden": v.size
+          },
+          prices: [
+            { currency_code: "try", amount: parseFloat(v.price) * 100 }
+          ],
+          metadata: {
+            cost_price: parseFloat(v.costPrice) || 0,
+            image: v.image || ""
+          }
+        }))
+      } else {
+        // Simple product has no options, single default variant
+        payload.options = []
+        payload.variants = [
+          {
+            title: "Standart",
+            sku: `${slugify(productName)}-STD`.toUpperCase(),
             manage_inventory: true,
-            options: {
-              "Renk": v.color,
-              "Beden": v.size
-            },
             prices: [
-              { currency_code: "try", amount: parseFloat(v.price) * 100 }
+              { currency_code: "try", amount: parseFloat(generalPrice || "0") * 100 }
             ],
             metadata: {
-              cost_price: parseFloat(v.costPrice) || 0,
-              image: v.image || ""
+              cost_price: parseFloat(generalCostPrice || "0") || 0
             }
-          }))
-        } else {
-          payload.options = []
-          payload.variants = [
-            {
-              title: "Standart",
-              sku: `${slugify(productName)}-STD`.toUpperCase(),
-              manage_inventory: true,
-              prices: [
-                { currency_code: "try", amount: parseFloat(generalPrice || "0") * 100 }
-              ],
-              metadata: {
-                cost_price: parseFloat(generalCostPrice || "0") || 0
-              }
-            }
-          ]
-        }
+          }
+        ]
       }
 
       let savedProduct: any = null
 
       if (view === "edit" && editingProductId) {
         url = `/admin/products/${editingProductId}`
-        method = "POST"
+        method = "POST" // Medusa update is POST
         
+        // 1. Update basic product fields (title, desc, categories, collection, images, etc.)
         const updateRes = await fetch(url, {
           method,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         })
         const data = await updateRes.json()
-        if (!updateRes.ok) {
-          throw new Error(data.message || "Ürün güncellenemedi.")
-        }
         savedProduct = data.product
 
+        // 2. Fetch current product options and variants to delete them
         const currentRes = await fetch(`/admin/products/${editingProductId}?fields=options.id,variants.id`)
         if (currentRes.ok) {
           const currentData = await currentRes.json()
           const currentProduct = currentData.product
 
+          // Delete all current variants
           if (currentProduct.variants) {
             for (const v of currentProduct.variants) {
               await fetch(`/admin/products/${editingProductId}/variants/${v.id}`, { method: "DELETE" })
             }
           }
 
+          // Delete all current options
           if (currentProduct.options) {
             for (const opt of currentProduct.options) {
               await fetch(`/admin/products/${editingProductId}/options/${opt.id}`, { method: "DELETE" })
@@ -822,6 +555,7 @@ const IkasProductsPage = () => {
           }
         }
 
+        // 3. Create new options
         if (isVariantProduct) {
           await fetch(`/admin/products/${editingProductId}/options`, {
             method: "POST",
@@ -842,6 +576,7 @@ const IkasProductsPage = () => {
           })
         }
 
+        // 4. Create new variants
         if (isVariantProduct) {
           for (const v of variantsTable) {
             await fetch(`/admin/products/${editingProductId}/variants`, {
@@ -867,6 +602,7 @@ const IkasProductsPage = () => {
             })
           }
         } else {
+          // Simple product default variant
           await fetch(`/admin/products/${editingProductId}/variants`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -884,7 +620,8 @@ const IkasProductsPage = () => {
           })
         }
 
-        const refreshedRes = await fetch(`/admin/products/${editingProductId}?fields=id,title,handle,metadata,variants.id,variants.sku,variants.title,variants.options.id,variants.options.value,variants.options.option_id`)
+        // 5. Re-fetch product to get the newly created variants with correct Medusa V2 format and IDs
+        const refreshedRes = await fetch(`/admin/products/${editingProductId}?fields=id,title,variants.id,variants.sku,variants.title,variants.options.id,variants.options.value,variants.options.option_id`)
         if (refreshedRes.ok) {
           const refreshedData = await refreshedRes.json()
           savedProduct = refreshedData.product
@@ -896,9 +633,6 @@ const IkasProductsPage = () => {
           body: JSON.stringify(payload)
         })
         const data = await createRes.json()
-        if (!createRes.ok) {
-          throw new Error(data.message || "Ürün kaydedilemedi.")
-        }
         savedProduct = data.product
       }
 
@@ -906,6 +640,7 @@ const IkasProductsPage = () => {
         throw new Error("Ürün kaydedilemedi.")
       }
 
+      // --- Sync Stock Levels to default stock location ---
       try {
         const slocRes = await fetch("/admin/stock-locations")
         if (slocRes.ok) {
@@ -913,6 +648,7 @@ const IkasProductsPage = () => {
           const locationId = slocData.stock_locations?.[0]?.id
 
           if (locationId) {
+            // Re-fetch the product to get variants with inventory item links
             const productUrl = `/admin/products/${savedProduct.id}?fields=id,title,variants.id,variants.sku,variants.barcode,variants.manage_inventory,variants.metadata,variants.inventory_items.inventory_item_id`
             const prodRes = await fetch(productUrl)
             if (prodRes.ok) {
@@ -928,22 +664,25 @@ const IkasProductsPage = () => {
                   continue
                 }
 
-                let targetStock = 100
+                // Match with target stock from the variantsTable or standard state
+                let targetStock = 0
                 if (isVariantProduct) {
                   const formV = variantsTable.find(v => v.sku === sku || `${v.color} / ${v.size}` === sv.title)
                   if (formV) {
                     targetStock = parseInt(formV.stock) || 0
                   }
                 } else {
-                  targetStock = parseInt(variantsTable[0]?.stock || "100") || 0
+                  targetStock = parseInt(variantsTable[0]?.stock || "0") || 0
                 }
 
+                // Query existing location levels for this item
                 const levelsRes = await fetch(`/admin/inventory-items/${inventoryItemId}/location-levels`)
                 if (levelsRes.ok) {
                   const levelsData = await levelsRes.json()
                   const existingLevel = levelsData.inventory_levels?.find((l: any) => l.location_id === locationId)
 
                   if (existingLevel) {
+                    // Update location level
                     await fetch(`/admin/inventory-items/${inventoryItemId}/location-levels/${locationId}`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -952,6 +691,7 @@ const IkasProductsPage = () => {
                       })
                     })
                   } else {
+                    // Create location level association
                     await fetch(`/admin/inventory-items/${inventoryItemId}/location-levels`, {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
@@ -970,6 +710,7 @@ const IkasProductsPage = () => {
         console.error("Error syncing stock levels:", stockErr)
       }
 
+      // --- Price List overridden sync for Discounted Prices (İKAS İndirimli Fiyat) ---
       const activeSalePrices: any[] = []
       
       if (isVariantProduct) {
@@ -1000,9 +741,11 @@ const IkasProductsPage = () => {
       }
 
       if (activeSalePrices.length > 0) {
+        // Look for "Ürün İndirim Listesi" or "İKAS İndirim Listesi"
         let targetList = priceLists.find(pl => pl.title === "Ürün İndirim Listesi" || pl.title === "İKAS İndirim Listesi")
         
         if (targetList) {
+          // Update list prices
           await fetch(`/admin/price-lists/${targetList.id}/prices/batch`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1011,6 +754,7 @@ const IkasProductsPage = () => {
             })
           })
         } else {
+          // Create list
           await fetch("/admin/price-lists", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1025,6 +769,7 @@ const IkasProductsPage = () => {
         }
       }
 
+      // Refresh list and return
       await fetchData()
       setView("list")
     } catch (err: any) {
@@ -1035,6 +780,7 @@ const IkasProductsPage = () => {
     }
   }
 
+  // --- Delete Product Handler ---
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Bu ürünü silmek istediğinize emin misiniz?")) return
 
@@ -1053,13 +799,34 @@ const IkasProductsPage = () => {
     }
   }
 
+  // --- Bulk Delete Handler ---
+  const handleBulkDelete = async () => {
+    if (!confirm(`Seçili ${selectedProductIds.length} ürünü silmek istediğinize emin misiniz?`)) return
+    
+    try {
+      // Basic loop to delete selected products (in production, batch delete API might be better if supported)
+      for (const id of selectedProductIds) {
+        await fetch(`/admin/products/${id}`, { method: "DELETE" })
+      }
+      setProducts(prev => prev.filter(p => !selectedProductIds.includes(p.id)))
+      setSelectedProductIds([])
+    } catch (err) {
+      console.error(err)
+      alert("Toplu silme işleminde hata oluştu.")
+    }
+  }
+
+  // --- Calculate total stock of product ---
   const getProductTotalStock = (prod: any) => {
     return prod.variants?.reduce((sum: number, v: any) => sum + (v.inventory_quantity || v.inventory_items?.[0]?.inventory_quantity || 0), 0) || 0
   }
 
+  // --- Filtered Products list ---
   const filteredProducts = products.filter(p => 
     p.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
+  const totalPages = Math.ceil(filteredProducts.length / pageSize)
+  const paginatedProducts = filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize)
 
   return (
     <div className="bg-[#f8fafc] -m-8 p-8 min-h-screen text-slate-800 custom-admin-wrapper">
@@ -1124,6 +891,7 @@ const IkasProductsPage = () => {
             </div>
           </div>
 
+          {/* Search, Filter, and View Controls */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
             <div className="flex gap-2 w-full md:w-auto flex-1 max-w-md">
               <div className="relative flex-1">
@@ -1170,6 +938,7 @@ const IkasProductsPage = () => {
             </div>
           </div>
 
+          {/* Table */}
           {loading ? (
             <div className="flex justify-center items-center py-20 text-slate-400 text-sm gap-2">
               <ArrowPath className="w-4 h-4 animate-spin text-violet-600" />
@@ -1185,8 +954,14 @@ const IkasProductsPage = () => {
                         <input
                           type="checkbox"
                           className="w-4 h-4 text-violet-600 border-slate-300 rounded focus:ring-violet-500"
-                          checked={false}
-                          readOnly
+                          checked={paginatedProducts.length > 0 && selectedProductIds.length === paginatedProducts.length}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProductIds(paginatedProducts.map((p) => p.id))
+                            } else {
+                              setSelectedProductIds([])
+                            }
+                          }}
                         />
                       </th>
                       <th className="py-3 px-4 text-slate-600 font-bold select-none cursor-pointer">
@@ -1213,7 +988,7 @@ const IkasProductsPage = () => {
                         <td colSpan={7} className="py-12 text-center text-slate-400 font-medium">Hiç ürün bulunamadı.</td>
                       </tr>
                     ) : (
-                      filteredProducts.map((prod) => {
+                      paginatedProducts.map((prod) => {
                         const firstV = prod.variants?.[0]
                         const originalPrice = (firstV?.prices?.find((p: any) => p.currency_code === "try")?.amount || 0) / 100
                         const salePrice = getSalePriceForVariant(firstV?.id) || originalPrice
@@ -1226,8 +1001,14 @@ const IkasProductsPage = () => {
                               <input
                                 type="checkbox"
                                 className="w-4 h-4 text-violet-600 border-slate-300 rounded focus:ring-violet-500"
-                                checked={false}
-                                readOnly
+                                checked={selectedProductIds.includes(prod.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedProductIds((prev) => [...prev, prod.id])
+                                  } else {
+                                    setSelectedProductIds((prev) => prev.filter((id) => id !== prod.id))
+                                  }
+                                }}
                               />
                             </td>
                             <td className="py-3.5 px-4">
@@ -1309,39 +1090,95 @@ const IkasProductsPage = () => {
                 </table>
               </div>
 
+              {/* Pagination Footer */}
               <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 text-xs text-slate-500 font-semibold select-none bg-white border border-slate-150 rounded-xl p-4.5 shadow-sm">
                 <div className="flex items-center gap-4.5">
                   <div className="flex items-center gap-2">
                     <span>Satır Adedi:</span>
                     <div className="relative">
-                      <select className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-bold focus:outline-none pr-7 appearance-none cursor-pointer">
-                        <option>20</option>
-                        <option>50</option>
-                        <option>100</option>
+                      <select 
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(Number(e.target.value))
+                          setCurrentPage(1)
+                        }}
+                        className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 font-bold focus:outline-none pr-7 appearance-none cursor-pointer">
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
                       </select>
                       <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-slate-400">▼</span>
                     </div>
                   </div>
                   <div>
-                    1 - {Math.min(20, filteredProducts.length)} / {filteredProducts.length} Ürün
+                    {filteredProducts.length > 0 ? (currentPage - 1) * pageSize + 1 : 0} - {Math.min(currentPage * pageSize, filteredProducts.length)} / {filteredProducts.length} Ürün
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-1.5">
-                  <button type="button" className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-400 transition-colors disabled:opacity-50">&lt; Önceki</button>
-                  <button type="button" className="px-3 py-1.5 bg-violet-50 text-violet-700 border border-violet-200 rounded-lg font-bold">1</button>
-                  <button type="button" className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 transition-colors">2</button>
-                  <button type="button" className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 transition-colors">3</button>
-                  <button type="button" className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 transition-colors">Sonraki &gt;</button>
+                  <button 
+                    type="button" 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    &lt; Önceki
+                  </button>
+                  <span className="px-3 py-1.5 bg-violet-50 text-violet-700 border border-violet-200 rounded-lg font-bold">
+                    {currentPage} / {totalPages || 1}
+                  </span>
+                  <button 
+                    type="button" 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage >= totalPages || totalPages === 0}
+                    className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Sonraki &gt;
+                  </button>
                 </div>
               </div>
+
+              {/* Floating Bottom Bulk Action Bar */}
+              {selectedProductIds.length > 0 && (
+                <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-[#2b3548] p-4 flex items-center justify-center gap-3 z-40 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.3)] border-t border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => setIsBulkModalOpen(true)}
+                    className="bg-[#3b82f6] hover:bg-blue-600 text-white font-bold text-sm px-6 py-2.5 rounded transition-colors"
+                  >
+                    İşlemler ({selectedProductIds.length})
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-[#a855f7] hover:bg-purple-600 text-white font-bold text-sm px-6 py-2.5 rounded transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    Durum ({selectedProductIds.length})
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-[#f59e0b] hover:bg-amber-600 text-white font-bold text-sm px-6 py-2.5 rounded transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    Yazdır ({selectedProductIds.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBulkDelete}
+                    className="bg-[#ef4444] hover:bg-red-600 text-white font-bold text-sm px-6 py-2.5 rounded transition-colors flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Seçilenleri Sil ({selectedProductIds.length})
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
 
+      {/* -------------------- 2. CREATE & EDIT VIEW -------------------- */}
       {(view === "create" || view === "edit") && (
-        <form onSubmit={handleSubmit} className="max-w-5xl mx-auto">
+        <form onSubmit={handleSubmit} className="max-w-[1400px] mx-auto">
+          {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
               <button
@@ -1382,7 +1219,11 @@ const IkasProductsPage = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left 2 Columns: Main Fields */}
             <div className="lg:col-span-2 space-y-6">
+              
+              {/* Card 1: Temel Bilgiler */}
               <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-4">
                 <h2 className="text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">Temel Bilgiler</h2>
                 
@@ -1392,30 +1233,10 @@ const IkasProductsPage = () => {
                     type="text"
                     required
                     value={productName}
-                    onChange={(e) => {
-                      setProductName(e.target.value)
-                      if (view === "create") {
-                        setProductHandle(slugify(e.target.value))
-                      }
-                    }}
+                    onChange={(e) => setProductName(e.target.value)}
                     placeholder="Örn: Pembe Alo Arabiyeli Taytlı Takım"
                     className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:border-indigo-500 text-slate-800 transition-colors"
                   />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ürün Linki (URL Slug) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={productHandle}
-                    onChange={(e) => setProductHandle(slugify(e.target.value))}
-                    placeholder="Örn: pembe-alo-arabiyeli-taytli-takim"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:border-indigo-500 text-slate-800 transition-colors"
-                  />
-                  <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                    Ürün Web Adresi: <strong className="text-indigo-600">{getStorefrontBaseUrl()}/{productHandle || "urun-linki"}</strong>
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -1463,63 +1284,14 @@ const IkasProductsPage = () => {
                     />
                   </div>
                 </div>
-
-                {/* Kampanya Paket Fiyatları */}
-                <div className="border-t border-slate-100 pt-4 mt-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-xs font-extrabold text-slate-900">Kampanya Paket Fiyatları (Arayüz Seçenekleri)</h3>
-                    <button
-                      type="button"
-                      onClick={() => setPackagePrices(prev => [...prev, ""])}
-                      className="flex items-center gap-1 bg-indigo-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Yeni Paket Ekle</span>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    {packagePrices.map((price, idx) => (
-                      <div key={idx} className="space-y-1 relative group">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                          {idx + 1}. Adet Fiyatı (TRY)
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            value={price}
-                            onChange={(e) => {
-                              const val = e.target.value
-                              setPackagePrices(prev => {
-                                const updated = [...prev]
-                                updated[idx] = val
-                                return updated
-                              })
-                            }}
-                            placeholder={`Örn: ${(idx + 1) * 500}`}
-                            className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-xs font-medium focus:outline-none focus:border-indigo-500 text-slate-800 transition-colors"
-                          />
-                          {packagePrices.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => setPackagePrices(prev => prev.filter((_, i) => i !== idx))}
-                              className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg border border-transparent hover:border-rose-100 transition-colors"
-                              title="Sil"
-                            >
-                              <Trash className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               </div>
 
+              {/* Card 2: Medya (Görseller) - Only shown for simple products */}
               {!isVariantProduct && (
                 <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-4">
                   <h2 className="text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">Medya (Görseller)</h2>
                   
+                  {/* Upload Zone */}
                   <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-500/50 transition-colors relative cursor-pointer">
                     <input
                       type="file"
@@ -1542,6 +1314,7 @@ const IkasProductsPage = () => {
                     </div>
                   )}
 
+                  {/* Images grid preview */}
                   {images.length > 0 && (
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 pt-2">
                       {images.map((img, idx) => {
@@ -1577,6 +1350,7 @@ const IkasProductsPage = () => {
                 </div>
               )}
 
+              {/* Card 3: Varyant Yönetimi */}
               <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-4">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                   <h2 className="text-sm font-extrabold text-slate-900">Varyant ve Seçenek Yönetimi</h2>
@@ -1594,6 +1368,7 @@ const IkasProductsPage = () => {
 
                 {isVariantProduct ? (
                   <div className="space-y-4">
+                    {/* Renk Seçenekleri */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Renk Seçenekleri</label>
@@ -1657,6 +1432,7 @@ const IkasProductsPage = () => {
                       </div>
                     </div>
 
+                    {/* Beden Seçenekleri */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Beden Seçenekleri</label>
@@ -1720,8 +1496,10 @@ const IkasProductsPage = () => {
                       </div>
                     </div>
 
+                    {/* Generated Variants Table */}
                     {variantsTable.length > 0 && (
                       <div className="mt-6">
+                        {/* Bulk Action / Selection info bar */}
                         {checkedIndices.length > 0 && (
                           <div className="flex items-center gap-4 bg-indigo-50/40 border border-indigo-100 rounded-lg px-4 py-2.5 text-xs text-indigo-900 mb-3.5 shadow-sm">
                             <span className="font-extrabold">{checkedIndices.length} Seçili Varyant var</span>
@@ -1736,8 +1514,8 @@ const IkasProductsPage = () => {
                             </button>
                           </div>
                         )}
-                        <div className="border border-slate-100 rounded-xl overflow-hidden">
-                          <table className="w-full text-left border-collapse">
+                        <div className="border border-slate-100 rounded-xl overflow-x-auto">
+                          <table className="w-full text-left border-collapse min-w-max">
                             <thead>
                               <tr className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                                 <th className="py-2.5 px-3 w-10">
@@ -1759,6 +1537,7 @@ const IkasProductsPage = () => {
                                 <th className="py-2.5 px-3">Satış Fiyatı</th>
                                 <th className="py-2.5 px-3">İndirimli Fiyat</th>
                                 <th className="py-2.5 px-3">SKU</th>
+                                <th className="py-2.5 px-3">Barkod <button type="button" onClick={() => setVariantsTable(variantsTable.map(v => ({...v, barcode: "7689887" + Math.floor(100000 + Math.random() * 900000).toString()})))} className="text-blue-500 hover:underline text-[10px] font-normal normal-case ml-1">(Rastgele)</button></th>
                                 <th className="py-2.5 px-3">Stok</th>
                               </tr>
                             </thead>
@@ -1850,7 +1629,7 @@ const IkasProductsPage = () => {
                                     <td className="py-2 px-3">
                                       <input
                                         type="text"
-                                        value={v.sku}
+                                        value={v.sku || ""}
                                         onChange={(e) => {
                                           const val = e.target.value
                                           const updated = [...variantsTable]
@@ -1860,6 +1639,25 @@ const IkasProductsPage = () => {
                                             })
                                           } else {
                                             updated[idx].sku = val
+                                          }
+                                          setVariantsTable(updated)
+                                        }}
+                                        className="w-28 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-[11px] font-bold focus:outline-none focus:border-indigo-500 text-slate-800"
+                                      />
+                                    </td>
+                                    <td className="py-2 px-3">
+                                      <input
+                                        type="text"
+                                        value={v.barcode || ""}
+                                        onChange={(e) => {
+                                          const val = e.target.value
+                                          const updated = [...variantsTable]
+                                          if (isChecked) {
+                                            checkedIndices.forEach(i => {
+                                              updated[i].barcode = val
+                                            })
+                                          } else {
+                                            updated[idx].barcode = val
                                           }
                                           setVariantsTable(updated)
                                         }}
@@ -1902,62 +1700,10 @@ const IkasProductsPage = () => {
               </div>
             </div>
 
+            {/* Right Sidebar: Details & Settings */}
             <div className="space-y-6">
-              {/* Dikey Scroll-Snap Karusel Görselleri */}
-              <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-4">
-                <div className="border-b border-slate-100 pb-3 flex flex-col">
-                  <h2 className="text-sm font-extrabold text-slate-900">Dikey Scroll-Snap Karusel</h2>
-                  <span className="text-[10px] text-slate-400 font-bold mt-1">
-                    Sitede yukarı kaydırılan swipe banner alanında gösterilecek 3 görsel (2., 3. ve 4. resimler).
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  {[0, 1, 2].map((idx) => {
-                    const url = carouselImages[idx]
-                    return (
-                      <div
-                        key={idx}
-                        className={`relative aspect-[3/4] rounded-lg border-2 border-dashed flex flex-col items-center justify-center overflow-hidden transition-all bg-slate-50/50 hover:bg-slate-50 cursor-pointer ${
-                          url ? "border-solid border-slate-200" : "border-slate-200 hover:border-indigo-500/50"
-                        }`}
-                      >
-                        {url ? (
-                          <div className="group w-full h-full relative">
-                            <img src={url} alt={`Karusel ${idx + 1}`} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleRemoveCarouselImage(idx)
-                                }}
-                                className="bg-rose-600 text-white rounded-md p-1.5 shadow-md hover:bg-rose-700 transition-colors"
-                                title="Sil"
-                              >
-                                <Trash className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="relative w-full h-full flex flex-col items-center justify-center p-2 text-center">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => handleCarouselImageUpload(e, idx)}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            />
-                            <span className="text-xl mb-1">📸</span>
-                            <span className="text-[10px] font-bold text-slate-500">Görsel {idx + 1}</span>
-                            <span className="text-[8px] text-slate-400 mt-0.5">Ekle</span>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
+              
+              {/* Card 4: Ürün Detayı */}
               <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-4">
                 <h2 className="text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">Ürün Detayı</h2>
                 
@@ -2001,6 +1747,7 @@ const IkasProductsPage = () => {
                 </div>
               </div>
 
+              {/* Card 5: Açıklama */}
               <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-4">
                 <h2 className="text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">Açıklama</h2>
                 
@@ -2015,72 +1762,81 @@ const IkasProductsPage = () => {
                 </div>
               </div>
 
-              {/* Yorum Yönetimi (Reviews Management) */}
-              <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-4">
-                <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
-                  <div className="flex flex-col">
-                    <h2 className="text-sm font-extrabold text-slate-900">Müşteri Yorumları</h2>
-                    <span className="text-[10px] text-slate-400 font-bold mt-1">
-                      Landing page üzerinde gösterilecek gerçek müşteri yorumları.
-                    </span>
+              {/* Card 6: SEO */}
+              <div className="bg-white border border-slate-100 shadow-sm rounded-xl p-6 space-y-6">
+                <div className="space-y-1 relative">
+                  <label className="text-[12px] text-slate-700 block font-normal">SEO Başlığı <span className="text-orange-600">({seoTitle.length})</span></label>
+                  <div className="relative">
+                    <textarea
+                      value={seoTitle}
+                      onChange={(e) => setSeoTitle(e.target.value)}
+                      rows={2}
+                      className="w-full bg-white border border-slate-300 rounded p-3 text-sm focus:outline-none focus:border-indigo-500 text-slate-800 pr-12 resize-none"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setSeoTitle(`${productName || "Ürün"} | En Uygun Fiyatlar ve İndirimler`)
+                        if (!seoKeywords) setSeoKeywords(productName)
+                      }}
+                      className="absolute right-2 top-2 p-1 border border-slate-400 rounded hover:bg-slate-100 transition-colors text-slate-600 flex items-center justify-center"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <text x="4" y="16" fontSize="13" fontWeight="bold" fill="currentColor" stroke="none">Ai</text>
+                        <path d="M16 4l2 2l-2 2M18 6h-4" />
+                      </svg>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddReviewClick}
-                    className="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-sm hover:bg-indigo-700 transition flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Ekle
-                  </button>
                 </div>
 
-                <div className="space-y-3.5">
-                  {reviews.length === 0 ? (
-                    <div className="text-center py-6 text-slate-400 text-xs font-bold">
-                      Henüz yorum eklenmemiş. "Ekle" butonuna basarak ilk yorumu ekleyin.
+                <div className="space-y-1 relative">
+                  <label className="text-[12px] text-slate-700 block font-normal">SEO Açıklaması <span className="text-orange-600">({seoDescription.length})</span></label>
+                  <div className="relative">
+                    <textarea
+                      value={seoDescription}
+                      onChange={(e) => setSeoDescription(e.target.value)}
+                      rows={3}
+                      className="w-full bg-white border border-slate-300 rounded p-3 text-sm focus:outline-none focus:border-indigo-500 text-slate-800 pr-12 resize-none"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setSeoDescription(`${productName || "Bu ürün"} modeli en ucuz fiyat avantajı ve indirim fırsatıyla burada. Hemen tıkla, güvenle satın al!`)
+                        if (!seoKeywords) setSeoKeywords(productName)
+                      }}
+                      className="absolute right-2 top-2 p-1 border border-slate-400 rounded hover:bg-slate-100 transition-colors text-slate-600 flex items-center justify-center"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <text x="4" y="16" fontSize="13" fontWeight="bold" fill="currentColor" stroke="none">Ai</text>
+                        <path d="M16 4l2 2l-2 2M18 6h-4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[12px] text-slate-700 block font-normal">SEO Anahtar Kelimeleri <span className="text-orange-600">({seoKeywords.length})</span></label>
+                  <textarea
+                    value={seoKeywords}
+                    onChange={(e) => setSeoKeywords(e.target.value)}
+                    rows={3}
+                    className="w-full bg-white border border-slate-300 rounded p-3 text-sm focus:outline-none focus:border-indigo-500 text-slate-800 resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <label className="text-[12px] text-slate-700 block font-normal">Arama Önizlemesi</label>
+                  <div className="border border-slate-200 rounded p-4 bg-white shadow-sm flex flex-col gap-1">
+                    <div className="text-[13px] text-[#202124] flex items-center gap-1">
+                      fametarz.com/ <span className="text-[#4d5156]">{productName ? productName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '') : "krem-desenli-oversize-tisort-ve-sort-takimi"}</span>
                     </div>
-                  ) : (
-                    <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto pr-1">
-                      {reviews.map((rev, index) => (
-                        <div key={rev.id || index} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-                          <div className="min-w-0 flex-1 space-y-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-slate-800">{rev.name}</span>
-                              <span className="text-[9px] font-black text-rose-800 bg-rose-50 px-1.5 py-0.2 rounded-full">
-                                {rev.rating} ★
-                              </span>
-                              <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded-full ${
-                                rev.is_active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
-                              }`}>
-                                {rev.is_active ? "Aktif" : "Pasif"}
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-semibold uppercase">{rev.color || "Standart"}</div>
-                            <p className="text-slate-500 truncate font-medium max-w-[200px]">{rev.comment}</p>
-                          </div>
-                          
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleEditReviewClick(index)}
-                              className="p-1 hover:bg-slate-100 rounded text-slate-500"
-                              title="Düzenle"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveReview(index)}
-                              className="p-1 hover:bg-slate-100 rounded text-rose-600"
-                              title="Sil"
-                            >
-                              <Trash className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="text-[18px] text-[#1a0dab] hover:underline cursor-pointer truncate">
+                      {seoTitle || (productName ? `${productName} | En Uygun Fiyatlar` : "Krem Desenli Oversize Tişört ve Şort Takımı")}
                     </div>
-                  )}
+                    <div className="text-[13px] text-[#4d5156] line-clamp-2">
+                      {seoDescription || (productName ? `${productName} modeli en ucuz fiyat avantajı ve indirim fırsatıyla burada.` : "Krem Desenli Oversize Tişört ve Şort Takımı")}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2088,196 +1844,7 @@ const IkasProductsPage = () => {
         </form>
       )}
 
-      {/* Yorum Ekleme / Düzenleme Modalı */}
-      {showReviewModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4 transition-all">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-150 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-4.5 border-b border-slate-100 flex justify-between items-center bg-white flex-shrink-0">
-              <span className="text-sm font-extrabold text-slate-900">
-                {editingReviewIndex !== null ? "Yorumu Düzenle" : "Yeni Yorum Ekle"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowReviewModal(false)}
-                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
-              >
-                Kapat
-              </button>
-            </div>
-
-            <div className="p-5 overflow-y-auto space-y-4 text-xs font-semibold text-slate-700">
-              {/* Ad Soyad */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Müşteri Adı</label>
-                <input
-                  type="text"
-                  value={reviewName}
-                  onChange={(e) => setReviewName(e.target.value)}
-                  placeholder="Örn: Mehmet A."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2 text-xs font-medium focus:outline-none focus:border-indigo-500 text-slate-800"
-                />
-              </div>
-
-              {/* Ürün Rengi */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Ürün Rengi (Renk Seçimi)</label>
-                <select
-                  value={reviewColor}
-                  onChange={(e) => setReviewColor(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value="Standart">Standart / Seçilmedi</option>
-                  {selectedColors.map(color => (
-                    <option key={color} value={color}>{color}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Yıldız Puanı */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Yıldız Puanı (1-5)</label>
-                <select
-                  value={reviewRating}
-                  onChange={(e) => setReviewRating(Number(e.target.value))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:border-indigo-500"
-                >
-                  <option value={5}>5 Yıldız (Mükemmel)</option>
-                  <option value={4}>4 Yıldız (Çok İyi)</option>
-                  <option value={3}>3 Yıldız (Orta)</option>
-                  <option value={2}>2 Yıldız (Kötü)</option>
-                  <option value={1}>1 Yıldız (Çok Kötü)</option>
-                </select>
-              </div>
-
-              {/* Yorum */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Yorum</label>
-                <textarea
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  rows={3}
-                  placeholder="Müşteri yorumu..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs font-medium focus:outline-none focus:border-indigo-500 text-slate-800 resize-none"
-                />
-              </div>
-
-              {/* Media Upload (Resim/Video) */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Yorum Görseli / Videosu</label>
-                <div className="flex items-center gap-3">
-                  <div className="relative h-20 w-20 rounded-lg border border-slate-200 flex-shrink-0 overflow-hidden bg-slate-50 flex items-center justify-center">
-                    {reviewMediaUrl ? (
-                      reviewMediaType === "video" ? (
-                        <video src={reviewMediaUrl} className="w-full h-full object-cover" controls={false} />
-                      ) : (
-                        <img src={reviewMediaUrl} className="w-full h-full object-cover" alt="Preview" />
-                      )
-                    ) : (
-                      <span className="text-slate-400 text-xl">📸</span>
-                    )}
-                    {reviewUploading && (
-                      <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                        <span className="text-[10px] font-bold text-indigo-600 animate-pulse">Yükleniyor</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept="image/*,video/*"
-                        onChange={handleReviewMediaUpload}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        disabled={reviewUploading}
-                      />
-                      <button
-                        type="button"
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-2 rounded-lg text-xs transition border border-slate-200"
-                      >
-                        Dosya Seç (Görsel/Video)
-                      </button>
-                    </div>
-                    {reviewMediaUrl && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-bold text-slate-400 block truncate max-w-[120px]">{reviewMediaUrl}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReviewMediaUrl("")
-                            setReviewMediaType("image")
-                          }}
-                          className="text-rose-600 hover:underline text-[10px] font-bold"
-                        >
-                          Temizle
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Media Type Override Selector */}
-              {reviewMediaUrl && (
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dosya Türü</label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={reviewMediaType === "image"}
-                        onChange={() => setReviewMediaType("image")}
-                        className="text-indigo-600"
-                      />
-                      <span>Görsel</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={reviewMediaType === "video"}
-                        onChange={() => setReviewMediaType("video")}
-                        className="text-indigo-600"
-                      />
-                      <span>Video</span>
-                    </label>
-                  </div>
-                </div>
-              )}
-
-              {/* Aktif Pasif */}
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="reviewIsActive"
-                  checked={reviewIsActive}
-                  onChange={(e) => setReviewIsActive(e.target.checked)}
-                  className="rounded text-indigo-600"
-                />
-                <label htmlFor="reviewIsActive" className="text-slate-700 font-bold cursor-pointer select-none">
-                  Yorum Aktif (Sitede Gösterilsin)
-                </label>
-              </div>
-            </div>
-
-            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowReviewModal(false)}
-                className="bg-white border border-slate-200 text-slate-600 font-bold px-4 py-2 rounded-lg text-xs hover:bg-slate-50 transition"
-              >
-                Vazgeç
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveReview}
-                className="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg text-xs hover:bg-indigo-700 transition"
-              >
-                Kaydet
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* -------------------- 3. DIALOG / IMAGE PICKER FOR VARIANTS -------------------- */}
       {showImagePicker && activeVariantIndexForImage !== null && (() => {
         const isChecked = checkedIndices.includes(activeVariantIndexForImage)
         const selectionCount = isChecked ? checkedIndices.length : 1
@@ -2285,6 +1852,7 @@ const IkasProductsPage = () => {
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex justify-end z-50 transition-all">
             <div className="bg-white w-[380px] h-full flex flex-col shadow-2xl border-l border-slate-150 animate-slideOver overflow-hidden">
               
+              {/* Header */}
               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white flex-shrink-0">
                 <div className="flex flex-col">
                   <span className="text-sm font-extrabold text-slate-900">Görseller</span>
@@ -2302,6 +1870,7 @@ const IkasProductsPage = () => {
                 </button>
               </div>
 
+              {/* Upload media area directly in drawer */}
               <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-indigo-500/50 transition-colors relative cursor-pointer m-4 bg-slate-50/50 flex-shrink-0">
                 <input
                   type="file"
@@ -2317,6 +1886,7 @@ const IkasProductsPage = () => {
                 </div>
               </div>
 
+              {/* Media selection section */}
               <div className="flex-1 overflow-y-auto min-h-0 py-2">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-4 mb-2.5">
                   Yüklenen Görseller
@@ -2366,7 +1936,7 @@ const IkasProductsPage = () => {
                               draggedIndex === globalIdx ? 'opacity-40 border-dashed border-indigo-400' : ''
                             }`}
                           >
-                            <div className="text-slate-355 font-extrabold select-none text-xs pl-1 cursor-grab active:cursor-grabbing">
+                            <div className="text-slate-350 font-extrabold select-none text-xs pl-1 cursor-grab active:cursor-grabbing">
                               ⋮⋮
                             </div>
 
@@ -2419,6 +1989,7 @@ const IkasProductsPage = () => {
                 })()}
               </div>
 
+              {/* Footer */}
               <div className="bg-slate-50 px-4 py-3.5 flex gap-3 border-t border-slate-100 flex-shrink-0">
                 <button
                   type="button"
@@ -2451,6 +2022,123 @@ const IkasProductsPage = () => {
           </div>
         )
       })()}
+
+      {/* -------------------- 4. BULK ACTIONS MODAL -------------------- */}
+      {isBulkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-slideUp">
+            {/* Header */}
+            <div className="bg-[#1d4ed8] px-5 py-4 flex justify-between items-center text-white">
+              <h2 className="text-base font-bold">Toplu İşlemler</h2>
+              <button onClick={() => { setIsBulkModalOpen(false); setBulkModalStep(1); }} className="text-white hover:text-slate-200 transition-colors">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {bulkModalStep === 1 ? (
+              /* Step 1: Select Action */
+              <div className="p-6 space-y-6">
+                <div className="bg-[#3b82f6] text-white p-4 rounded-lg text-sm font-medium">
+                  Tabloda seçtiğiniz ürünlere aşağıdaki işlemleri uygulayabilirsiniz.
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-700 block">İşlemler</label>
+                  <select 
+                    value={bulkActionType}
+                    onChange={(e) => setBulkActionType(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-700"
+                  >
+                    <option value="">İşlem Seçiniz</option>
+                    <option value="category">Kategori Değiştir</option>
+                    <option value="price">Satış Fiyatını Güncelle</option>
+                    <option value="stock">Stok Miktarını Güncelle</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!bulkActionType) return alert("Lütfen bir işlem seçiniz.")
+                      setBulkModalStep(2)
+                    }}
+                    className="bg-[#10b981] hover:bg-emerald-600 text-white font-bold py-2 px-6 rounded shadow transition-colors flex items-center gap-2"
+                  >
+                    <span>İleri</span>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Step 2: Action Details */
+              <div className="p-6 space-y-6">
+                {bulkActionType === "category" && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-700 block">Kategori Seçin</label>
+                    <select
+                      value={bulkActionCategory}
+                      onChange={(e) => setBulkActionCategory(e.target.value)}
+                      className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-700"
+                    >
+                      <option value="">Hiçbiri seçilmedi</option>
+                      {categories.map((cat: any) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setBulkModalStep(1)}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-5 rounded shadow-sm transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                    <span>Geri</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isBulkUpdating}
+                    onClick={async () => {
+                      if (bulkActionType === "category" && !bulkActionCategory) return alert("Lütfen bir kategori seçin.")
+                      setIsBulkUpdating(true)
+                      try {
+                        for (const id of selectedProductIds) {
+                          await fetch(`/admin/products/${id}`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ categories: [{ id: bulkActionCategory }] })
+                          })
+                        }
+                        alert("Toplu güncelleme başarıyla tamamlandı.")
+                        setIsBulkModalOpen(false)
+                        setBulkModalStep(1)
+                        setSelectedProductIds([])
+                        await fetchData()
+                      } catch (e: any) {
+                        alert("Hata: " + e.message)
+                      } finally {
+                        setIsBulkUpdating(false)
+                      }
+                    }}
+                    className="bg-[#10b981] hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 px-5 rounded shadow transition-colors flex items-center gap-2"
+                  >
+                    {isBulkUpdating ? (
+                      <ArrowPath className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    )}
+                    <span>İşlemi Tamamla</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
