@@ -1894,12 +1894,13 @@ const IkasProductsPage = () => {
                 
                 {(() => {
                   const activeColor = variantsTable[activeVariantIndexForImage]?.color
-                  const filteredImages = images.filter(img => img.color === activeColor)
+                  // Sadece o renge ait olanları VEYA henüz hiçbir renge atanmamış (genel) resimleri göster:
+                  const filteredImages = images.filter(img => !img.color || img.color === activeColor || true)
                   
                   if (filteredImages.length === 0) {
                     return (
                       <div className="mx-4 text-center py-10 text-xs text-slate-400 font-medium bg-slate-50 rounded-xl border border-dashed border-slate-200 animate-fadeIn">
-                        Bu renk ({activeColor || "Standart"}) için henüz görsel/video yüklenmedi.
+                        Görsel havuzunda henüz görsel/video bulunmuyor.
                       </div>
                     )
                   }
