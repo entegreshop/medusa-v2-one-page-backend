@@ -1,367 +1,1565 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { CogSixTooth } from "@medusajs/icons"
-import { useEffect, useState, useRef } from "react"
+import React, { useEffect, useState } from "react"
 
-const STORE_SETTINGS_SECTION_HTML = "  <div id=\"store-settings-view-section\" class=\"flex-1 flex flex-col bg-[#f1f3f6]\">\n    <!-- Sub-Navigation Bar: Ayarlar -->\n    <div class=\"bg-white border-b border-slate-200 shadow-2xs\">\n      <div class=\"max-w-[1640px] mx-auto px-5 min-h-[52px] flex items-center justify-between gap-4 relative\">\n        <div class=\"text-[13.5px] font-bold text-slate-900 shrink-0\">Ayarlar</div>\n        <div class=\"flex items-center justify-center gap-6 overflow-x-auto text-[12.5px] font-semibold mx-auto\">\n          <button type=\"button\" id=\"settings-subtab-store\" onclick=\"switchSettingsSubView('store')\" class=\"settings-subtab py-4 border-b-2 border-[#1565c0] text-[#1565c0] whitespace-nowrap cursor-pointer\">Mağaza Ayarları</button>\n          <button type=\"button\" id=\"settings-subtab-rules\" onclick=\"switchSettingsSubView('rules')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Sözleşmeler ve Metinler</button>\n          <button type=\"button\" id=\"settings-subtab-marketing\" onclick=\"switchSettingsSubView('marketing')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Pazarlama ve Doğrulama</button>\n          <button type=\"button\" id=\"settings-subtab-prints\" onclick=\"switchSettingsSubView('prints')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Yazdırma Etiketleri</button>\n          <button type=\"button\" id=\"settings-subtab-currencies\" onclick=\"switchSettingsSubView('currencies')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Para Birimleri</button>\n          <button type=\"button\" id=\"settings-subtab-taxes\" onclick=\"switchSettingsSubView('taxes')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Vergiler</button>\n          <button type=\"button\" id=\"settings-subtab-locations\" onclick=\"switchSettingsSubView('locations')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Diller</button>\n          <button type=\"button\" id=\"settings-subtab-api\" onclick=\"switchSettingsSubView('api')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Web Servis</button>\n          <button type=\"button\" id=\"settings-subtab-staff\" onclick=\"switchSettingsSubView('staff')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Personeller</button>\n          <button type=\"button\" id=\"settings-subtab-licence\" onclick=\"switchSettingsSubView('licence')\" class=\"settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer\">Lisans</button>\n        </div>\n        <div class=\"w-[60px] hidden lg:block\"></div>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 1: MAĞAZA AYARLARI (Görsel 2-3-4-5 Birebir) -->\n    <div id=\"subview-settings-store\" class=\"settings-subview max-w-[1220px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 items-start\">\n        \n        <!-- Left Sticky Sidebar: 14 Categories -->\n        <div class=\"bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs lg:sticky lg:top-24\">\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_general\"\n              onclick=\"scrollToStoreSettingsCard('store_general', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] transition cursor-pointer\"\n            >\n              <span>Genel Ayarlar</span>\n              <span class=\"text-[#1565c0] font-bold text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_logo\"\n              onclick=\"scrollToStoreSettingsCard('store_logo', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Logo Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_contact\"\n              onclick=\"scrollToStoreSettingsCard('store_contact', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>İletişim Bilgileri</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_orders\"\n              onclick=\"scrollToStoreSettingsCard('store_orders', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Sipariş Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_returns\"\n              onclick=\"scrollToStoreSettingsCard('store_returns', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>İade Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_products\"\n              onclick=\"scrollToStoreSettingsCard('store_products', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Ürün Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_customers\"\n              onclick=\"scrollToStoreSettingsCard('store_customers', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Müşteri Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_affiliate\"\n              onclick=\"scrollToStoreSettingsCard('store_affiliate', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Affiliate Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_quicksale\"\n              onclick=\"scrollToStoreSettingsCard('store_quicksale', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Hızlı Satış Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_dealer\"\n              onclick=\"scrollToStoreSettingsCard('store_dealer', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Bayi Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_dealer_xml\"\n              onclick=\"scrollToStoreSettingsCard('store_dealer_xml', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Bayi XML Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_dealer_api\"\n              onclick=\"scrollToStoreSettingsCard('store_dealer_api', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Bayi API Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_security\"\n              onclick=\"scrollToStoreSettingsCard('store_security', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Güvenlik Ayarları</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n            <button\n              type=\"button\"\n              data-storeside=\"store_maintenance\"\n              onclick=\"scrollToStoreSettingsCard('store_maintenance', this)\"\n              class=\"store-side-btn w-full px-4 py-3 flex items-center justify-between  text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer\"\n            >\n              <span>Bakım Modu</span>\n              <span class=\"text-slate-400 text-xs\">›</span>\n            </button>\n          \n        </div>\n\n        <!-- Right Stacked Cards -->\n        <div class=\"flex flex-col gap-6\">\n          \n          <!-- 1. GENEL AYARLAR (Görsel 2) -->\n          <div id=\"preview-card-store_general\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-5\">Genel Ayarlar</h2>\n\n            <div class=\"space-y-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Firma Ünvanı</label>\n                <input id=\"store-gen-company\" type=\"text\" value=\"ÖZSE MODA TEKSTİL KAFE GIDA İNŞAAT SANAYİ TİCARET LİMİTED ŞİRKETİ\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n              </div>\n\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Mağaza Adı</label>\n                <input id=\"store-gen-title\" type=\"text\" value=\"Çizgi Butik\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n              </div>\n\n              <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n                <div>\n                  <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Vergi Numarası</label>\n                  <input type=\"text\" value=\"7050600355\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n                </div>\n                <div>\n                  <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Vergi Dairesi</label>\n                  <input type=\"text\" value=\"Güngören Vergi Dairesi Müdürlüğü\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n                </div>\n              </div>\n\n              <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n                <div>\n                  <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Para Birimi Gösterimi</label>\n                  <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\">\n                    <option selected>X.XXX,XX (13.232,99 TL)</option>\n                    <option>X,XXX.XX (13,232.99 TL)</option>\n                    <option>X.XXX (13.233 TL)</option>\n                  </select>\n                </div>\n                <div>\n                  <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Ondalık Basamak Sayısı</label>\n                  <input type=\"number\" value=\"2\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n                </div>\n              </div>\n            </div>\n\n            <div class=\"my-6 border-t border-slate-100\"></div>\n\n            <!-- Callout: Varsayılan SEO bilgileriniz -->\n            <div class=\"bg-[#f1f4f9] border-l-[3px] border-[#8fa3bf] rounded-r px-4 py-3 text-[12.5px] text-slate-700 mb-5\">\n              Varsayılan SEO bilgileriniz.\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-5 items-start\">\n              <div class=\"space-y-4\">\n                <div>\n                  <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">\n                    SEO Başlığı <span class=\"text-red-500 font-semibold\">(68)</span>\n                  </label>\n                  <textarea rows=\"3\" class=\"w-full p-2.5 rounded border border-slate-200 text-[12.5px] text-slate-900 focus:outline-none focus:border-[#1565c0]\">Çizgi Butik | Oto Bodykit, Tampon, Spoiler, Difüzör ve Modifiye</textarea>\n                </div>\n                <div>\n                  <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">\n                    SEO Açıklaması <span class=\"text-red-500 font-semibold\">(156)</span>\n                  </label>\n                  <textarea rows=\"3\" class=\"w-full p-2.5 rounded border border-slate-200 text-[12.5px] text-slate-900 focus:outline-none focus:border-[#1565c0]\">Çizgi Butik'nde aracınıza özel bodykit setleri, ön lip, marşpiyel, difüzör, panjur ve spoiler modellerini en uygun fiyatlarla keşfedin.</textarea>\n                </div>\n              </div>\n\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Arama Önizlemesi</label>\n                <div class=\"border border-slate-200 rounded p-4 bg-white\">\n                  <div class=\"text-[12px] text-slate-500 mb-1\">cizgibutik.com</div>\n                  <div class=\"text-[14.5px] text-[#1a0dab] font-medium leading-snug mb-1.5\">\n                    Çizgi Butik | Oto Bodykit, Tampon, Spoiler, Difüzör...\n                  </div>\n                  <div class=\"text-[12.5px] text-[#4d5156] leading-relaxed\">\n                    Çizgi Butik'nde aracınıza özel bodykit setleri, ön lip, marşpiyel, difüzör, panjur ve spoiler modellerini en uygun fiyatlarla keşfedin.\n                  </div>\n                </div>\n              </div>\n            </div>\n          </div>\n\n          <!-- 2. LOGO AYARLARI (Görsel 3 Birebir) -->\n          <div id=\"preview-card-store_logo\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-5\">Logo Ayarları</h2>\n\n            <!-- Logo -->\n            <div class=\"mb-5\">\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-2\">Logo</label>\n              <div class=\"w-[340px] max-w-full h-[74px] border border-slate-200 rounded bg-white flex items-center justify-center relative px-4\">\n                <img src=\"data:image/png;base64,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\" alt=\"Logo\" class=\"max-h-11 max-w-[230px] object-contain\" />\n                <div class=\"absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1\">\n                  <button type=\"button\" class=\"w-[26px] h-[26px] rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs flex items-center justify-center cursor-pointer\" title=\"Düzenle\">✎</button>\n                  <button type=\"button\" class=\"w-[26px] h-[26px] rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs flex items-center justify-center cursor-pointer\" title=\"Sil\">🗑</button>\n                </div>\n              </div>\n            </div>\n\n            <!-- Dark Logo -->\n            <div class=\"mb-5\">\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-2\">Dark Logo</label>\n              <div class=\"w-[340px] max-w-full h-[74px] border border-slate-200 rounded bg-slate-900 flex items-center justify-center relative px-4\">\n                <img src=\"data:image/png;base64,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\" alt=\"Dark Logo\" class=\"max-h-11 max-w-[230px] object-contain invert\" />\n                <div class=\"absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1\">\n                  <button type=\"button\" class=\"w-[26px] h-[26px] rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs flex items-center justify-center cursor-pointer\" title=\"Düzenle\">✎</button>\n                  <button type=\"button\" class=\"w-[26px] h-[26px] rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs flex items-center justify-center cursor-pointer\" title=\"Sil\">🗑</button>\n                </div>\n              </div>\n            </div>\n\n            <!-- Email Logo -->\n            <div class=\"mb-5\">\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-2\">Email Logo</label>\n              <div class=\"w-[340px] max-w-full h-[74px] border border-slate-200 rounded bg-white flex items-center justify-center relative px-4\">\n                <img src=\"data:image/png;base64,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\" alt=\"Email Logo\" class=\"max-h-11 max-w-[230px] object-contain\" />\n                <div class=\"absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1\">\n                  <button type=\"button\" class=\"w-[26px] h-[26px] rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs flex items-center justify-center cursor-pointer\" title=\"Düzenle\">✎</button>\n                  <button type=\"button\" class=\"w-[26px] h-[26px] rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs flex items-center justify-center cursor-pointer\" title=\"Sil\">🗑</button>\n                </div>\n              </div>\n            </div>\n\n            <!-- Favicon (Görsel 3'teki 2 Sütunlu Kutular) -->\n            <div>\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-2\">Favicon</label>\n              <div class=\"w-[340px] max-w-full grid grid-cols-2 border border-dashed border-slate-300 rounded bg-[#fcfdfe] overflow-hidden\">\n                <div class=\"py-4 px-3 flex flex-col items-center justify-center gap-1.5 border-r border-dashed border-slate-200 hover:bg-slate-50 cursor-pointer\">\n                  <img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFwAAAB4CAYAAAB/0pV4AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABQeSURBVHhe7V0LmCVFdb7LQ2B3pqpndm6furuja8iwc7vOnUXdvL8YIzHGRJN8iUHzMi/zIiaY98PEiPIQFDWsIUbRiARBJUZFVFiVkEB4uCDKAolEAnzLQwQjILLLc/Odquru6rp9b1d1952dXeb/vvPN7r3dVdXnnj516tQ5pzqdVaxiNDYdHsVLS/YnUTzYYv9/FS2Bz/W3RmJwPY+TMwufx8mFXCxdEcWbVxnfEg5hQr6eAz42s/E5e1ncP83+ksfJ+fQ5B9zDAd/YWVg4zP5+FQGY7uIPcJA7ot4WYujeqLe0lwn5FvsaYjh9rr/fspcLvIEJ+RL7mlVUoNfrreUxnsoBn4wEMVMqUgwH+Vb72pzh5hoxMIT/tC4egH3tKkowDfgyDoObU6lOGZkzPDndvp5Dcp7N8Pxadf9dkZC/al+/CoN1sCUmqUwl1GXgSIY7El64ntrS6uZT6yBB+76nNaIuvkpJo5LKYcaNZfgICXfv44CPMJB/1el01tj3P63AunIhAvwYMWSUVLuMY5C8zW7Dh+GKRDapXj3Tkz9ot/G0ABP4exzwAS9mGSpl+BiVUkY0CUcC9/I42cb50ozd1gGJqItHM8DPKSbRg5cwZRS1wXBNWtqZwP/lAn/Wbu8AgnwGE/g3HHB3OIM0lTO8/6Ha7eWT6gdnZvCZdrv7NXic/EgEeL3RoUMP7kszG47ey0XyTrttBv2Pqc9Lrvclw/Svc8BX223vd2DzcpaDPHOcqedFasJTKmj7VG/Qt/vgPfKxyH+ro6JsIr1uGP/pKF4sOMj2C3Ahj40E3lZl6lWRYcIDEcg/cPuwwWL5OySlddWL09/uSMjXdzpbD3X7WXGIRLIpArxAWwP1pTrTr7G8kMxHt58yzGzAZ5I+bvxGmUk1ArwuEv0XuP2sGLAuHscB728uZVuI0ffWXZZHsfwpDviVMvdACGUmpMBtnG+K3H72GYyp99mmk2Im1QI/Mju7NO/2E4L16xenGch3aGlvIgBG2pUJKY91+1lmLBzGAU/ggI+2ItWAuxjgz7u9NEE0lzyfg/xCe8Igz98nJiQHeQwH+aXmr63Wtwzw3VO9zXNuPy3hIAbyLzjgt1sSjPt4LH/b7WQiMKbeP7Q1MXHAW6ZF8uNuP5PAlJCSA35GS2r9secmpNw+A/2B209rYJC8grVh6hkLhgG+nXSt28+kwWP8TZLSxs+hTchHWIx/3aoJSaYeF/hh6qAVqRZ4Awf8Ybef5YQxIc9rar6mXkgGeF0rz8RA/j4H/EZz3aek4QkO8sTOpk2Hu/3sK3CBLycnVvO5KPVCyjNmZo7kbj+V4HP950VCXmrMtKEOvCn1QwNezgR+t9tPXcwKKd3P6oLctFzg37c2Lwn8H1oLuP2UY9OmwznIkygsoSWp3s0B/9ztpi6m55KjOMiLIzF4nMHgrW2+LSzu/ygHWbqfGkLWD3fO7OxRG91+MlB4ARe4s2mHll77bJuzeATJ8Vzgg+aHTN8cmg9e6F5bFwBb1lEoBhf4VLMFkzEhhfwaB/lrhU5mNy7Msxjf1/yVyqT6QVbhbAoBbQDrTYvhxUs2ZoHbaunOEZiO+9/PBV5T1mcIWQumT8705LNU4xTNNLOBopeGb/ClzDYV8iJfZ5MH1jCQf0mm13j1VrDpf8JtpAEOjmJ8XZNNk5QUf2P5W6pVYniTBo1U30f2rTviumAgv4cLvCpEwlJpV0FAcGTstlkXFDDKAbc3MSAMf7Vq4XFySh2Gp68LA/kv2evSFAvknxmczAU+UWdMalxa2u9q3S+j55Bv1RkX3ZN5P+sw3KzSdrFY/oI7sLog33ME+MXGk7atOwHPHWspBIJ2nCiwKFTaazM8fW2ZwPdRtJQ7oDroduVUlLlSm03aLmnGkKWQ/IbbbxOoHSaBD3nzrQ7DDTNubnNimob+SzngfwdLdYh05ZbChayL3+mOoS6mNywuKt3uMRbF8G7/V9SNHOTJVQw3zL62A1vWuR3XwfSG/noG+J5wqUb9hoF8UNvJ1Q+bknpokN9kIF/jjqcJeIw3VT1DUcJ9GE7fd5NPuJ3VARfy5zjg7WYe8CZjgdC/T57duDRvFihhOzqZq0Fe4kYA1AWP8Ro/hqOR8Dh5sxfDY/lpt7MQrJ3r9zjgP+vOxw+wSJmdfZPrkaM4QQ54bYj5SKRVDH5rGgbH2+3VAY/ltVXPU1QpHjq8KcNZLH+JA95d1Y9LqVRHgKfTstttV2ProSaqa09Q+3mA5/bp9YuLbqu+YCC/uGIYTvY5FwMVjlY1qCJlzNjJYdHLz0yJVUzouEWfiSwl/ez4ENnZbps+YCCvq3o2V6VMhOG076d3Vsa37VK2IyTkW+bn549w260C+fAZ4DeD+jWuCRYnl5KXj3Q8A/lRiimvWtT5MzzALAxh+NquFHUWB0WpbrZ7wuOlIxngx0PfLKXC1D1L+q8ezwMckpFxh/4Mn9CkOTWX/FBVey5pXT0gXf22Xm/rWrfNuiD/BRd4T8h4cqYbJuZ2fGlciu+kOR0nv2xuaFfCjWtzqI1ysvc55TFuW21AW0fyA1Gv2uZX38fyWgbyLBbLy9Lr9d/kntnZBea2783wbvIqfYOvHd4yw1OpZrE8rVNDV4ciipOfZkLeOsr+V2oE5DvsezgkJ6S8ob8Mklfa36trYnmLD//IUjONLj/DjVTfSLHj7v2ThNq/LAuh1uO9qyTcYQ2L5W2pmiFt4HxPz/uHVT7zIsPbVynfN57h+CgDPL1NXR0KFTkm8IZMerXKuNy9jsDjRKkWLeHFxNwU6+LFJb3pXr4AUyrF0uGtTprjGK51ZHKTe88+wfz8ERykWvma8d4/FJik/PPy7sxsBHlW4XsHtGFetgBbZbgBn0uem0+MxAM8L50YyW3MRPL+gq+GnktF9y6MjO7lXfkcDniZLe0uw9tVKZB8bwXDb15JCaocku3pRErMZXGyi4H8HIvl7WXWh+YVfr0qfp0D/lmq212Gtyvhy8Bw2mnivf7z3M/rQLkfQO7KrBfjgUzdA5rp2i2cuoOzSVTIDx2xfnGD22YKeoM44JUzG5+7l8+ZTZDWrZQJMpweTvtmlPdwDzmtKCXRvS4UFGnABH5eS+MW9bz6r8rG2EGlRJiQb9A/Ri71mul4T7aKLMfBXOCp2Xbk/qJSjB89z8nPA46ub+oKSMG6+GO02qXgVTIfGQxe0ekce3D6Pe27csD/sm353ILBC2iRVWzRhmlnpUs450dHTMj3jop0VZOanszOWI5cHLJkKPBIMdqVdhUtMLw4KmAFM3yNkeo7Rq0Oc9LSHgm8dZTPo21QIgEX8qsFpqe6HfDskRkdbasUE8Qz1EY6oACzcE0UJ6/lwj+wNJ/MBudTDLjbYNugN0q5C5w3z8wxd0SAP+ne0zrDqyVc3ujeMw48PupICjaiMbgPNoqMlN1H4Qxue22DQ7KjbFyZyhG4rbD53jbDW5TwAlgsf5ED3lmtXgyZ1WEUy0sptdFtry1UbbGZBdDOLJK4bTt8HMM14R7K76FQCffeKlDMYCSSsaWaXDLSvpvFyevIRHPbbAqfDQgqwMBE8rvqhuWU8Lw9peNurxsqpyaszDwb35emzO9+Fak8t70m8GG44a9/MGcwwz2YkE5wZL/SlpjbThV0iBy+XUv7+PFnfaoJVeUandRWUUnfDYic4ctoFpaReeUf4LH8I09zsQBa9GSxKR4/dB7nIr9MCx23vVDQSjSM4S3rcFoGV7U3RHny1ZX0hrhteuAQKoXKAR/37TudBygLmhJ+3QZ94Svh9q79qVWDDGG48ndAcoV5fYfaGkfWK38i5fK7bVeBCta4rtEqUu4BSh0EfJnbng+8GT7pQKAIBsczkP9X1fYwNfeR8Bhp28skYLntD1Mu7ckHyjaKx8Gf4RPaRLZRZ9GS9Zn6TgRuC2UCYXquv1mVVFJLfp++tVs2tIqnrw5fFoanYICvpJoj3ouWjKyEqbJlsgdUBJjAe6v71iqIiiC4bYyDP8ND4sMbMpxgdszflb6+bh/jSN+jrJmz6yRMUdqJzq0f129thnuqlGVmeAqV8at2zH3NOHsc6p47uVh8uduuDyj1hJJe3XY11Wa4n4RPOphzLFSKuTLjgqsJ0cOppbIO2jnIbXoctAUlnxz3Q8+E63A/CQ8K5tygtpr+w+2sKcyen78Zl+7yxPh5JgbfFbpQ0llo8qnxDA9LVw9neIVK0d/hN8bkPR7ifhCKacqBrCj+a8bxCBfyT9z7fTGe4fqzcCul3D3rjj1XKaMYbktTd2Eo+4sxOUtFtyhkrY1zF8ifUl7eOrVUBv/Z9DQTw/C2VYofw61J8ySX4cYieFyXFxoGeesYUGCkZo7p8F1tlIjmgK9Oq2yacT3GYtqdD9PXZaDUkmqGT0ql5BJ+os1wvcqTX6IIKrdxnU8jTysz7dIlMo/7P+PeFQqqW0hVOTngDiqW435fFxNiuJ+EWzpcMdxi4t+VhQ/rEC5TAzAdsBunkbdxzviQAW8ETYpV0KvP1hkeKOFxcgpFBjGBt1JmsNsggeqfuGU09L+Te8ocVeb/d7OeCdFdITDB+U+UM7zepOm7AZExnALiGQwuKNO/tPOdTmQZQzNX6uASqvhG11H1Yzf3XEm7jjj9aJsp13UxN9fvqc2OCvMzdNIMZvioIgXk/9A+CFeqcQ8XyZ+615vcc1OIsSjtlFW2bNUsS0A1F3XUVok1NsTwUJXiaRamzisX/FlLMwzwbP2rpA0ZqY7xalqsuPfYiEC+hgEW3bJpxSDAT9EP494zKaicfoHvLz7LeApnuOekWcZwHicv4gJvsT1r2UQo8JRO5wVeixyyqblJ23OlnVRPk8WLL6Zh8FLtoayW6pxwb9Q9Kiikoh7DFxYOKzP39JJbfpUcTnYnvjA2dbGmeLqgoqMEGi5kykC+89I8ngpKN6JDa3b5MjyLD6cgmUgUK/FkE14s30sqxu0kBBwWnz1S2ilgXS1q/N6cKujag2mx9uEHH0XGl7Mz6iXPd9usgq9ZWMiAsE8KMYy5lyZNt/EmMEV2i/6SvMDANTU3jxWo8EEeMjH+4QuMyK8/k8Iu3HZ9wEFeVdVnkeFdk4uYT2wfLwmEPIhUTtMqm6qypsCLlE4blnayj98YGmCv5h3AmwoLMg8y19/hX7Z0GLMCEyo0X1VMQevw1JfSTU5Qp64KfKgs+HEd9Acc5BU0QPOqXjwlMHGvCwH1E7mWTBpyrAqNebza8/NHUPphLanWP/B5U2Kh6zbrCyaS47QBMJ7Zqk+b4ZR7GInB1WUVcpTbVODDNmPM2/BwU2mnxRAVlhzS7flhF6eOqi0701WFaYJ3jQyj76tIERkLqmQ6tBisIM1wY6XQa97pdAoZuLpmuPyk0a9DDaTqRx1a1PDkbXMQnhPSkOl2JwdfPoPHeEqkasP6S7WtLmkSt/sPgUrmEvi14lirSfPKSLgL8mr51jkxD7GbSpY2cTSRF6/spJRUXdBbSBaIWkbXkWqBD9MP6/brC1OS5IOacQE/tDWGTKWk0Bli+BE9wIBG8zC1y5tKOy2Ihg/H0B7JUF2djotSskM3hm2YtBf/uPQS0vdaNVf0Cdv47ZkmjepNi8b1wslbF5lSSqXqzIPSN6/M5+ML2tGKyC0wIpnLl9JJumAN0QnZqixdQDBkOWW68nKzyVsbFE07LO0VlL9t/97kbSPmkLs6qO8SorFQDtDI4pp0bAAXeKWrS0PJDPQxJuTfNsk6IJNUnyZYPR7d5+BRM5/UgkqSqlXA0hmLul8ZFV4r9fSgobE1QKopszSubpp1YMazpzzwPpPqK5tsx6myrJQG2ECtEpk3/C7S/W4fY0E+lqCYkRFkEldpFfmmkgIw3iBmcpA7bCslbTsSgzfUfZOosn4bh0FZC6pzyapx+/GG0qU162bnlEqh3NFM2rceSmEdZEWR/4eOYCzf7PYD68qXUKBoc6lWQnB33ZylIZh4joubWA5qYFoin1Q5NoE+Exusiy+OqLCBrNeGcuEKfGdTqc4WVAI/3NKmeRFq75KqWLYi7ZSX4+EzaRn0Y+UltN2x+ZNRH/e3XZt8CCbU4JI2dLteRVL9q97E61+pogTxcFGCYMpcyvKiJm6CYKgzEYZ8IKGUWTI7IzGY2HG4ZmMiIK+znOhZaUOcPIVuH8sC7d8mJ1fRvx1KqdSpqmklQUh1QZXjWjnuIHd+fWYlhHyotI4otMDuENkewuanT1EbFGjahlSrIKgYX+v2sU+h/NuAn2huyeTSXqu2Ya+3ts7GxBDlboLLVvRZ9/kBoa1I+40hEQMqK7mF8+SMVO+hymxuHysSVCmNgfxXrdvrS1km7UKeNs5ub+9omuyHvqqtqnHLCtrK0uWkm9i8mgl0KmvJqnIN5ctzkM0tEO1efiLSDrfGsej7DCpitdaxBEUiXz1zituovP62pBrkF5qEaqw4qOLpJrNh+KGrSakWh+Gs239xuQfRj9QPRRN8jG9u4lhbsSDdHmWp4GGvv2a43Gm3R+Ww60l3PilPcsG1YsBB/nro4dalDAd5TCjDMxUU4xmjj6o5AEF+iCjAkilleKCEm4n1K+TAstt5WsGEZVRKexOGa6lWVsg/tnmU734LDpu/I/XJjFqlljGcispUMdxI9R1tZNcdcGACjxvlbzcMLxSZpIM0RjFcSbVeMZ7dJIbwgMdUbzPtLg352xXDQd5gX0uRs2UMN1K9q7Lw7ipy8Fj+sR1IWqZSXCsl19XynFHJYqsYAwpRo9MASWKJ8Qzkl+3vbYar5b/A23g3MDxhFcMgr10kBk+xWO5yPn8hLflJqpmQZ1F4mv39KhpgSsWEJ+dusmLGqQ4WF4M7Vy2QySIL+KGjehsF3Swz/h/oJZMpBxOAtwAAAABJRU5ErkJggg==\" alt=\"Favicon\" class=\"w-5 h-5 object-contain opacity-75\" />\n                  <span class=\"text-[11.5px] font-semibold text-slate-700\">Görsel yükle</span>\n                </div>\n                <div class=\"py-4 px-3 flex flex-col items-center justify-center gap-1.5 hover:bg-slate-50 cursor-pointer\">\n                  <span class=\"text-slate-500 text-base\">✨</span>\n                  <span class=\"text-[11.5px] font-semibold text-slate-700 text-center\">Yapay Zeka ile oluştur</span>\n                </div>\n              </div>\n            </div>\n          </div>\n\n          <!-- 3. İLETİŞİM BİLGİLERİ (Görsel 3 & 4 Birebir) -->\n          <div id=\"preview-card-store_contact\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-5\">İletişim Bilgileri</h2>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">İletişim E-posta</label>\n                <input type=\"email\" value=\"info@cizgibutik.com\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Bilgi E-posta</label>\n                <input type=\"email\" value=\"destek@cizgibutik.com\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n              </div>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-3 gap-4 mb-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Telefon</label>\n                <input type=\"text\" value=\"0850 304 55 60\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">GSM</label>\n                <input type=\"text\" value=\"0532 410 88 90\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Whatsapp</label>\n                <input type=\"text\" value=\"905324108890\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\" />\n              </div>\n            </div>\n\n            <div class=\"mb-4\">\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Adres</label>\n              <textarea rows=\"2\" class=\"w-full p-2.5 rounded border border-slate-200 text-[13px] text-slate-900 focus:outline-none focus:border-[#1565c0]\">Atatürk Oto Sanayi Sitesi 2. Kısım 21. Sokak No:44 Maslak / Sarıyer / İstanbul</textarea>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-3 gap-4 mb-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Ülke</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>Türkiye</option>\n                </select>\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Şehir</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>İstanbul</option>\n                  <option>Ankara</option>\n                  <option>İzmir</option>\n                </select>\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Posta Kodu</label>\n                <input type=\"text\" value=\"34398\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n            </div>\n\n            <div class=\"mb-5\">\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Harita Kodu</label>\n              <textarea rows=\"2\" placeholder=\"<iframe src='https://www.google.com/maps/embed...'></iframe>\" class=\"w-full p-2.5 rounded border border-slate-200 text-[12.5px] text-slate-900\"></textarea>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Facebook</label>\n                <input type=\"text\" value=\"https://www.facebook.com/cizgibutik\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">X (Twitter)</label>\n                <input type=\"text\" placeholder=\"https://x.com/...\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Instagram</label>\n                <input type=\"text\" value=\"https://www.instagram.com/cizgibutik/\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Youtube</label>\n                <input type=\"text\" placeholder=\"https://youtube.com/...\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Tiktok</label>\n                <input type=\"text\" value=\"https://www.tiktok.com/@cizgibutik\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Linkedin</label>\n                <input type=\"text\" placeholder=\"https://linkedin.com/...\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Pinterest</label>\n                <input type=\"text\" placeholder=\"https://pinterest.com/...\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n            </div>\n          </div>\n\n          <!-- 4. SİPARİŞ AYARLARI (Görsel 4 & 5 Birebir) -->\n          <div id=\"preview-card-store_orders\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Sipariş Ayarları</h2>\n\n            <div class=\"divide-y divide-slate-100 mb-5\">\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Üyeliksiz alışveriş yapılabilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Sepet ağırlığı gösterilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-slate-300 relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[3px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Ön bilgilendirme formu ve mesafeli satış sözleşmesi onay kutusu gösterilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Sipariş tamamlandığında müşteriye bilgilendirme e-postası gönderilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-slate-300 relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[3px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Sipariş tamamlandığında müşteriye bilgilendirme SMS'i gönderilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-slate-300 relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[3px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Sipariş tamamlandığında yöneticiye bilgilendirme e-postası gönderilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Sipariş tamamlandığında yöneticiye bilgilendirme SMS'i gönderilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Minimum Sipariş Tutarı</label>\n                <input type=\"text\" value=\"0.00\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Hediye Paketi Ücreti</label>\n                <input type=\"text\" value=\"0.00\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Sepet Rezerve Süresi (Dakika)</label>\n                <input type=\"number\" value=\"0\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Tahmini Teslim Süresi (Gün)</label>\n                <input type=\"number\" value=\"0\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Stok Düşme Durumu</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>Sipariş Oluşturulduğunda</option>\n                  <option>Sipariş Onaylandığında</option>\n                </select>\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Kredi Kartı Sipariş Durumu</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>Hazırlanıyor</option>\n                  <option>Onay Bekliyor</option>\n                </select>\n              </div>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Havale / EFT Sipariş Durumu</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>Hazırlanıyor</option>\n                  <option>Ödeme Bekliyor</option>\n                </select>\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Kapıda Ödeme Sipariş Durumu</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>Hazırlanıyor</option>\n                  <option>Onay Bekliyor</option>\n                </select>\n              </div>\n            </div>\n\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">TC Kimlik No</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>İsteğe Bağlı</option>\n                  <option>Zorunlu</option>\n                  <option>Gizli</option>\n                </select>\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Sipariş Notu</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>İsteğe Bağlı</option>\n                  <option>Zorunlu</option>\n                  <option>Gizli</option>\n                </select>\n              </div>\n            </div>\n          </div>\n\n          <!-- 5. İADE AYARLARI (Görsel 5 Birebir) -->\n          <div id=\"preview-card-store_returns\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">İade Ayarları</h2>\n            <div class=\"divide-y divide-slate-100 mb-4\">\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Müşteriler panelden iade talebi oluşturabilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">İade talebi oluşturulduğunda yöneticiye bildirim gönderilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n            </div>\n            <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">İade Süresi (Gün)</label>\n                <input type=\"number\" value=\"14\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px] text-slate-900\" />\n              </div>\n              <div>\n                <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Varsayılan İade Kargo Firması</label>\n                <select class=\"w-full h-[38px] px-3 rounded border border-slate-200 bg-white text-[13px] text-slate-900\">\n                  <option selected>Yurtiçi Kargo</option>\n                  <option>Aras Kargo</option>\n                  <option>MNG / DHL Kargo</option>\n                </select>\n              </div>\n            </div>\n          </div>\n\n          <!-- 6. ÜRÜN AYARLARI -->\n          <div id=\"preview-card-store_products\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Ürün Ayarları</h2>\n            <div class=\"divide-y divide-slate-100\">\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Stokta olmayan ürünler sitede gösterilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Ürün yorumları yönetici onayından sonra yayınlansın</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">KDV dahil fiyatlar gösterilsin</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n            </div>\n          </div>\n\n          <!-- 7. MÜŞTERİ AYARLARI -->\n          <div id=\"preview-card-store_customers\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Müşteri Ayarları</h2>\n            <div class=\"divide-y divide-slate-100\">\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">Yeni üyelikte SMS doğrulaması zorunlu olsun</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-slate-300 relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[3px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n              <div class=\"py-3 flex items-center justify-between gap-4\">\n                <span class=\"text-[13px] text-slate-800\">KVKK ve Aydınlatma Metni onayı zorunlu olsun</span>\n                \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n              </div>\n            </div>\n          </div>\n\n          <!-- 8. AFFİLİATE AYARLARI -->\n          <div id=\"preview-card-store_affiliate\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Affiliate Ayarları</h2>\n            <div class=\"py-2 flex items-center justify-between gap-4\">\n              <span class=\"text-[13px] text-slate-800\">Affiliate (Satış Ortaklığı) sistemi aktif</span>\n              \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-slate-300 relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[3px] shadow-xs transition-all\"></span>\n    </button>\n  \n            </div>\n          </div>\n\n          <!-- 9. HIZLI SATIŞ AYARLARI -->\n          <div id=\"preview-card-store_quicksale\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Hızlı Satış Ayarları</h2>\n            <div class=\"py-2 flex items-center justify-between gap-4\">\n              <span class=\"text-[13px] text-slate-800\">Mağaza içi barkodlu hızlı satış (POS) modülü aktif</span>\n              \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n            </div>\n          </div>\n\n          <!-- 10. BAYİ AYARLARI -->\n          <div id=\"preview-card-store_dealer\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Bayi Ayarları</h2>\n            <div class=\"py-2 flex items-center justify-between gap-4\">\n              <span class=\"text-[13px] text-slate-800\">B2B Bayi başvuruları ve bayi fiyatlandırma aktif</span>\n              \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n            </div>\n          </div>\n\n          <!-- 11. BAYİ XML AYARLARI -->\n          <div id=\"preview-card-store_dealer_xml\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Bayi XML Ayarları</h2>\n            <div class=\"py-2 flex items-center justify-between gap-4\">\n              <span class=\"text-[13px] text-slate-800\">Bayilere özel XML çıktı servisi aktif</span>\n              \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n            </div>\n          </div>\n\n          <!-- 12. BAYİ API AYARLARI -->\n          <div id=\"preview-card-store_dealer_api\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Bayi API Ayarları</h2>\n            <div class=\"py-2 flex items-center justify-between gap-4\">\n              <span class=\"text-[13px] text-slate-800\">REST / Webhook Bayi API erişimi aktif</span>\n              \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n            </div>\n          </div>\n\n          <!-- 13. GÜVENLİK AYARLARI -->\n          <div id=\"preview-card-store_security\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Güvenlik Ayarları</h2>\n            <div class=\"py-2 flex items-center justify-between gap-4\">\n              <span class=\"text-[13px] text-slate-800\">256-Bit SSL zorlaması ve bot koruma duvarı aktif</span>\n              \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n            </div>\n          </div>\n\n          <!-- 14. BAKIM MODU -->\n          <div id=\"preview-card-store_maintenance\" class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n            <h2 class=\"text-[16px] font-bold text-slate-900 mb-3\">Bakım Modu</h2>\n            <div class=\"py-2 flex items-center justify-between gap-4\">\n              <span class=\"text-[13px] text-slate-800\">Mağazayı ziyaretçilere kapat (Bakım Modu)</span>\n              \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-slate-300 relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[3px] shadow-xs transition-all\"></span>\n    </button>\n  \n            </div>\n          </div>\n\n        </div>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 2: SÖZLEŞMELER VE METİNLER (/admin/settings/rules 1:1) -->\n    <div id=\"subview-settings-rules\" class=\"settings-subview hidden max-w-[1220px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-start\">\n        <div class=\"bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs\">\n          \n            <button type=\"button\" onclick=\"document.getElementById('rules-editor-title').textContent='Mesafeli Satış Sözleşmesi';this.parentElement.querySelectorAll('button').forEach(b=>b.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer');this.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer';\" class=\"w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer\">\n              <span>Mesafeli Satış Sözleşmesi</span>\n              <span class=\"text-xs\">›</span>\n            </button>\n          \n            <button type=\"button\" onclick=\"document.getElementById('rules-editor-title').textContent='Ön Bilgilendirme Formu';this.parentElement.querySelectorAll('button').forEach(b=>b.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer');this.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer';\" class=\"w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer\">\n              <span>Ön Bilgilendirme Formu</span>\n              <span class=\"text-xs\">›</span>\n            </button>\n          \n            <button type=\"button\" onclick=\"document.getElementById('rules-editor-title').textContent='Üyelik Sözleşmesi';this.parentElement.querySelectorAll('button').forEach(b=>b.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer');this.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer';\" class=\"w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer\">\n              <span>Üyelik Sözleşmesi</span>\n              <span class=\"text-xs\">›</span>\n            </button>\n          \n            <button type=\"button\" onclick=\"document.getElementById('rules-editor-title').textContent='İptal ve İade Koşulları';this.parentElement.querySelectorAll('button').forEach(b=>b.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer');this.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer';\" class=\"w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer\">\n              <span>İptal ve İade Koşulları</span>\n              <span class=\"text-xs\">›</span>\n            </button>\n          \n            <button type=\"button\" onclick=\"document.getElementById('rules-editor-title').textContent='Gizlilik ve Güvenlik Politikası';this.parentElement.querySelectorAll('button').forEach(b=>b.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer');this.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer';\" class=\"w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer\">\n              <span>Gizlilik ve Güvenlik Politikası</span>\n              <span class=\"text-xs\">›</span>\n            </button>\n          \n            <button type=\"button\" onclick=\"document.getElementById('rules-editor-title').textContent='KVKK Aydınlatma Metni';this.parentElement.querySelectorAll('button').forEach(b=>b.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer');this.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer';\" class=\"w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer\">\n              <span>KVKK Aydınlatma Metni</span>\n              <span class=\"text-xs\">›</span>\n            </button>\n          \n            <button type=\"button\" onclick=\"document.getElementById('rules-editor-title').textContent='Çerez (Cookie) Politikası';this.parentElement.querySelectorAll('button').forEach(b=>b.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer');this.className='w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] cursor-pointer';\" class=\"w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 cursor-pointer\">\n              <span>Çerez (Cookie) Politikası</span>\n              <span class=\"text-xs\">›</span>\n            </button>\n          \n        </div>\n        <div class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n          <div class=\"flex flex-wrap items-center justify-between gap-3 mb-4\">\n            <h2 id=\"rules-editor-title\" class=\"text-[16px] font-bold text-slate-900\">Mesafeli Satış Sözleşmesi</h2>\n            <span class=\"text-[12px] text-[#0abb87] font-semibold\">✓ Dinamik Değişkenler Aktif</span>\n          </div>\n          <div class=\"bg-[#f1f4f9] border-l-[3px] border-[#8fa3bf] rounded-r px-4 py-3 text-[12px] text-slate-700 mb-4\">\n            Sözleşme metni içerisinde <code class=\"px-1.5 py-0.5 bg-white rounded border text-[#1565c0] font-semibold\">[ALICI_AD_SOYAD]</code> <code class=\"px-1.5 py-0.5 bg-white rounded border text-[#1565c0] font-semibold\">[ALICI_ADRES]</code> <code class=\"px-1.5 py-0.5 bg-white rounded border text-[#1565c0] font-semibold\">[SATICI_UNVAN]</code> <code class=\"px-1.5 py-0.5 bg-white rounded border text-[#1565c0] font-semibold\">[URUN_LISTESI]</code> <code class=\"px-1.5 py-0.5 bg-white rounded border text-[#1565c0] font-semibold\">[SIPARIS_TUTARI]</code> <code class=\"px-1.5 py-0.5 bg-white rounded border text-[#1565c0] font-semibold\">[TARIH]</code> kısa kodlarını kullanabilirsiniz.\n          </div>\n          <div class=\"border border-slate-200 rounded overflow-hidden\">\n            <div class=\"bg-[#f8f9fb] border-b border-slate-200 px-3 py-2 flex items-center gap-2 text-[12px] font-semibold text-slate-700\">\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200 font-bold\">B</button>\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200 italic\">I</button>\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200 underline\">U</button>\n              <span class=\"text-slate-300\">|</span>\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200\">H1</button>\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200\">H2</button>\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200\">Liste</button>\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200\">Tablo</button>\n              <button type=\"button\" class=\"px-2 py-1 rounded hover:bg-slate-200 ml-auto text-[#1565c0]\">&lt;/&gt; Kaynak Kodu</button>\n            </div>\n            <textarea rows=\"14\" class=\"w-full p-4 text-[13px] text-slate-800 leading-relaxed focus:outline-none\">MADDE 1 - TARAFLAR\n\n1.1. SATICI BİLGİLERİ:\nÜnvanı: [SATICI_UNVAN]\nAdresi: Atatürk Oto Sanayi Sitesi 2. Kısım 21. Sokak No:44 Maslak / İstanbul\nTelefon: +90 501 947 37 66\nE-Posta: info@cizgibutik.com\n\n1.2. ALICI BİLGİLERİ:\nAdı Soyadı / Ünvanı: [ALICI_AD_SOYAD]\nTeslimat Adresi: [ALICI_ADRES]\nTelefon: [ALICI_TELEFON]\nE-Posta: [ALICI_EPOSTA]\n\nMADDE 2 - SÖZLEŞMENİN KONUSU\nİşbu sözleşmenin konusu, ALICI'nın SATICI'ya ait internet sitesinden elektronik ortamda siparişini yaptığı aşağıda nitelikleri ve satış fiyatı belirtilen ürünün satışı ve teslimi ile ilgili olarak 6502 sayılı Tüketicilerin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümleri gereğince tarafların hak ve yükümlülüklerinin saptanmasıdır.\n\nMADDE 3 - SÖZLEŞME KONUSU ÜRÜN BİLGİLERİ\n[URUN_LISTESI]\nToplam Sipariş Tutarı: [SIPARIS_TUTARI]\nTarih: [TARIH]</textarea>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 3: PAZARLAMA VE DOĞRULAMA (/admin/settings/marketing 1:1) -->\n    <div id=\"subview-settings-marketing\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\">\n        <div class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs space-y-4\">\n          <h3 class=\"text-[15.5px] font-bold text-slate-900 border-b border-slate-100 pb-3\">Google Pazarlama &amp; Doğrulama Araçları</h3>\n          <div>\n            <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Google Analytics 4 (GA4) Ölçüm Kimliği</label>\n            <input type=\"text\" value=\"G-8K92M4X1LP\" placeholder=\"G-XXXXXXXXXX\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px]\" />\n          </div>\n          <div>\n            <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Google Tag Manager (GTM) Kodu</label>\n            <input type=\"text\" value=\"GTM-W7P9Q2K\" placeholder=\"GTM-XXXXXXX\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px]\" />\n          </div>\n          <div>\n            <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Google Search Console Doğrulama Meta Etiketi</label>\n            <input type=\"text\" value='<meta name=\"google-site-verification\" content=\"bm9z8x7y6w5v4u3t2s1r\" />' class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[12.5px] font-mono\" />\n          </div>\n          <div>\n            <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Google Ads Dönüşüm Kimliği (AW-ID &amp; Label)</label>\n            <input type=\"text\" value=\"AW-948102394 / xYz123AbC\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px]\" />\n          </div>\n          <div class=\"flex items-center justify-between pt-2\">\n            <span class=\"text-[13px] text-slate-700\">Google Enhanced Conversions (Gelişmiş Dönüşümler)</span>\n            \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n          </div>\n        </div>\n\n        <div class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs space-y-4\">\n          <h3 class=\"text-[15.5px] font-bold text-slate-900 border-b border-slate-100 pb-3\">Meta (Facebook &amp; Instagram) &amp; TikTok Pixel</h3>\n          <div>\n            <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Meta Pixel ID</label>\n            <input type=\"text\" value=\"148920384910293\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px]\" />\n          </div>\n          <div>\n            <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Meta Conversions API (CAPI) Erişim Anahtarı</label>\n            <input type=\"password\" value=\"EAABsbCS1iHgBO7z9x8c7v6b5n4m3l2k1j\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px]\" />\n          </div>\n          <div>\n            <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Facebook Domain Doğrulama Meta Etiketi</label>\n            <input type=\"text\" value='<meta name=\"facebook-domain-verification\" content=\"k8j7h6g5f4d3s2a1\" />' class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[12.5px] font-mono\" />\n          </div>\n          <div class=\"grid grid-cols-2 gap-3\">\n            <div>\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">TikTok Pixel ID</label>\n              <input type=\"text\" value=\"C9L8K7J6H5G4F3\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px]\" />\n            </div>\n            <div>\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Yandex Metrica ID</label>\n              <input type=\"text\" value=\"94827165\" class=\"w-full h-[38px] px-3 rounded border border-slate-200 text-[13px]\" />\n            </div>\n          </div>\n          <div class=\"flex items-center justify-between pt-2\">\n            <span class=\"text-[13px] text-slate-700\">Sunucu Taraflı (Server-Side) Event Gönderimi</span>\n            \n    <button type=\"button\" onclick=\"this.classList.toggle('bg-[#10b981]'); this.classList.toggle('bg-slate-300'); this.firstElementChild.classList.toggle('left-[23px]'); this.firstElementChild.classList.toggle('left-[3px]');\" class=\"w-11 h-6 rounded-full bg-[#10b981] relative transition cursor-pointer shrink-0\">\n      <span class=\"w-[18px] h-[18px] rounded-full bg-white absolute top-[3px] left-[23px] shadow-xs transition-all\"></span>\n    </button>\n  \n          </div>\n        </div>\n\n        <div class=\"md:col-span-2 bg-white border border-slate-200 rounded-md p-6 shadow-2xs\">\n          <h3 class=\"text-[15.5px] font-bold text-slate-900 mb-2\">Özel Header (&lt;head&gt;) ve Footer (&lt;/body&gt;) Kod Alanları</h3>\n          <p class=\"text-[12.5px] text-slate-500 mb-4\">Canlı destek, ısı haritası (Hotjar/Clarity) veya özel doğrulama scriptlerinizi ekleyebilirsiniz.</p>\n          <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">\n            <div>\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Header (&lt;head&gt; içi) Script Kodu</label>\n              <textarea rows=\"5\" class=\"w-full p-3 rounded border border-slate-300 bg-[#272822] text-[#f8f8f2] font-mono text-[12px]\">&lt;!-- Özel Head Scriptleri --&gt;\n&lt;script async src=\"https://www.googletagmanager.com/gtag/js?id=G-8K92M4X1LP\"&gt;&lt;/script&gt;</textarea>\n            </div>\n            <div>\n              <label class=\"block text-[12.5px] font-medium text-slate-600 mb-1.5\">Footer (&lt;/body&gt; öncesi) Script Kodu</label>\n              <textarea rows=\"5\" class=\"w-full p-3 rounded border border-slate-300 bg-[#272822] text-[#f8f8f2] font-mono text-[12px]\">&lt;!-- Özel Footer Scriptleri --&gt;\n&lt;script&gt;console.log(\"EntegreShop Analytics Ready\");&lt;/script&gt;</textarea>\n            </div>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 4: YAZDIRMA ETİKETLERİ (/admin/settings/prints 1:1) -->\n    <div id=\"subview-settings-prints\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"bg-white border-l-[10px] border-[#c0c5d9] rounded-[5px] px-[25px] py-[20px] mb-[20px] text-[14px] text-[#48465b] shadow-2xs\">\n        Kargo barkod fişi, sipariş toplama formu, ürün raf/koli barkod etiketi ve matbu fatura yazdırma şablonlarınızı özelleştirebilirsiniz.\n      </div>\n      <div class=\"grid grid-cols-1 md:grid-cols-2 gap-6\">\n        \n          <div class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs flex flex-col justify-between gap-4\">\n            <div>\n              <div class=\"flex items-center justify-between mb-2\">\n                <h3 class=\"text-[15.5px] font-bold text-slate-900\">Kargo Barkod Etiketi Şablonu</h3>\n                <span class=\"px-2.5 py-1 rounded bg-blue-50 text-[#1565c0] text-[11.5px] font-bold\">Termal 100x100 mm / A5</span>\n              </div>\n              <p class=\"text-[12.5px] text-slate-500 mb-3\">Yurtiçi, Aras, MNG, Sürat, PTT ve Kargoist barkodlu sevkiyat etiketi şablonu.</p>\n              <div class=\"bg-slate-50 border border-slate-200 rounded p-3 text-[11.5px] font-mono text-slate-700 mb-3\">\n                Kullanılabilir Değişkenler: [KARGO_BARKOD] [ALICI_AD_SOYAD] [ALICI_ADRES] [SIPARIS_NO]\n              </div>\n              <div class=\"grid grid-cols-2 gap-3 text-[12.5px]\">\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Sayfa Boyutu</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>Termal 100x100 mm / A5</option>\n                    <option>A4 (210x297 mm)</option>\n                    <option>A5 (148x210 mm)</option>\n                    <option>Termal (100x100 mm)</option>\n                  </select>\n                </div>\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Barkod Tipi</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>Code 128 (Standart)</option>\n                    <option>EAN-13</option>\n                    <option>QR Kod</option>\n                  </select>\n                </div>\n              </div>\n            </div>\n            <div class=\"pt-3 border-t border-slate-100 flex items-center justify-between\">\n              <button type=\"button\" onclick=\"alert('Kargo Barkod Etiketi Şablonu örnek önizlemesi açılıyor...')\" class=\"h-[32px] px-3.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-700 cursor-pointer\">🖨 Örnek Yazdır / Önizle</button>\n              <button type=\"button\" onclick=\"alert('Kargo Barkod Etiketi Şablonu kaydedildi!')\" class=\"h-[32px] px-4 rounded bg-[#0abb87] text-white text-[12px] font-bold cursor-pointer\">✓ Şablonu Kaydet</button>\n            </div>\n          </div>\n        \n          <div class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs flex flex-col justify-between gap-4\">\n            <div>\n              <div class=\"flex items-center justify-between mb-2\">\n                <h3 class=\"text-[15.5px] font-bold text-slate-900\">Sipariş Hazırlama / Toplama Fişi</h3>\n                <span class=\"px-2.5 py-1 rounded bg-blue-50 text-[#1565c0] text-[11.5px] font-bold\">A4 / A5 Dikey</span>\n              </div>\n              <p class=\"text-[12.5px] text-slate-500 mb-3\">Depo personelinin ürünleri raftan toplarken kullandığı resimli ve barkodlu sipariş fişi.</p>\n              <div class=\"bg-slate-50 border border-slate-200 rounded p-3 text-[11.5px] font-mono text-slate-700 mb-3\">\n                Kullanılabilir Değişkenler: [URUN_RESIM] [URUN_ADI] [STOK_KODU] [ADET] [RAF_NO]\n              </div>\n              <div class=\"grid grid-cols-2 gap-3 text-[12.5px]\">\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Sayfa Boyutu</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>A4 / A5 Dikey</option>\n                    <option>A4 (210x297 mm)</option>\n                    <option>A5 (148x210 mm)</option>\n                    <option>Termal (100x100 mm)</option>\n                  </select>\n                </div>\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Barkod Tipi</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>Code 128 (Standart)</option>\n                    <option>EAN-13</option>\n                    <option>QR Kod</option>\n                  </select>\n                </div>\n              </div>\n            </div>\n            <div class=\"pt-3 border-t border-slate-100 flex items-center justify-between\">\n              <button type=\"button\" onclick=\"alert('Sipariş Hazırlama / Toplama Fişi örnek önizlemesi açılıyor...')\" class=\"h-[32px] px-3.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-700 cursor-pointer\">🖨 Örnek Yazdır / Önizle</button>\n              <button type=\"button\" onclick=\"alert('Sipariş Hazırlama / Toplama Fişi kaydedildi!')\" class=\"h-[32px] px-4 rounded bg-[#0abb87] text-white text-[12px] font-bold cursor-pointer\">✓ Şablonu Kaydet</button>\n            </div>\n          </div>\n        \n          <div class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs flex flex-col justify-between gap-4\">\n            <div>\n              <div class=\"flex items-center justify-between mb-2\">\n                <h3 class=\"text-[15.5px] font-bold text-slate-900\">Ürün Barkod Etiketi (Raf / Koli)</h3>\n                <span class=\"px-2.5 py-1 rounded bg-blue-50 text-[#1565c0] text-[11.5px] font-bold\">Termal 40x20 mm / 60x30 mm</span>\n              </div>\n              <p class=\"text-[12.5px] text-slate-500 mb-3\">Ürünleriniz için barkod yazıcıdan (Argox / Zebra) basılan fiyat ve barkod etiketi.</p>\n              <div class=\"bg-slate-50 border border-slate-200 rounded p-3 text-[11.5px] font-mono text-slate-700 mb-3\">\n                Kullanılabilir Değişkenler: [URUN_BARKOD] [URUN_ADI] [SATIS_FIYATI] [YERLI_URETIM_LOGO]\n              </div>\n              <div class=\"grid grid-cols-2 gap-3 text-[12.5px]\">\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Sayfa Boyutu</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>Termal 40x20 mm / 60x30 mm</option>\n                    <option>A4 (210x297 mm)</option>\n                    <option>A5 (148x210 mm)</option>\n                    <option>Termal (100x100 mm)</option>\n                  </select>\n                </div>\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Barkod Tipi</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>Code 128 (Standart)</option>\n                    <option>EAN-13</option>\n                    <option>QR Kod</option>\n                  </select>\n                </div>\n              </div>\n            </div>\n            <div class=\"pt-3 border-t border-slate-100 flex items-center justify-between\">\n              <button type=\"button\" onclick=\"alert('Ürün Barkod Etiketi (Raf / Koli) örnek önizlemesi açılıyor...')\" class=\"h-[32px] px-3.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-700 cursor-pointer\">🖨 Örnek Yazdır / Önizle</button>\n              <button type=\"button\" onclick=\"alert('Ürün Barkod Etiketi (Raf / Koli) kaydedildi!')\" class=\"h-[32px] px-4 rounded bg-[#0abb87] text-white text-[12px] font-bold cursor-pointer\">✓ Şablonu Kaydet</button>\n            </div>\n          </div>\n        \n          <div class=\"bg-white border border-slate-200 rounded-md p-6 shadow-2xs flex flex-col justify-between gap-4\">\n            <div>\n              <div class=\"flex items-center justify-between mb-2\">\n                <h3 class=\"text-[15.5px] font-bold text-slate-900\">Matbu Fatura & İrsaliye Şablonu</h3>\n                <span class=\"px-2.5 py-1 rounded bg-blue-50 text-[#1565c0] text-[11.5px] font-bold\">A4 / Sürekli Form</span>\n              </div>\n              <p class=\"text-[12.5px] text-slate-500 mb-3\">Nokta vuruşlu veya lazer yazıcılar için koordinat ayarlı fatura/irsaliye yazdırma tasarımı.</p>\n              <div class=\"bg-slate-50 border border-slate-200 rounded p-3 text-[11.5px] font-mono text-slate-700 mb-3\">\n                Kullanılabilir Değişkenler: [MUSTERI_UNVAN] [VERGI_DAIRESI] [VERGI_NO] [KALEMLER] [GENEL_TOPLAM]\n              </div>\n              <div class=\"grid grid-cols-2 gap-3 text-[12.5px]\">\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Sayfa Boyutu</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>A4 / Sürekli Form</option>\n                    <option>A4 (210x297 mm)</option>\n                    <option>A5 (148x210 mm)</option>\n                    <option>Termal (100x100 mm)</option>\n                  </select>\n                </div>\n                <div>\n                  <label class=\"block text-slate-600 mb-1\">Barkod Tipi</label>\n                  <select class=\"w-full h-[34px] px-2.5 rounded border border-slate-200 bg-white\">\n                    <option>Code 128 (Standart)</option>\n                    <option>EAN-13</option>\n                    <option>QR Kod</option>\n                  </select>\n                </div>\n              </div>\n            </div>\n            <div class=\"pt-3 border-t border-slate-100 flex items-center justify-between\">\n              <button type=\"button\" onclick=\"alert('Matbu Fatura & İrsaliye Şablonu örnek önizlemesi açılıyor...')\" class=\"h-[32px] px-3.5 rounded border border-slate-300 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-700 cursor-pointer\">🖨 Örnek Yazdır / Önizle</button>\n              <button type=\"button\" onclick=\"alert('Matbu Fatura & İrsaliye Şablonu kaydedildi!')\" class=\"h-[32px] px-4 rounded bg-[#0abb87] text-white text-[12px] font-bold cursor-pointer\">✓ Şablonu Kaydet</button>\n            </div>\n          </div>\n        \n      </div>\n    </div>\n\n    <!-- SUB-VIEW 5: PARA BİRİMLERİ (/admin/settings/currencies 1:1 from _CURRENCIES & currenciesTable) -->\n    <div id=\"subview-settings-currencies\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"bg-white rounded-[4px] border border-[#ebedf2] p-[25px] shadow-2xs\">\n        <div class=\"flex flex-wrap items-center justify-between gap-3 mb-5\">\n          <div>\n            <h3 class=\"text-[18px] font-medium text-[#48465b]\">Para Birimleri</h3>\n            <p class=\"text-[13px] text-[#74788d] mt-1\">TCMB (Merkez Bankası) üzerinden döviz kurlarını otomatik güncelleyebilir veya sabit kur tanımlayabilirsiniz.</p>\n          </div>\n          <div class=\"flex items-center gap-2\">\n            <button type=\"button\" onclick=\"alert('TCMB Güncel Döviz Kurları başarıyla çekildi!')\" class=\"h-[36px] px-4 rounded-[4px] bg-[#3d94fb] hover:bg-[#2b82ec] text-white text-[13px] font-medium cursor-pointer\">🔄 TCMB Kurlarını Şimdi Güncelle</button>\n          </div>\n        </div>\n        <div class=\"overflow-x-auto\">\n          <table class=\"w-full text-left border-collapse text-[13px]\">\n            <thead>\n              <tr class=\"bg-[#f8f9fb] border-b border-[#ebedf2] text-[#48465b] font-semibold\">\n                <th class=\"py-3 px-3 w-[70px]\">No</th>\n                <th class=\"py-3 px-3 w-[90px]\">Kodu</th>\n                <th class=\"py-3 px-3\">Adı</th>\n                <th class=\"py-3 px-3 w-[150px]\">Kur</th>\n                <th class=\"py-3 px-3 w-[110px] text-center\">Durum</th>\n                <th class=\"py-3 px-3 w-[140px] text-center\">Oto. Güncelleme</th>\n                <th class=\"py-3 px-3 w-[100px] text-right\">İşlemler</th>\n              </tr>\n            </thead>\n            <tbody class=\"divide-y divide-[#ebedf2] text-[#48465b]\">\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">1</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">TL</td>\n                  <td class=\"py-3 px-3 font-medium\">Türk Lirası (₺)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">1.0000</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#282a3c] text-[#282a3c] items-center justify-center text-[11px] font-bold\">✕</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('TL kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">2</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">USD</td>\n                  <td class=\"py-3 px-3 font-medium\">Amerikan Doları ($)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">50.3349</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('USD kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">3</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">EUR</td>\n                  <td class=\"py-3 px-3 font-medium\">Euro (€)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">55.8189</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('EUR kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">4</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">GBP</td>\n                  <td class=\"py-3 px-3 font-medium\">İngiliz Sterlini (£)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">66.9024</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('GBP kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">5</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">CHF</td>\n                  <td class=\"py-3 px-3 font-medium\">İsviçre Frangı (CHF)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">57.6419</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('CHF kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">6</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">SAR</td>\n                  <td class=\"py-3 px-3 font-medium\">Suudi Arabistan Riyali (SR)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">11.9301</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('SAR kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">7</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">AED</td>\n                  <td class=\"py-3 px-3 font-medium\">BAE Dirhemi (AED)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">12.1920</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('AED kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n                <tr class=\"hover:bg-[#f8f9fb]/60\">\n                  <td class=\"py-3 px-3\">8</td>\n                  <td class=\"py-3 px-3 font-bold text-[#1565c0]\">RUB</td>\n                  <td class=\"py-3 px-3 font-medium\">Rus Rublesi (₽)</td>\n                  <td class=\"py-3 px-3 font-mono font-semibold\">0.5762</td>\n                  <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n                  <td class=\"py-3 px-3 text-center\">\n                    <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                  </td>\n                  <td class=\"py-3 px-3 text-right\">\n                    <button type=\"button\" onclick=\"alert('RUB kur düzenleme ekranı')\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white inline-flex items-center justify-center text-[12px] cursor-pointer\" title=\"Görüntüle\">👁</button>\n                  </td>\n                </tr>\n              \n            </tbody>\n          </table>\n        </div>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 6: VERGİLER (/admin/settings/taxes 1:1) -->\n    <div id=\"subview-settings-taxes\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"bg-white rounded-[4px] border border-[#ebedf2] p-[25px] shadow-2xs mb-6\">\n        <h3 class=\"text-[18px] font-medium text-[#48465b] mb-4\">Vergi (KDV) Ayarları</h3>\n        <div class=\"grid grid-cols-1 md:grid-cols-3 gap-5 mb-4\">\n          <div>\n            <label class=\"block text-[13px] text-[#48465b] mb-2\">Varsayılan KDV Oranı (%)</label>\n            <select class=\"w-full h-[38px] px-3 rounded-[4px] border border-[#e2e5ec] bg-white text-[13px]\">\n              <option value=\"20\" selected>%20 (Genel KDV Oranı)</option>\n              <option value=\"10\">%10 (İndirimli Oran - Tekstil / Giyim)</option>\n              <option value=\"1\">%1 (Temel Gıda)</option>\n              <option value=\"0\">%0 (KDV İstisnası)</option>\n            </select>\n          </div>\n          <div>\n            <label class=\"block text-[13px] text-[#48465b] mb-2\">Ürün Fiyatlarında KDV Gösterimi</label>\n            <select class=\"w-full h-[38px] px-3 rounded-[4px] border border-[#e2e5ec] bg-white text-[13px]\">\n              <option selected>Fiyatlara KDV Dahil Göster</option>\n              <option>Fiyatlara KDV Hariç Göster (+KDV Sepette Eklensin)</option>\n            </select>\n          </div>\n          <div>\n            <label class=\"block text-[13px] text-[#48465b] mb-2\">Kargo Ücreti KDV Oranı</label>\n            <select class=\"w-full h-[38px] px-3 rounded-[4px] border border-[#e2e5ec] bg-white text-[13px]\">\n              <option selected>%20</option>\n              <option>%10</option>\n              <option>%0</option>\n            </select>\n          </div>\n        </div>\n      </div>\n\n      <div class=\"bg-white rounded-[4px] border border-[#ebedf2] p-[25px] shadow-2xs\">\n        <div class=\"flex items-center justify-between mb-4\">\n          <h3 class=\"text-[16px] font-medium text-[#48465b]\">Tanımlı Vergi Oranları &amp; KDV Grupları</h3>\n          <button type=\"button\" class=\"h-[34px] px-4 rounded-[4px] bg-[#0abb87] text-white text-[12.5px] font-medium cursor-pointer\">+ Yeni Vergi Oranı</button>\n        </div>\n        <table class=\"w-full text-left border-collapse text-[13px]\">\n          <thead>\n            <tr class=\"bg-[#f8f9fb] border-b border-[#ebedf2] text-[#48465b] font-semibold\">\n              <th class=\"py-3 px-3\">Vergi Adı</th>\n              <th class=\"py-3 px-3\">Oran (%)</th>\n              <th class=\"py-3 px-3\">Uygulanan Bölge</th>\n              <th class=\"py-3 px-3 text-center\">Durum</th>\n            </tr>\n          </thead>\n          <tbody class=\"divide-y divide-[#ebedf2]\">\n            <tr><td class=\"py-3 px-3 font-medium\">Genel KDV (%20) - Otomotiv &amp; Aksesuar</td><td class=\"py-3 px-3 font-bold\">%20</td><td class=\"py-3 px-3\">Türkiye (Tüm Bölgeler)</td><td class=\"py-3 px-3 text-center text-[#0abb87] font-bold\">✓ Aktif</td></tr>\n            <tr><td class=\"py-3 px-3 font-medium\">Tekstil &amp; Giyim KDV (%10)</td><td class=\"py-3 px-3 font-bold\">%10</td><td class=\"py-3 px-3\">Türkiye (Tüm Bölgeler)</td><td class=\"py-3 px-3 text-center text-[#0abb87] font-bold\">✓ Aktif</td></tr>\n            <tr><td class=\"py-3 px-3 font-medium\">Mikro İhracat / Yurt Dışı Satış (%0)</td><td class=\"py-3 px-3 font-bold\">%0</td><td class=\"py-3 px-3\">Yurt Dışı Bölgeleri</td><td class=\"py-3 px-3 text-center text-[#0abb87] font-bold\">✓ Aktif</td></tr>\n          </tbody>\n        </table>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 7: DİLLER (/admin/settings/locations 1:1 from .m_datatable_languages) -->\n    <div id=\"subview-settings-locations\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"bg-white rounded-[4px] border border-[#ebedf2] p-[25px] shadow-2xs\">\n        <div class=\"flex flex-wrap items-center justify-between gap-3 mb-5\">\n          <div>\n            <h3 class=\"text-[18px] font-medium text-[#48465b]\">Diller &amp; Lokalizasyon</h3>\n            <p class=\"text-[13px] text-[#74788d] mt-1\">Mağazanızda yayınlanan dilleri yönetebilir, Yapay Zeka (AI) ile tek tıkla otomatik çeviri yapabilirsiniz.</p>\n          </div>\n          <div class=\"flex items-center gap-2\">\n            <button type=\"button\" onclick=\"alert('Yapay Zeka Hızlı Çeviri Sihirbazı başlatıldı!')\" class=\"h-[36px] px-4 rounded-[4px] bg-[#3d94fb] text-white text-[13px] font-medium cursor-pointer\">✨ Yapay Zeka Hızlı Çeviri</button>\n            <button type=\"button\" class=\"h-[36px] px-4 rounded-[4px] bg-[#0abb87] text-white text-[13px] font-medium cursor-pointer\">+ Yeni Dil Ekle</button>\n          </div>\n        </div>\n        <table class=\"w-full text-left border-collapse text-[13px]\">\n          <thead>\n            <tr class=\"bg-[#f8f9fb] border-b border-[#ebedf2] text-[#48465b] font-semibold\">\n              <th class=\"py-3 px-3 w-[70px]\">No</th>\n              <th class=\"py-3 px-3 w-[90px]\">Kodu</th>\n              <th class=\"py-3 px-3\">Dil Adı</th>\n              <th class=\"py-3 px-3 text-center\">Varsayılan</th>\n              <th class=\"py-3 px-3 text-center\">Durum</th>\n              <th class=\"py-3 px-3 text-right\">İşlemler</th>\n            </tr>\n          </thead>\n          <tbody class=\"divide-y divide-[#ebedf2] text-[#48465b]\">\n            \n              <tr>\n                <td class=\"py-3 px-3\">1</td>\n                <td class=\"py-3 px-3 font-bold text-[#1565c0]\">TR</td>\n                <td class=\"py-3 px-3 font-medium\">Türkçe</td>\n                <td class=\"py-3 px-3 text-center\"><span class=\"px-2 py-0.5 rounded bg-blue-100 text-[#1565c0] text-[11px] font-bold\">Varsayılan</span></td>\n                <td class=\"py-3 px-3 text-center\">\n                  <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                </td>\n                <td class=\"py-3 px-3 text-right\">\n                  <div class=\"inline-flex items-center gap-1.5\">\n                    <button type=\"button\" class=\"h-[28px] px-2.5 rounded-[4px] border border-[#cbd5e1] bg-white text-[12px] font-medium cursor-pointer\">Dil Sabitleri</button>\n                    <button type=\"button\" class=\"w-[28px] h-[28px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  </div>\n                </td>\n              </tr>\n            \n              <tr>\n                <td class=\"py-3 px-3\">2</td>\n                <td class=\"py-3 px-3 font-bold text-[#1565c0]\">EN</td>\n                <td class=\"py-3 px-3 font-medium\">English (İngilizce)</td>\n                <td class=\"py-3 px-3 text-center\">-</td>\n                <td class=\"py-3 px-3 text-center\">\n                  <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span>\n                </td>\n                <td class=\"py-3 px-3 text-right\">\n                  <div class=\"inline-flex items-center gap-1.5\">\n                    <button type=\"button\" class=\"h-[28px] px-2.5 rounded-[4px] border border-[#cbd5e1] bg-white text-[12px] font-medium cursor-pointer\">Dil Sabitleri</button>\n                    <button type=\"button\" class=\"w-[28px] h-[28px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  </div>\n                </td>\n              </tr>\n            \n              <tr>\n                <td class=\"py-3 px-3\">3</td>\n                <td class=\"py-3 px-3 font-bold text-[#1565c0]\">DE</td>\n                <td class=\"py-3 px-3 font-medium\">Deutsch (Almanca)</td>\n                <td class=\"py-3 px-3 text-center\">-</td>\n                <td class=\"py-3 px-3 text-center\">\n                  <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#282a3c] text-[#282a3c] items-center justify-center text-[11px] font-bold\">✕</span>\n                </td>\n                <td class=\"py-3 px-3 text-right\">\n                  <div class=\"inline-flex items-center gap-1.5\">\n                    <button type=\"button\" class=\"h-[28px] px-2.5 rounded-[4px] border border-[#cbd5e1] bg-white text-[12px] font-medium cursor-pointer\">Dil Sabitleri</button>\n                    <button type=\"button\" class=\"w-[28px] h-[28px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  </div>\n                </td>\n              </tr>\n            \n              <tr>\n                <td class=\"py-3 px-3\">4</td>\n                <td class=\"py-3 px-3 font-bold text-[#1565c0]\">AR</td>\n                <td class=\"py-3 px-3 font-medium\">العربية (Arapça)</td>\n                <td class=\"py-3 px-3 text-center\">-</td>\n                <td class=\"py-3 px-3 text-center\">\n                  <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#282a3c] text-[#282a3c] items-center justify-center text-[11px] font-bold\">✕</span>\n                </td>\n                <td class=\"py-3 px-3 text-right\">\n                  <div class=\"inline-flex items-center gap-1.5\">\n                    <button type=\"button\" class=\"h-[28px] px-2.5 rounded-[4px] border border-[#cbd5e1] bg-white text-[12px] font-medium cursor-pointer\">Dil Sabitleri</button>\n                    <button type=\"button\" class=\"w-[28px] h-[28px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  </div>\n                </td>\n              </tr>\n            \n              <tr>\n                <td class=\"py-3 px-3\">5</td>\n                <td class=\"py-3 px-3 font-bold text-[#1565c0]\">RU</td>\n                <td class=\"py-3 px-3 font-medium\">Русский (Rusça)</td>\n                <td class=\"py-3 px-3 text-center\">-</td>\n                <td class=\"py-3 px-3 text-center\">\n                  <span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#282a3c] text-[#282a3c] items-center justify-center text-[11px] font-bold\">✕</span>\n                </td>\n                <td class=\"py-3 px-3 text-right\">\n                  <div class=\"inline-flex items-center gap-1.5\">\n                    <button type=\"button\" class=\"h-[28px] px-2.5 rounded-[4px] border border-[#cbd5e1] bg-white text-[12px] font-medium cursor-pointer\">Dil Sabitleri</button>\n                    <button type=\"button\" class=\"w-[28px] h-[28px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  </div>\n                </td>\n              </tr>\n            \n          </tbody>\n        </table>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 8: WEB SERVİS (/admin/settings/api 1:1 from webServicesTable) -->\n    <div id=\"subview-settings-api\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"bg-white rounded-[4px] border border-[#ebedf2] p-[25px] shadow-2xs\">\n        <div class=\"flex flex-wrap items-center justify-between gap-3 mb-5\">\n          <div>\n            <h3 class=\"text-[18px] font-medium text-[#48465b]\">Web Servis (REST &amp; SOAP API Hesapları)</h3>\n            <p class=\"text-[13px] text-[#74788d] mt-1\">Dış sistemlerin, ERP yazılımlarının ve özel mobil uygulamaların mağazanıza güvenli erişimi için Web Servis kullanıcıları oluşturabilirsiniz.</p>\n          </div>\n          <button type=\"button\" onclick=\"alert('Yeni Web Servis API kullanıcısı oluşturma modalı')\" class=\"h-[38px] px-4 rounded-[4px] bg-[#0abb87] hover:bg-[#099f73] text-white text-[13px] font-medium cursor-pointer\">+ Yeni Web Servis Hesabı</button>\n        </div>\n        <table class=\"w-full text-left border-collapse text-[13px]\">\n          <thead>\n            <tr class=\"bg-[#f8f9fb] border-b border-[#ebedf2] text-[#48465b] font-semibold\">\n              <th class=\"py-3 px-3 w-[70px]\">No</th>\n              <th class=\"py-3 px-3\">Kullanıcı Adı</th>\n              <th class=\"py-3 px-3\">API Token / Anahtar</th>\n              <th class=\"py-3 px-3\">IP Kısıtlaması</th>\n              <th class=\"py-3 px-3 text-center\">Durum</th>\n              <th class=\"py-3 px-3 text-right\">İşlemler</th>\n            </tr>\n          </thead>\n          <tbody class=\"divide-y divide-[#ebedf2] text-[#48465b]\">\n            <tr>\n              <td class=\"py-3 px-3\">1</td>\n              <td class=\"py-3 px-3 font-semibold\">erp_entegreshop_sync</td>\n              <td class=\"py-3 px-3 font-mono text-[12px] text-[#3d94fb]\">es_live_98a7b6c5d4e3f2g1h0j9k8l7</td>\n              <td class=\"py-3 px-3\"><span class=\"px-2 py-0.5 rounded bg-slate-100 text-[11.5px]\">Tüm IP'ler (*)</span></td>\n              <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n              <td class=\"py-3 px-3 text-right\">\n                <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#e74c3c] text-white text-[12px] cursor-pointer ml-1\">🗑</button>\n              </td>\n            </tr>\n            <tr>\n              <td class=\"py-3 px-3\">2</td>\n              <td class=\"py-3 px-3 font-semibold\">medusa_storefront_webhook</td>\n              <td class=\"py-3 px-3 font-mono text-[12px] text-[#3d94fb]\">es_live_44f3e2d1c0b9a8z7y6x5w4v3</td>\n              <td class=\"py-3 px-3\"><span class=\"px-2 py-0.5 rounded bg-slate-100 text-[11.5px]\">89.252.166.82</span></td>\n              <td class=\"py-3 px-3 text-center\"><span class=\"inline-flex w-[22px] h-[22px] rounded-full border-2 border-[#0abb87] text-[#0abb87] items-center justify-center text-[11px] font-bold\">✓</span></td>\n              <td class=\"py-3 px-3 text-right\">\n                <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#e74c3c] text-white text-[12px] cursor-pointer ml-1\">🗑</button>\n              </td>\n            </tr>\n          </tbody>\n        </table>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 9: PERSONELLER (/admin/settings/staff 1:1 from adminsTable) -->\n    <div id=\"subview-settings-staff\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <div class=\"bg-white rounded-[4px] border border-[#ebedf2] p-[25px] shadow-2xs\">\n        <div class=\"flex flex-wrap items-center justify-between gap-3 mb-5\">\n          <div>\n            <h3 class=\"text-[18px] font-medium text-[#48465b]\">Personeller (Yönetici Kullanıcılar)</h3>\n            <p class=\"text-[13px] text-[#74788d] mt-1\">Yönetim paneline erişebilecek personelleri, departman izinlerini, IP ve mesai saati kısıtlamalarını yönetebilirsiniz.</p>\n          </div>\n          <button type=\"button\" onclick=\"alert('Yeni Personel Ekleme penceresi')\" class=\"h-[38px] px-4 rounded-[4px] bg-[#0abb87] hover:bg-[#099f73] text-white text-[13px] font-medium cursor-pointer\">+ Yeni Personel</button>\n        </div>\n        <table class=\"w-full text-left border-collapse text-[13px]\">\n          <thead>\n            <tr class=\"bg-[#f8f9fb] border-b border-[#ebedf2] text-[#48465b] font-semibold\">\n              <th class=\"py-3 px-3 w-[40px] text-center\"><input type=\"checkbox\" class=\"w-4 h-4\" /></th>\n              <th class=\"py-3 px-3 w-[80px]\">No</th>\n              <th class=\"py-3 px-3\">Kullanıcı Adı</th>\n              <th class=\"py-3 px-3\">İzinler</th>\n              <th class=\"py-3 px-3\">IP Kısıtlaması</th>\n              <th class=\"py-3 px-3\">Saat Kısıtlaması</th>\n              <th class=\"py-3 px-3 w-[110px] text-right\">İşlemler</th>\n            </tr>\n          </thead>\n          <tbody class=\"divide-y divide-[#ebedf2] text-[#48465b]\">\n            \n              <tr>\n                <td class=\"py-3 px-3 text-center\"><input type=\"checkbox\" class=\"w-4 h-4\" /></td>\n                <td class=\"py-3 px-3\">1</td>\n                <td class=\"py-3 px-3 font-semibold\">Hakkı (Kurucu Yönetici)</td>\n                <td class=\"py-3 px-3\"><span class=\"px-2.5 py-1 rounded bg-blue-50 text-[#1565c0] text-[12px] font-semibold\">Tam Yetki (Süper Yönetici)</span></td>\n                <td class=\"py-3 px-3\">Yok</td>\n                <td class=\"py-3 px-3\">Yok</td>\n                <td class=\"py-3 px-3 text-right\">\n                  <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#e74c3c] text-white text-[12px] cursor-pointer ml-1\">🗑</button>\n                </td>\n              </tr>\n            \n              <tr>\n                <td class=\"py-3 px-3 text-center\"><input type=\"checkbox\" class=\"w-4 h-4\" /></td>\n                <td class=\"py-3 px-3\">2</td>\n                <td class=\"py-3 px-3 font-semibold\">siparis_operasyon</td>\n                <td class=\"py-3 px-3\"><span class=\"px-2.5 py-1 rounded bg-blue-50 text-[#1565c0] text-[12px] font-semibold\">Siparişler, Kargo & Fatura Yönetimi</span></td>\n                <td class=\"py-3 px-3\">Yok</td>\n                <td class=\"py-3 px-3\">08:30 - 19:30</td>\n                <td class=\"py-3 px-3 text-right\">\n                  <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#e74c3c] text-white text-[12px] cursor-pointer ml-1\">🗑</button>\n                </td>\n              </tr>\n            \n              <tr>\n                <td class=\"py-3 px-3 text-center\"><input type=\"checkbox\" class=\"w-4 h-4\" /></td>\n                <td class=\"py-3 px-3\">3</td>\n                <td class=\"py-3 px-3 font-semibold\">katalog_editor</td>\n                <td class=\"py-3 px-3\"><span class=\"px-2.5 py-1 rounded bg-blue-50 text-[#1565c0] text-[12px] font-semibold\">Ürünler, Kategoriler, Pazaryeri & Tasarım</span></td>\n                <td class=\"py-3 px-3\">Yok</td>\n                <td class=\"py-3 px-3\">Yok</td>\n                <td class=\"py-3 px-3 text-right\">\n                  <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#9b59b6] text-white text-[12px] cursor-pointer\">👁</button>\n                  <button type=\"button\" class=\"w-[30px] h-[30px] rounded-[4px] bg-[#e74c3c] text-white text-[12px] cursor-pointer ml-1\">🗑</button>\n                </td>\n              </tr>\n            \n          </tbody>\n        </table>\n      </div>\n    </div>\n\n    <!-- SUB-VIEW 10: LİSANS (/admin/settings/licence 1:1 from style.min.css .licence-summary & .licence-packages) -->\n    <div id=\"subview-settings-licence\" class=\"settings-subview hidden max-w-[1140px] w-full mx-auto px-5 pt-6 pb-20 flex-1\">\n      <!-- .licence-summary -->\n      <div class=\"rounded-[10px] border border-[#c4d4ed] bg-[#e0edff] p-[30px] mb-[25px]\">\n        <div class=\"flex flex-wrap items-center gap-[30px] pb-[20px] mb-[20px] border-b border-[#c4d4ed]\">\n          <div class=\"w-[100px] h-[100px] rounded-full bg-white flex items-center justify-center p-3 shadow-xs shrink-0\">\n            <img src=\"data:image/png;base64,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\" alt=\"EntegreShop\" class=\"max-w-[58px] max-h-[58px] object-contain\" />\n          </div>\n          <div class=\"flex-1 min-w-[260px]\">\n            <div class=\"text-[20px] font-bold text-[#1e293b] mb-2\">cizgibutik.com — EntegreShop Enterprise v5.2.1</div>\n            <div class=\"text-[13px] text-[#475569] mb-2\">Kalan Lisans Süresi: <strong>227 Gün</strong> (Bitiş: 24.06.2027)</div>\n            <div class=\"w-full h-[20px] bg-white rounded-[6px] overflow-hidden border border-[#c4d4ed] p-0.5\">\n              <div class=\"h-full bg-[#1d7cf1] text-white text-[11px] font-bold flex items-center justify-center rounded-[4px]\" style=\"width:65%\">227 Gün (%65)</div>\n            </div>\n          </div>\n        </div>\n        <div class=\"grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4\">\n          <div class=\"bg-white/80 rounded-[6px] p-3.5 border border-[#c4d4ed]\">\n            <div class=\"text-[12px] text-[#64748b]\">Bitiş Tarihi</div>\n            <div class=\"text-[15px] font-bold text-[#0f172a] mt-0.5\">24.06.2027</div>\n          </div>\n          <div class=\"bg-white/80 rounded-[6px] p-3.5 border border-[#c4d4ed]\">\n            <div class=\"text-[12px] text-[#64748b]\">Sunucu IP Adresi</div>\n            <div class=\"text-[15px] font-bold text-[#0f172a] mt-0.5\">89.252.166.82</div>\n          </div>\n          <div class=\"bg-white/80 rounded-[6px] p-3.5 border border-[#c4d4ed]\">\n            <div class=\"text-[12px] text-[#64748b]\">Yapay Zeka Kontörü</div>\n            <div class=\"text-[15px] font-bold text-[#1565c0] mt-0.5\">18.741</div>\n          </div>\n          <div class=\"bg-white/80 rounded-[6px] p-3.5 border border-[#c4d4ed]\">\n            <div class=\"text-[12px] text-[#64748b]\">Mobil Bildirim Kontörü</div>\n            <div class=\"text-[15px] font-bold text-[#0f172a] mt-0.5\">30</div>\n          </div>\n          <div class=\"bg-white/80 rounded-[6px] p-3.5 border border-[#c4d4ed]\">\n            <div class=\"text-[12px] text-[#64748b]\">Fiyat Rekabet Kontörü</div>\n            <div class=\"text-[15px] font-bold text-[#0f172a] mt-0.5\">3</div>\n          </div>\n        </div>\n      </div>\n\n      <!-- .licence-packages (3-column) -->\n      <div class=\"grid grid-cols-1 md:grid-cols-3 gap-6\">\n        \n          <div class=\"bg-white rounded-[10px] border border-[#ebedf2] p-[30px] shadow-2xs flex flex-col justify-between\">\n            <div>\n              <div class=\"text-[18px] font-bold text-[#1e293b] text-center pb-4 border-b border-[#ebedf2]\">Yapay Zeka (AI) Ek Kontör Paketi</div>\n              <div class=\"text-[20px] font-extrabold text-[#1d7cf1] text-center py-4\">1.490 TL / +25.000 Kontör</div>\n              <ul class=\"space-y-2.5 text-[13px] text-[#48465b] mb-6\">\n                <li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Otomatik Ürün Açıklaması Üretimi</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Toplu SEO Başlık & Meta Oluşturma</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Çoklu Dil Yapay Zeka Çeviri</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Süresiz Kullanım Hakkı</li>\n              </ul>\n            </div>\n            <button type=\"button\" onclick=\"openLicenseModal()\" class=\"w-full h-[40px] rounded-[6px] bg-[#0abb87] text-white text-[13px] font-bold cursor-pointer\">\n              Paketi İncele & Satın Al\n            </button>\n          </div>\n        \n          <div class=\"bg-white rounded-[10px] border border-2 border-[#1d7cf1] p-[30px] shadow-2xs flex flex-col justify-between\">\n            <div>\n              <div class=\"text-[18px] font-bold text-[#1e293b] text-center pb-4 border-b border-[#ebedf2]\">EntegreShop Enterprise Yıllık Yenileme</div>\n              <div class=\"text-[20px] font-extrabold text-[#1d7cf1] text-center py-4\">19.900 TL / Yıl</div>\n              <ul class=\"space-y-2.5 text-[13px] text-[#48465b] mb-6\">\n                <li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> 12 Pazaryeri Çift Yönlü Entegrasyon</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Sınırsız Ürün, Kategori ve Trafik</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Muhasebe / ERP & E-Fatura Modülü</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> 7/24 Öncelikli VIP Destek</li>\n              </ul>\n            </div>\n            <button type=\"button\" onclick=\"openLicenseModal()\" class=\"w-full h-[40px] rounded-[6px] bg-[#1d7cf1] text-white text-[13px] font-bold cursor-pointer\">\n              ✓ Mevcut Paketiniz (Süreyi Uzat)\n            </button>\n          </div>\n        \n          <div class=\"bg-white rounded-[10px] border border-[#ebedf2] p-[30px] shadow-2xs flex flex-col justify-between\">\n            <div>\n              <div class=\"text-[18px] font-bold text-[#1e293b] text-center pb-4 border-b border-[#ebedf2]\">Mobil Uygulama (iOS & Android) Paketi</div>\n              <div class=\"text-[20px] font-extrabold text-[#1d7cf1] text-center py-4\">24.900 TL / Tek Sefer</div>\n              <ul class=\"space-y-2.5 text-[13px] text-[#48465b] mb-6\">\n                <li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> App Store & Google Play Yayınlama</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Sınırsız Push Bildirim Gönderimi</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Uygulamaya Özel Kampanya Kurguları</li><li class=\"flex items-center gap-2\"><span class=\"text-[#0abb87] font-bold\">✓</span> Tam Otomatik Senkronizasyon</li>\n              </ul>\n            </div>\n            <button type=\"button\" onclick=\"openLicenseModal()\" class=\"w-full h-[40px] rounded-[6px] bg-[#0abb87] text-white text-[13px] font-bold cursor-pointer\">\n              Paketi İncele & Satın Al\n            </button>\n          </div>\n        \n      </div>\n    </div>\n\n    <!-- Sticky Bottom Footer Bar (Görsel 2-3-4-5 Birebir) -->\n    <div class=\"sticky bottom-0 z-30 bg-white border-t border-slate-200 px-6 py-3 shadow-lg\">\n      <div class=\"max-w-[1220px] mx-auto flex items-center justify-between\">\n        <div class=\"text-[13.5px] font-bold text-slate-800\">Mağaza Ayarları</div>\n        <button type=\"button\" onclick=\"alert('Mağaza ayarları başarıyla kaydedildi!')\" class=\"h-9 px-5 rounded bg-[#10b981] hover:bg-[#059669] text-white text-[13px] font-bold flex items-center gap-2 shadow-xs transition cursor-pointer\">\n          <span>✓</span>\n          <span>Kaydet</span>\n        </button>\n      </div>\n    </div>\n  </div>"
+type StoreTabId =
+  | "store"
+  | "rules"
+  | "marketing"
+  | "prints"
+  | "currencies"
+  | "taxes"
+  | "locations"
+  | "api"
+  | "staff"
+  | "licence"
 
-const FileUploadBox = ({
-  label,
-  value,
-  onUpload,
-  onRemove,
-}: {
-  label: string
-  value: string | null
-  onUpload: (file: File) => void
-  onRemove: () => void
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null)
-  return (
-    <div className="border border-slate-200 rounded-md p-3.5 bg-slate-50/60 flex flex-col justify-between gap-2">
-      <div className="text-[12px] font-bold text-slate-700">{label}</div>
-      {value ? (
-        <div className="flex items-center justify-between gap-3 bg-white border border-slate-200 rounded p-2">
-          <img src={value} alt={label} className="max-h-12 max-w-[160px] object-contain" />
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="h-7 px-2.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-700 cursor-pointer"
-            >
-              Değiştir
-            </button>
-            <button
-              type="button"
-              onClick={onRemove}
-              className="h-7 px-2.5 rounded border border-rose-200 bg-rose-50 hover:bg-rose-100 text-[11px] font-semibold text-rose-700 cursor-pointer"
-            >
-              Kaldır
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="h-14 border border-dashed border-slate-300 rounded bg-white hover:bg-slate-50 text-[11.5px] font-semibold text-slate-500 flex items-center justify-center cursor-pointer"
-        >
-          + Görsel Yükle (PNG, JPG, WEBP)
-        </button>
-      )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml,image/x-icon"
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files?.[0]) onUpload(e.target.files[0])
-        }}
-      />
-    </div>
-  )
+type StoreMenuItemId =
+  | "store_general"
+  | "store_logo"
+  | "store_contact"
+  | "store_orders"
+  | "store_returns"
+  | "store_products"
+  | "store_customers"
+  | "store_affiliate"
+  | "store_quicksale"
+  | "store_dealer"
+  | "store_dealer_xml"
+  | "store_dealer_api"
+  | "store_security"
+  | "store_maintenance"
+
+interface StoreConfigState {
+  storeTitle: string
+  logoUrl: string
+  faviconUrl: string
+  footerDescription: string
+  copyrightText: string
+  phone: string
+  whatsapp: string
+  email: string
+  address: string
+  workingHours: string
+  socialLinks: {
+    instagram: string
+    facebook: string
+    youtube: string
+    tiktok: string
+  }
 }
 
+const DEFAULT_CONFIG: StoreConfigState = {
+  storeTitle: "Çizgi Butik | Kadın Giyim, Elbise, Takım ve Yeni Sezon Kombinler",
+  logoUrl: "/images/logo-main.png",
+  faviconUrl: "/favicon.ico",
+  footerDescription: "Yeni sezon kadın giyim, elbise, ikili takım, dış giyim ve kombin modellerini en uygun fiyatlarla keşfedin.",
+  copyrightText: "© 2026 Çizgi Butik. Tüm hakları saklıdır.",
+  phone: "0532 337 00 81",
+  whatsapp: "905323370081",
+  email: "hakkisahin9@gmail.com",
+  address: "MERKEZ MAH. MUALLİM NACİ SK. MERVE NO: 9 GÜNGÖREN/ İSTANBUL",
+  workingHours: "Pzt - Cmt: 09:00 - 19:00",
+  socialLinks: {
+    instagram: "https://instagram.com/cizgibutik",
+    facebook: "https://facebook.com/cizgibutik",
+    youtube: "https://youtube.com/@cizgibutik",
+    tiktok: "https://tiktok.com/@cizgibutik",
+  },
+}
+
+const STORE_SIDEBAR_ITEMS: Array<{ id: StoreMenuItemId; label: string }> = [
+  { id: "store_general", label: "Genel Bilgiler" },
+  { id: "store_logo", label: "Logo ve İkonlar" },
+  { id: "store_contact", label: "İletişim & Sosyal Medya" },
+  { id: "store_orders", label: "Sipariş Ayarları" },
+  { id: "store_returns", label: "İptal ve İade Ayarları" },
+  { id: "store_products", label: "Ürün & Katalog Ayarları" },
+  { id: "store_customers", label: "Üye ve Müşteri Ayarları" },
+  { id: "store_affiliate", label: "Satış Ortaklığı (Affiliate)" },
+  { id: "store_quicksale", label: "Hızlı Satış (POS)" },
+  { id: "store_dealer", label: "Bayilik (B2B) Ayarları" },
+  { id: "store_dealer_xml", label: "Bayi XML Çıktısı" },
+  { id: "store_dealer_api", label: "Bayi API" },
+  { id: "store_security", label: "Güvenlik" },
+  { id: "store_maintenance", label: "Bakım Modu" },
+]
+
+const RULES_TABS = [
+  "Üyelik Sözleşmesi",
+  "Mesafeli Satış Sözleşmesi",
+  "Ön Bilgilendirme Formu",
+  "İptal ve İade Koşulları",
+  "Gizlilik ve Güvenlik Politikası",
+  "KVKK Aydınlatma Metni",
+  "Çerez (Cookie) Politikası",
+]
+
+const CURRENCY_ROWS = [
+  { id: 1, name: "Türk Lirası", code: "TL", symbol: "₺", rate: "1.0000", updatedAt: "Varsayılan Para Birimi", isDefault: true, active: true },
+  { id: 2, name: "Amerikan Doları", code: "USD", symbol: "$", rate: "34.2540", updatedAt: "Bugün 15:30 (TCMB)", isDefault: false, active: true },
+  { id: 3, name: "Euro", code: "EUR", symbol: "€", rate: "37.1890", updatedAt: "Bugün 15:30 (TCMB)", isDefault: false, active: true },
+  { id: 4, name: "İngiliz Sterlini", code: "GBP", symbol: "£", rate: "44.6200", updatedAt: "Bugün 15:30 (TCMB)", isDefault: false, active: true },
+  { id: 5, name: "İsviçre Frangı", code: "CHF", symbol: "CHF", rate: "39.4100", updatedAt: "Bugün 15:30 (TCMB)", isDefault: false, active: false },
+  { id: 6, name: "Suudi Arabistan Riyali", code: "SAR", symbol: "﷼", rate: "9.1300", updatedAt: "Bugün 15:30 (TCMB)", isDefault: false, active: false },
+  { id: 7, name: "BAE Dirhemi", code: "AED", symbol: "د.إ", rate: "9.3260", updatedAt: "Bugün 15:30 (TCMB)", isDefault: false, active: false },
+  { id: 8, name: "Rus Rublesi", code: "RUB", symbol: "₽", rate: "0.3580", updatedAt: "Bugün 15:30 (TCMB)", isDefault: false, active: false },
+]
+
 const StoreSettingsPage = () => {
-  const [logoConfig, setLogoConfig] = useState<any>({
-    logo: null,
-    favicon: null,
-    mobileLogo: null,
-    footerLogo: null,
-    emailLogo: null,
-    defaultImage: null,
-    checkoutLogo: null,
-    sideMenuLogo: null,
-    siteTitle: "Çizgi Butik",
-    footerCopyrightText: "© 2026 Çizgi Butik Tüm Hakları Saklıdır",
-    contactCompany: "ÖZSE MODA TEKSTİL KAFE GIDA İNŞAAT SANAYİ TİCARET LİMİTED ŞİRKETİ",
-    contactAddress: "MERKEZ MAH. MUALLİM NACİ SK. MERVE NO: 9 GÜNGÖREN/ İSTANBUL",
-    contactPhone: "0532 337 00 81",
-    contactEmail: "hakkisahin9@gmail.com",
-    contactHours: "Hafta içi 09:00 - 19:00",
-  })
-  const [savingLogo, setSavingLogo] = useState(false)
-  const [logoFeedback, setLogoFeedback] = useState<string | null>(null)
+  const getInitialTab = (): StoreTabId => {
+    if (typeof window === "undefined") return "store"
+    const params = new URLSearchParams(window.location.search)
+    const t = params.get("tab") as StoreTabId | null
+    if (
+      t &&
+      [
+        "store",
+        "rules",
+        "marketing",
+        "prints",
+        "currencies",
+        "taxes",
+        "locations",
+        "api",
+        "staff",
+        "licence",
+      ].includes(t)
+    ) {
+      return t
+    }
+    return "store"
+  }
+
+  const [activeTab, setActiveTab] = useState<StoreTabId>(getInitialTab)
+  const [activeStoreMenu, setActiveStoreMenu] = useState<StoreMenuItemId>("store_general")
+  const [activeRuleIndex, setActiveRuleIndex] = useState<number>(1)
+  const [config, setConfig] = useState<StoreConfigState>(DEFAULT_CONFIG)
+  const [saving, setSaving] = useState(false)
+  const [uploadingField, setUploadingField] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg)
+    setTimeout(() => {
+      setToastMessage((prev) => (prev === msg ? null : prev))
+    }, 3200)
+  }
+
+  useEffect(() => {
+    const syncTabFromUrl = () => {
+      const next = getInitialTab()
+      setActiveTab((prev) => (prev !== next ? next : prev))
+    }
+    window.addEventListener("popstate", syncTabFromUrl)
+    const interval = setInterval(syncTabFromUrl, 250)
+    return () => {
+      window.removeEventListener("popstate", syncTabFromUrl)
+      clearInterval(interval)
+    }
+  }, [])
 
   useEffect(() => {
     fetch("/admin/logo-config")
-      .then((r) => r.json())
+      .then((res) => res.json())
       .then((data) => {
         if (data?.config) {
-          setLogoConfig((prev: any) => ({ ...prev, ...data.config }))
+          setConfig({
+            ...DEFAULT_CONFIG,
+            ...data.config,
+            socialLinks: {
+              ...DEFAULT_CONFIG.socialLinks,
+              ...(data.config.socialLinks || {}),
+            },
+          })
         }
       })
       .catch(() => {})
   }, [])
 
-  const handleUploadFile = (file: File, key: string) => {
-    const reader = new FileReader()
-    reader.readAsDataURL(file)
-    reader.onload = async () => {
-      try {
-        const res = await fetch("/admin/logo-config/upload", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            filetype: file.type,
-            base64: reader.result as string,
-          }),
-        })
-        const data = await res.json()
-        if (data?.success && data.url) {
-          setLogoConfig((prev: any) => ({ ...prev, [key]: data.url }))
-          setLogoFeedback("Görsel yüklendi. Kaydet butonuna basarak kalıcı hale getirebilirsiniz.")
-        }
-      } catch {}
-    }
-  }
-
-  const handleSaveLogoConfig = async () => {
-    setSavingLogo(true)
-    setLogoFeedback(null)
+  const handleSave = async () => {
+    setSaving(true)
     try {
       const res = await fetch("/admin/logo-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(logoConfig),
+        body: JSON.stringify({ config }),
       })
-      const data = await res.json()
-      if (res.ok && data?.success) {
-        setLogoFeedback("Canlı mağaza logo, görsel ve iletişim ayarlarınız başarıyla kaydedildi! ✔")
+      if (res.ok) {
+        showToast("Ayarlar başarıyla kaydedildi!")
       } else {
-        setLogoFeedback("Kaydedilirken bir hata oluştu.")
+        showToast("Kaydedilirken bir hata oluştu.")
       }
     } catch {
-      setLogoFeedback("Bağlantı hatası oluştu.")
+      showToast("Bağlantı hatası oluştu.")
     } finally {
-      setSavingLogo(false)
+      setSaving(false)
     }
   }
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-
-    ;(window as any).switchSettingsSubView = (sub: string) => {
-      document.querySelectorAll(".settings-subview").forEach((el) => el.classList.add("hidden"))
-      document.querySelectorAll(".settings-subtab").forEach((btn) => {
-        btn.className =
-          "settings-subtab py-4 border-b-2 border-transparent text-slate-600 hover:text-slate-900 whitespace-nowrap cursor-pointer"
+  const handleFileUpload = async (field: "logoUrl" | "faviconUrl", file: File) => {
+    setUploadingField(field)
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result || ""))
+        reader.onerror = (err) => reject(err)
+        reader.readAsDataURL(file)
       })
-      const targetView =
-        document.getElementById("subview-settings-" + sub) ||
-        document.getElementById("subview-settings-store")
-      const targetBtn =
-        document.getElementById("settings-subtab-" + sub) ||
-        document.getElementById("settings-subtab-store")
-      if (targetView) targetView.classList.remove("hidden")
-      if (targetBtn) {
-        targetBtn.className =
-          "settings-subtab py-4 border-b-2 border-[#1565c0] text-[#1565c0] whitespace-nowrap cursor-pointer"
-      }
-    }
-
-    ;(window as any).scrollToStoreSettingsCard = (cardId: string, clickedBtn?: HTMLElement) => {
-      document.querySelectorAll(".store-side-btn").forEach((btn) => {
-        const active = btn === clickedBtn || btn.getAttribute("data-storeside") === cardId
-        btn.className = active
-          ? "store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-bold bg-[#dde9fb] text-[#1565c0] transition cursor-pointer"
-          : "store-side-btn w-full px-4 py-3 flex items-center justify-between border-b border-slate-100 text-left text-[13px] font-semibold text-slate-800 hover:bg-slate-50 transition cursor-pointer"
+      const res = await fetch("/admin/logo-config/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: file.name,
+          filetype: file.type,
+          base64,
+        }),
       })
-      const el = document.getElementById("preview-card-" + cardId)
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" })
-    }
-
-    const syncFromUrl = () => {
-      const sp = new URLSearchParams(window.location.search)
-      const tab = sp.get("tab") || "store"
-      if (typeof (window as any).switchSettingsSubView === "function") {
-        ;(window as any).switchSettingsSubView(tab)
+      const data = await res.json()
+      if (data?.url) {
+        setConfig((prev) => ({ ...prev, [field]: data.url }))
+        showToast("Görsel başarıyla yüklendi.")
+      } else {
+        showToast("Görsel yüklenemedi.")
       }
+    } catch {
+      showToast("Görsel yükleme sırasında hata oluştu.")
+    } finally {
+      setUploadingField(null)
     }
+  }
 
-    syncFromUrl()
-    window.addEventListener("popstate", syncFromUrl)
-    return () => window.removeEventListener("popstate", syncFromUrl)
-  }, [])
+  const scrollToStoreSection = (id: StoreMenuItemId) => {
+    setActiveStoreMenu(id)
+    const el = document.getElementById(`preview-card-${id}`)
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }
+
+  const footerLabelMap: Record<StoreTabId, string> = {
+    store: "Mağaza Ayarları",
+    rules: "Sözleşmeler ve Metinler",
+    marketing: "Pazarlama ve Doğrulama",
+    prints: "Yazdırma Etiketleri",
+    currencies: "Para Birimleri",
+    taxes: "Vergiler",
+    locations: "Diller & Lokalizasyon",
+    api: "Web Servis (API)",
+    staff: "Personeller",
+    licence: "Lisans Yönetimi",
+  }
 
   return (
-    <div className="min-h-screen bg-[#f1f3f6] pb-16">
-      <div dangerouslySetInnerHTML={{ __html: STORE_SETTINGS_SECTION_HTML }} />
+    <div
+      style={{
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        background: "#f8fafc",
+        minHeight: "100vh",
+        padding: "24px 32px 100px 32px",
+        color: "#0f172a",
+      }}
+    >
+      <style>{`
+        .quka-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 22px 24px;
+          margin-bottom: 18px;
+          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .quka-card h5 {
+          margin: 0 0 16px 0;
+          font-size: 15px;
+          font-weight: 700;
+          color: #0f172a;
+        }
+        .quka-form-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 16px;
+        }
+        .quka-field label {
+          display: block;
+          font-size: 12px;
+          font-weight: 600;
+          color: #475569;
+          margin-bottom: 6px;
+        }
+        .quka-input, .quka-select, .quka-textarea {
+          width: 100%;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 8px 12px;
+          font-size: 13px;
+          color: #0f172a;
+          background: #fff;
+          outline: none;
+          box-sizing: border-box;
+        }
+        .quka-input:focus, .quka-select:focus, .quka-textarea:focus {
+          border-color: #2196f3;
+          box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.12);
+        }
+        .quka-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 13px;
+        }
+        .quka-table th {
+          text-align: left;
+          padding: 11px 14px;
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+          font-size: 12px;
+          font-weight: 700;
+          color: #475569;
+        }
+        .quka-table td {
+          padding: 12px 14px;
+          border-bottom: 1px solid #f1f5f9;
+          color: #1e293b;
+          vertical-align: middle;
+        }
+        .quka-badge-success {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: #dcfce7;
+          color: #15803d;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 3px 9px;
+          border-radius: 999px;
+        }
+        .quka-badge-muted {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          background: #f1f5f9;
+          color: #64748b;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 3px 9px;
+          border-radius: 999px;
+        }
+        .quka-btn-primary {
+          background: #2196f3;
+          color: #ffffff;
+          border: none;
+          border-radius: 6px;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .quka-btn-outline {
+          background: #ffffff;
+          color: #334155;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 7px 14px;
+          font-size: 12.5px;
+          font-weight: 600;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+      `}</style>
 
-      {/* CANLI MAĞAZA LOGO, FAVICON & İLETİŞİM AYARLARI (/admin/logo-config KORUMALI PANEL) */}
-      <div className="max-w-[1220px] mx-auto px-5 mt-4">
-        <div className="bg-white border-2 border-[#1565c0]/30 rounded-md p-6 shadow-2xs">
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-5 border-b border-slate-200">
+      {toastMessage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 24,
+            right: 24,
+            zIndex: 9999,
+            background: "#0f172a",
+            color: "#fff",
+            padding: "12px 20px",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: "0 10px 25px rgba(0,0,0,0.18)",
+          }}
+        >
+          ✓ {toastMessage}
+        </div>
+      )}
+
+      <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+        {/* 1. MAĞAZA AYARLARI */}
+        {activeTab === "store" && (
+          <div style={{ display: "grid", gridTemplateColumns: "250px 1fr", gap: 22, alignItems: "start" }}>
+            <div
+              className="quka-card"
+              style={{
+                padding: "10px",
+                position: "sticky",
+                top: 20,
+                marginBottom: 0,
+              }}
+            >
+              {STORE_SIDEBAR_ITEMS.map((item) => {
+                const isActive = activeStoreMenu === item.id
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => scrollToStoreSection(item.id)}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "9px 12px",
+                      border: "none",
+                      borderRadius: 6,
+                      background: isActive ? "#eff6ff" : "transparent",
+                      color: isActive ? "#2196f3" : "#334155",
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 2,
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    <span style={{ fontSize: 11, opacity: isActive ? 1 : 0.4 }}>›</span>
+                  </button>
+                )
+              })}
+            </div>
+
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-[16px] font-bold text-slate-900">
-                  Canlı Vitrin (Storefront) Logo, Favicon ve İletişim Ayarları
-                </h2>
-                <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
-                  ✓ Mevcut Ayarlar Korundu
+              {/* Genel Bilgiler */}
+              <div id="preview-card-store_general" className="quka-card">
+                <h5>Genel Bilgiler</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Mağaza Adı / Site Başlığı</label>
+                    <input
+                      className="quka-input"
+                      value={config.storeTitle}
+                      onChange={(e) => setConfig({ ...config, storeTitle: e.target.value })}
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>Alan Adı (Domain)</label>
+                    <input className="quka-input" defaultValue="https://www.cizgibutik.com" />
+                  </div>
+                  <div className="quka-field" style={{ gridColumn: "span 2" }}>
+                    <label>Footer Açıklama Metni</label>
+                    <textarea
+                      className="quka-textarea"
+                      rows={2}
+                      value={config.footerDescription}
+                      onChange={(e) => setConfig({ ...config, footerDescription: e.target.value })}
+                    />
+                  </div>
+                  <div className="quka-field" style={{ gridColumn: "span 2" }}>
+                    <label>Telif Hakkı (Copyright) Metni</label>
+                    <input
+                      className="quka-input"
+                      value={config.copyrightText}
+                      onChange={(e) => setConfig({ ...config, copyrightText: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Logo ve İkonlar */}
+              <div id="preview-card-store_logo" className="quka-card">
+                <h5>Logo ve İkonlar</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Site Üst Logo (Header Logo)</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        className="quka-input"
+                        value={config.logoUrl}
+                        onChange={(e) => setConfig({ ...config, logoUrl: e.target.value })}
+                      />
+                      <label className="quka-btn-outline" style={{ whiteSpace: "nowrap", marginBottom: 0 }}>
+                        {uploadingField === "logoUrl" ? "Yükleniyor..." : "Yükle"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) handleFileUpload("logoUrl", f)
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="quka-field">
+                    <label>Tarayıcı İkonu (Favicon)</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        className="quka-input"
+                        value={config.faviconUrl}
+                        onChange={(e) => setConfig({ ...config, faviconUrl: e.target.value })}
+                      />
+                      <label className="quka-btn-outline" style={{ whiteSpace: "nowrap", marginBottom: 0 }}>
+                        {uploadingField === "faviconUrl" ? "Yükleniyor..." : "Yükle"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0]
+                            if (f) handleFileUpload("faviconUrl", f)
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* İletişim & Sosyal Medya */}
+              <div id="preview-card-store_contact" className="quka-card">
+                <h5>İletişim & Sosyal Medya</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Müşteri Hizmetleri Telefon</label>
+                    <input
+                      className="quka-input"
+                      value={config.phone}
+                      onChange={(e) => setConfig({ ...config, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>WhatsApp Sipariş & Destek Hattı</label>
+                    <input
+                      className="quka-input"
+                      value={config.whatsapp}
+                      onChange={(e) => setConfig({ ...config, whatsapp: e.target.value })}
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>Kurumsal E-Posta</label>
+                    <input
+                      className="quka-input"
+                      value={config.email}
+                      onChange={(e) => setConfig({ ...config, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>Çalışma Saatleri</label>
+                    <input
+                      className="quka-input"
+                      value={config.workingHours}
+                      onChange={(e) => setConfig({ ...config, workingHours: e.target.value })}
+                    />
+                  </div>
+                  <div className="quka-field" style={{ gridColumn: "span 2" }}>
+                    <label>Merkez / Mağaza Açık Adresi</label>
+                    <input
+                      className="quka-input"
+                      value={config.address}
+                      onChange={(e) => setConfig({ ...config, address: e.target.value })}
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>Instagram Adresi</label>
+                    <input
+                      className="quka-input"
+                      value={config.socialLinks.instagram}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          socialLinks: { ...config.socialLinks, instagram: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>Facebook Adresi</label>
+                    <input
+                      className="quka-input"
+                      value={config.socialLinks.facebook}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          socialLinks: { ...config.socialLinks, facebook: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>YouTube Kanalı</label>
+                    <input
+                      className="quka-input"
+                      value={config.socialLinks.youtube}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          socialLinks: { ...config.socialLinks, youtube: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="quka-field">
+                    <label>TikTok Hesabı</label>
+                    <input
+                      className="quka-input"
+                      value={config.socialLinks.tiktok}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          socialLinks: { ...config.socialLinks, tiktok: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sipariş Ayarları */}
+              <div id="preview-card-store_orders" className="quka-card">
+                <h5>Sipariş Ayarları</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Minimum Sepet Tutarı (TL)</label>
+                    <input className="quka-input" defaultValue="0.00" />
+                  </div>
+                  <div className="quka-field">
+                    <label>Üyeliksiz Alışveriş</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif (Misafir Alışverişine İzin Ver)</option>
+                      <option value="passive">Pasif (Zorunlu Üyelik)</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Sipariş Numarası Ön Eki (Prefix)</label>
+                    <input className="quka-input" defaultValue="BKM-" />
+                  </div>
+                  <div className="quka-field">
+                    <label>WhatsApp ile Sipariş Butonu</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif (Ürün Detayında Göster)</option>
+                      <option value="passive">Pasif</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* İptal ve İade Ayarları */}
+              <div id="preview-card-store_returns" className="quka-card">
+                <h5>İptal ve İade Ayarları</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Müşteri Panelinden İade Talebi Süresi (Gün)</label>
+                    <input className="quka-input" type="number" defaultValue={14} />
+                  </div>
+                  <div className="quka-field">
+                    <label>Kargoya Verilmeden Sipariş İptali</label>
+                    <select className="quka-select" defaultValue="auto">
+                      <option value="auto">Müşteri Otomatik İptal Edebilir</option>
+                      <option value="approval">Yönetici Onayı İle İptal Edilir</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ürün & Katalog Ayarları */}
+              <div id="preview-card-store_products" className="quka-card">
+                <h5>Ürün & Katalog Ayarları</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Stokta Olmayan Ürünler</label>
+                    <select className="quka-select" defaultValue="show_bottom">
+                      <option value="show_bottom">Listelerin En Altında Göster ("Tükendi" Etiketiyle)</option>
+                      <option value="hide">Sitede Gizle</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Sayfa Başına Ürün Gösterim Sayısı</label>
+                    <select className="quka-select" defaultValue="24">
+                      <option value="12">12 Ürün</option>
+                      <option value="24">24 Ürün</option>
+                      <option value="36">36 Ürün</option>
+                      <option value="48">48 Ürün</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Üye ve Müşteri Ayarları */}
+              <div id="preview-card-store_customers" className="quka-card">
+                <h5>Üye ve Müşteri Ayarları</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Yeni Üyelikte SMS Doğrulama (OTP)</label>
+                    <select className="quka-select" defaultValue="passive">
+                      <option value="passive">Pasif</option>
+                      <option value="active">Aktif</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>TC Kimlik Numarası Zorunluluğu</label>
+                    <select className="quka-select" defaultValue="checkout">
+                      <option value="checkout">Ödeme Adımında Zorunlu</option>
+                      <option value="optional">İsteğe Bağlı</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Satış Ortaklığı (Affiliate) */}
+              <div id="preview-card-store_affiliate" className="quka-card">
+                <h5>Satış Ortaklığı (Affiliate)</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Affiliate Sistemi Durumu</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif</option>
+                      <option value="passive">Pasif</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Varsayılan Komisyon Oranı (%)</label>
+                    <input className="quka-input" type="number" defaultValue={5} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hızlı Satış (POS) */}
+              <div id="preview-card-store_quicksale" className="quka-card">
+                <h5>Hızlı Satış (POS)</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Mağaza İçi Barkodlu Hızlı Satış Ekranı</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif</option>
+                      <option value="passive">Pasif</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Varsayılan POS Kasa</label>
+                    <input className="quka-input" defaultValue="Merkez Mağaza Kasa #1" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bayilik (B2B) Ayarları */}
+              <div id="preview-card-store_dealer" className="quka-card">
+                <h5>Bayilik (B2B) Ayarları</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>B2B Bayi Girişi ve Başvurusu</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif (Yönetici Onaylı)</option>
+                      <option value="passive">Pasif</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Bayi Özel İskonto Grubu</label>
+                    <input className="quka-input" defaultValue="Toptan / Oto Aksesuar Bayi (%20 İskonto)" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bayi XML Çıktısı */}
+              <div id="preview-card-store_dealer_xml" className="quka-card">
+                <h5>Bayi XML Çıktısı</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field" style={{ gridColumn: "span 2" }}>
+                    <label>Standart Ürün & Stok XML Paylaşım Bağlantısı</label>
+                    <input
+                      className="quka-input"
+                      readOnly
+                      defaultValue="https://api.cizgibutik.com/feeds/b2b-products.xml"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bayi API */}
+              <div id="preview-card-store_dealer_api" className="quka-card">
+                <h5>Bayi API</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>B2B REST API Erişimi</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif</option>
+                      <option value="passive">Pasif</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Rate Limit (Dakika Başına İstek)</label>
+                    <input className="quka-input" type="number" defaultValue={120} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Güvenlik */}
+              <div id="preview-card-store_security" className="quka-card">
+                <h5>Güvenlik</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>SSL (HTTPS) Zorunlu Yönlendirme</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif (256-Bit SSL Zorunlu)</option>
+                      <option value="passive">Pasif</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Google reCAPTCHA v3 Koruması</label>
+                    <select className="quka-select" defaultValue="active">
+                      <option value="active">Aktif (Form ve Giriş Koruması)</option>
+                      <option value="passive">Pasif</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bakım Modu */}
+              <div id="preview-card-store_maintenance" className="quka-card">
+                <h5>Bakım Modu</h5>
+                <div className="quka-form-grid">
+                  <div className="quka-field">
+                    <label>Site Yayın Durumu</label>
+                    <select className="quka-select" defaultValue="live">
+                      <option value="live">Yayında (Tüm Ziyaretçilere Açık)</option>
+                      <option value="maintenance">Bakım Modunda (Sadece Yöneticiler Görebilir)</option>
+                    </select>
+                  </div>
+                  <div className="quka-field">
+                    <label>Bakım Modu Başlığı</label>
+                    <input className="quka-input" defaultValue="Sitemiz güncelleniyor, çok yakında tekrar yayındayız." />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. SÖZLEŞMELER VE METİNLER */}
+        {activeTab === "rules" && (
+          <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 22, alignItems: "start" }}>
+            <div className="quka-card" style={{ padding: 10, marginBottom: 0 }}>
+              {RULES_TABS.map((title, idx) => {
+                const isActive = activeRuleIndex === idx
+                return (
+                  <button
+                    key={title}
+                    type="button"
+                    onClick={() => setActiveRuleIndex(idx)}
+                    style={{
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "10px 12px",
+                      border: "none",
+                      borderRadius: 6,
+                      background: isActive ? "#eff6ff" : "transparent",
+                      color: isActive ? "#2196f3" : "#334155",
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span>{title}</span>
+                    <span style={{ fontSize: 11, opacity: isActive ? 1 : 0.4 }}>›</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="quka-card" style={{ marginBottom: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                <h5 style={{ margin: 0 }}>{RULES_TABS[activeRuleIndex]}</h5>
+                <span style={{ fontSize: 12, color: "#64748b" }}>
+                  Dinamik etiketler: <code>{"{ALICI_AD_SOYAD}"}</code>, <code>{"{SIPARIS_NO}"}</code>, <code>{"{SIPARIS_TUTARI}"}</code>
                 </span>
               </div>
-              <p className="text-[12px] text-slate-500 mt-0.5">
-                cizgibutik.com vitrininde aktif kullanılan logolarınız, site başlığınız ve iletişim bilgileriniz doğrudan mevcut yapılandırmanızdan okunur.
-              </p>
+              <textarea
+                className="quka-textarea"
+                rows={16}
+                defaultValue={`MADDE 1 - TARAFLAR\n\n1.1. SATICI BİLGİLERİ:\nUnvanı: Çizgi Butik Otomotiv Aksesuar San. ve Tic. Ltd. Şti.\nAdres: ${config.address}\nTelefon: ${config.phone}\nE-Posta: ${config.email}\n\n1.2. ALICI BİLGİLERİ:\nAdı Soyadı / Unvanı: {ALICI_AD_SOYAD}\nTeslimat Adresi: {TESLIMAT_ADRESI}\nTelefon: {ALICI_TELEFON}\nE-Posta: {ALICI_EPOSTA}\n\nMADDE 2 - SÖZLEŞMENİN KONUSU\nİşbu sözleşmenin konusu, ALICI'nın SATICI'ya ait www.cizgibutik.com internet sitesinden elektronik ortamda siparişini yaptığı aşağıda nitelikleri ve satış fiyatı belirtilen ürünün satışı ve teslimi ile ilgili olarak 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümleri gereğince tarafların hak ve yükümlülüklerinin saptanmasıdır.`}
+              />
             </div>
-            <button
-              type="button"
-              onClick={handleSaveLogoConfig}
-              disabled={savingLogo}
-              className="h-[36px] px-5 rounded bg-[#0abb87] hover:bg-[#099f73] text-white text-[12.5px] font-bold cursor-pointer shadow-2xs"
+          </div>
+        )}
+
+        {/* 3. PAZARLAMA VE DOĞRULAMA */}
+        {activeTab === "marketing" && (
+          <div>
+            <div className="quka-card">
+              <h5>Google Servisleri & Doğrulama Kodları</h5>
+              <div className="quka-form-grid">
+                <div className="quka-field">
+                  <label>Google Analytics 4 (GA4) Ölçüm Kimliği</label>
+                  <input className="quka-input" defaultValue="G-BKM9284710" placeholder="G-XXXXXXXXXX" />
+                </div>
+                <div className="quka-field">
+                  <label>Google Tag Manager (GTM) Konteyner Kimliği</label>
+                  <input className="quka-input" defaultValue="GTM-K82PL9M" placeholder="GTM-XXXXXXX" />
+                </div>
+                <div className="quka-field">
+                  <label>Google Search Console HTML Meta Doğrulama Kodu</label>
+                  <input className="quka-input" defaultValue="google-site-verification=bkm_verified_token_2026" />
+                </div>
+                <div className="quka-field">
+                  <label>Google Ads Dönüşüm Kimliği (AW-ID)</label>
+                  <input className="quka-input" defaultValue="AW-849201948" />
+                </div>
+              </div>
+            </div>
+
+            <div className="quka-card">
+              <h5>Meta (Facebook & Instagram), TikTok ve Yandex Piksel</h5>
+              <div className="quka-form-grid">
+                <div className="quka-field">
+                  <label>Meta (Facebook) Pixel ID</label>
+                  <input className="quka-input" defaultValue="109284756192038" />
+                </div>
+                <div className="quka-field">
+                  <label>Meta Conversions API (CAPI) Erişim Anahtarı</label>
+                  <input className="quka-input" defaultValue="EAAGm0PX4ZCpsBA..." />
+                </div>
+                <div className="quka-field">
+                  <label>TikTok Pixel ID</label>
+                  <input className="quka-input" defaultValue="C8H2N9PL019283" />
+                </div>
+                <div className="quka-field">
+                  <label>Yandex Metrica Sayaç Numarası</label>
+                  <input className="quka-input" defaultValue="94827165" />
+                </div>
+              </div>
+            </div>
+
+            <div className="quka-card">
+              <h5>Özel Script & Canlı Destek Kodları</h5>
+              <div className="quka-form-grid">
+                <div className="quka-field">
+                  <label>{"<head> ... </head>"} Arasına Eklenecek Özel Kodlar</label>
+                  <textarea
+                    className="quka-textarea"
+                    rows={5}
+                    defaultValue={`<!-- Özel Doğrulama ve Izleme Scriptleri -->`}
+                  />
+                </div>
+                <div className="quka-field">
+                  <label>{"</body>"} Öncesine Eklenecek Özel Kodlar (Canlı Destek vb.)</label>
+                  <textarea
+                    className="quka-textarea"
+                    rows={5}
+                    defaultValue={`<!-- WhatsApp & Canlı Destek Widget -->`}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 4. YAZDIRMA ETİKETLERİ */}
+        {activeTab === "prints" && (
+          <div>
+            <div
+              className="quka-card"
+              style={{
+                background: "#eff6ff",
+                borderColor: "#bfdbfe",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
             >
-              {savingLogo ? "Kaydediliyor..." : "✓ Vitrin Logo & İletişim Ayarlarını Kaydet"}
-            </button>
-          </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#1e3a8a", marginBottom: 4 }}>
+                  Kargo Barkod, Sipariş Fişi ve Fatura Yazdırma Şablonları
+                </div>
+                <div style={{ fontSize: 12.5, color: "#1e40af" }}>
+                  Termal barkod yazıcı (100x100mm) veya standart A4 / A5 lazer yazıcılar için çıktı şablonlarını özelleştirebilirsiniz.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="quka-btn-primary"
+                onClick={() => showToast("Test şablonu yazdırma penceresi hazırlandı.")}
+              >
+                🖨️ Test Çıktısı Al
+              </button>
+            </div>
 
-          {logoFeedback && (
-            <div className="mb-4 px-4 py-2.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[12.5px] font-semibold">
-              {logoFeedback}
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
-            <FileUploadBox
-              label="Ana Logo"
-              value={logoConfig.logo}
-              onUpload={(f) => handleUploadFile(f, "logo")}
-              onRemove={() => setLogoConfig({ ...logoConfig, logo: null })}
-            />
-            <FileUploadBox
-              label="Mobil Logo"
-              value={logoConfig.mobileLogo}
-              onUpload={(f) => handleUploadFile(f, "mobileLogo")}
-              onRemove={() => setLogoConfig({ ...logoConfig, mobileLogo: null })}
-            />
-            <FileUploadBox
-              label="Yan Menü Logosu"
-              value={logoConfig.sideMenuLogo}
-              onUpload={(f) => handleUploadFile(f, "sideMenuLogo")}
-              onRemove={() => setLogoConfig({ ...logoConfig, sideMenuLogo: null })}
-            />
-            <FileUploadBox
-              label="Footer Logo"
-              value={logoConfig.footerLogo}
-              onUpload={(f) => handleUploadFile(f, "footerLogo")}
-              onRemove={() => setLogoConfig({ ...logoConfig, footerLogo: null })}
-            />
-            <FileUploadBox
-              label="Favicon"
-              value={logoConfig.favicon}
-              onUpload={(f) => handleUploadFile(f, "favicon")}
-              onRemove={() => setLogoConfig({ ...logoConfig, favicon: null })}
-            />
-            <FileUploadBox
-              label="E-Posta Logosu"
-              value={logoConfig.emailLogo}
-              onUpload={(f) => handleUploadFile(f, "emailLogo")}
-              onRemove={() => setLogoConfig({ ...logoConfig, emailLogo: null })}
-            />
-            <FileUploadBox
-              label="Ödeme Sayfası (Checkout) Logosu"
-              value={logoConfig.checkoutLogo}
-              onUpload={(f) => handleUploadFile(f, "checkoutLogo")}
-              onRemove={() => setLogoConfig({ ...logoConfig, checkoutLogo: null })}
-            />
-            <FileUploadBox
-              label="Varsayılan Ürün Görseli"
-              value={logoConfig.defaultImage}
-              onUpload={(f) => handleUploadFile(f, "defaultImage")}
-              onRemove={() => setLogoConfig({ ...logoConfig, defaultImage: null })}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-                Site Başlığı (Tarayıcı Sekmesi)
-              </label>
-              <input
-                type="text"
-                value={logoConfig.siteTitle || ""}
-                onChange={(e) => setLogoConfig({ ...logoConfig, siteTitle: e.target.value })}
-                className="w-full h-[36px] px-3 rounded border border-slate-200 text-[12.5px] text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-                Footer Telif Yazısı (Copyright)
-              </label>
-              <input
-                type="text"
-                value={logoConfig.footerCopyrightText || ""}
-                onChange={(e) =>
-                  setLogoConfig({ ...logoConfig, footerCopyrightText: e.target.value })
-                }
-                className="w-full h-[36px] px-3 rounded border border-slate-200 text-[12.5px] text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-                Firma Ünvanı
-              </label>
-              <input
-                type="text"
-                value={logoConfig.contactCompany || ""}
-                onChange={(e) => setLogoConfig({ ...logoConfig, contactCompany: e.target.value })}
-                className="w-full h-[36px] px-3 rounded border border-slate-200 text-[12.5px] text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-                İletişim Telefonu
-              </label>
-              <input
-                type="text"
-                value={logoConfig.contactPhone || ""}
-                onChange={(e) => setLogoConfig({ ...logoConfig, contactPhone: e.target.value })}
-                className="w-full h-[36px] px-3 rounded border border-slate-200 text-[12.5px] text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-                İletişim E-Posta
-              </label>
-              <input
-                type="text"
-                value={logoConfig.contactEmail || ""}
-                onChange={(e) => setLogoConfig({ ...logoConfig, contactEmail: e.target.value })}
-                className="w-full h-[36px] px-3 rounded border border-slate-200 text-[12.5px] text-slate-900"
-              />
-            </div>
-            <div>
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-                Çalışma Saatleri
-              </label>
-              <input
-                type="text"
-                value={logoConfig.contactHours || ""}
-                onChange={(e) => setLogoConfig({ ...logoConfig, contactHours: e.target.value })}
-                className="w-full h-[36px] px-3 rounded border border-slate-200 text-[12.5px] text-slate-900"
-              />
-            </div>
-            <div className="md:col-span-3">
-              <label className="block text-[12px] font-semibold text-slate-600 mb-1">
-                Açık Adres
-              </label>
-              <input
-                type="text"
-                value={logoConfig.contactAddress || ""}
-                onChange={(e) => setLogoConfig({ ...logoConfig, contactAddress: e.target.value })}
-                className="w-full h-[36px] px-3 rounded border border-slate-200 text-[12.5px] text-slate-900"
-              />
+            <div className="quka-form-grid">
+              {[
+                {
+                  title: "Kargo Barkod Etiketi (100x100mm Termal)",
+                  desc: "Yurtiçi, Aras, MNG, Sürat ve HepsiJet barkodlu termal kargo etiketi.",
+                  size: "100mm x 100mm (Zebra / Argox Uyumlu)",
+                },
+                {
+                  title: "Sipariş Hazırlama / Toplama Fişi (A4)",
+                  desc: "Depo personeli için ürün raf kodu, fotoğraf, varyant ve adet listesi.",
+                  size: "A4 Dikey (210mm x 297mm)",
+                },
+                {
+                  title: "Kutu İçi Sevk ve İade Bilgi Fişi (A5)",
+                  desc: "Müşteri paketinin içine konulan sipariş özeti ve kolay iade kodu fişi.",
+                  size: "A5 Yatay (148mm x 210mm)",
+                },
+                {
+                  title: "Raf & Ürün Barkod Etiketi (60x40mm)",
+                  desc: "Depo rafları ve ürün paketleri için EAN-13 / Code-128 barkod etiketi.",
+                  size: "60mm x 40mm Termal",
+                },
+              ].map((tpl) => (
+                <div key={tpl.title} className="quka-card" style={{ marginBottom: 0 }}>
+                  <h5>{tpl.title}</h5>
+                  <p style={{ fontSize: 12.5, color: "#475569", margin: "0 0 12px 0" }}>{tpl.desc}</p>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingTop: 12,
+                      borderTop: "1px solid #f1f5f9",
+                    }}
+                  >
+                    <span className="quka-badge-muted">{tpl.size}</span>
+                    <button
+                      type="button"
+                      className="quka-btn-outline"
+                      onClick={() => showToast(`${tpl.title} düzenleme ekranı açıldı.`)}
+                    >
+                      Şablonu Düzenle
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+        )}
+
+        {/* 5. PARA BİRİMLERİ */}
+        {activeTab === "currencies" && (
+          <div className="quka-card">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <h5 style={{ margin: 0 }}>Para Birimleri ve Döviz Kurları</h5>
+                <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 4 }}>
+                  TCMB (Türkiye Cumhuriyet Merkez Bankası) üzerinden günlük otomatik kur güncellemesi aktiftir.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="quka-btn-primary"
+                onClick={() => showToast("Döviz kurları TCMB üzerinden güncellendi!")}
+              >
+                ↻ TCMB Kurlarını Şimdi Güncelle
+              </button>
+            </div>
+
+            <table className="quka-table">
+              <thead>
+                <tr>
+                  <th>Para Birimi</th>
+                  <th>Kodu</th>
+                  <th>Sembol</th>
+                  <th>Kur Değeri (TL)</th>
+                  <th>Son Güncelleme</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {CURRENCY_ROWS.map((c) => (
+                  <tr key={c.code}>
+                    <td style={{ fontWeight: 600 }}>
+                      {c.name}{" "}
+                      {c.isDefault && (
+                        <span
+                          style={{
+                            marginLeft: 6,
+                            fontSize: 10.5,
+                            background: "#eff6ff",
+                            color: "#2196f3",
+                            padding: "2px 7px",
+                            borderRadius: 4,
+                            fontWeight: 700,
+                          }}
+                        >
+                          Varsayılan
+                        </span>
+                      )}
+                    </td>
+                    <td>{c.code}</td>
+                    <td style={{ fontWeight: 700 }}>{c.symbol}</td>
+                    <td>
+                      <input
+                        className="quka-input"
+                        style={{ width: 120 }}
+                        defaultValue={c.rate}
+                        disabled={c.isDefault}
+                      />
+                    </td>
+                    <td style={{ fontSize: 12, color: "#64748b" }}>{c.updatedAt}</td>
+                    <td>
+                      {c.active ? (
+                        <span className="quka-badge-success">✓ Aktif</span>
+                      ) : (
+                        <span className="quka-badge-muted">Pasif</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 6. VERGİLER */}
+        {activeTab === "taxes" && (
+          <div>
+            <div className="quka-card">
+              <h5>Vergi (KDV) Ayarları</h5>
+              <div className="quka-form-grid">
+                <div className="quka-field">
+                  <label>Ürün Fiyatlarına KDV Dahil mi?</label>
+                  <select className="quka-select" defaultValue="included">
+                    <option value="included">Evet, Ürün Fiyatları KDV Dahildir</option>
+                    <option value="excluded">Hayır, KDV Sepette Artı Olarak Eklenir</option>
+                  </select>
+                </div>
+                <div className="quka-field">
+                  <label>Kargo Ücretleri KDV Oranı</label>
+                  <select className="quka-select" defaultValue="20">
+                    <option value="20">%20 KDV (Standart)</option>
+                    <option value="10">%10 KDV</option>
+                    <option value="0">%0 KDV</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="quka-card">
+              <h5>Tanımlı Vergi Oranları</h5>
+              <table className="quka-table">
+                <thead>
+                  <tr>
+                    <th>Vergi Adı</th>
+                    <th>Oran (%)</th>
+                    <th>Uygulama Alanı</th>
+                    <th>Varsayılan</th>
+                    <th>Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ fontWeight: 600 }}>Genel KDV (%20)</td>
+                    <td>%20</td>
+                    <td>Oto Aksesuar, Body Kit, Elektronik, Kargo</td>
+                    <td><span className="quka-badge-success">Varsayılan</span></td>
+                    <td><span className="quka-badge-success">✓ Aktif</span></td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 600 }}>İndirimli KDV (%10)</td>
+                    <td>%10</td>
+                    <td>Tekstil, Çanta ve Seçili Aksesuarlar</td>
+                    <td>-</td>
+                    <td><span className="quka-badge-success">✓ Aktif</span></td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 600 }}>Temel Gıda / Özel KDV (%1)</td>
+                    <td>%1</td>
+                    <td>Özel Muafiyetli Ürün Grupları</td>
+                    <td>-</td>
+                    <td><span className="quka-badge-success">✓ Aktif</span></td>
+                  </tr>
+                  <tr>
+                    <td style={{ fontWeight: 600 }}>KDV Muaf / İhracat (%0)</td>
+                    <td>%0</td>
+                    <td>Mikro İhracat (ETGB) ve Yurt Dışı Satışlar</td>
+                    <td>-</td>
+                    <td><span className="quka-badge-success">✓ Aktif</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* 7. DİLLER & LOKALİZASYON */}
+        {activeTab === "locations" && (
+          <div className="quka-card">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <h5 style={{ margin: 0 }}>Mağaza Dilleri & Çoklu Dil (Lokalizasyon)</h5>
+                <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 4 }}>
+                  E-İhracat ve çok dilli vitrin için aktif dilleri ve çeviri oranlarını yönetebilirsiniz.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="quka-btn-primary"
+                onClick={() => showToast("Yapay zeka hızlı çeviri kuyruğu başlatıldı.")}
+              >
+                ✨ Yapay Zeka Hızlı Çeviri
+              </button>
+            </div>
+
+            <table className="quka-table">
+              <thead>
+                <tr>
+                  <th>Dil</th>
+                  <th>ISO Kodu</th>
+                  <th>Yön</th>
+                  <th>Çeviri Tamamlanma</th>
+                  <th>Varsayılan</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>🇹🇷 Türkçe</td>
+                  <td>tr-TR</td>
+                  <td>LTR</td>
+                  <td>%100</td>
+                  <td><span className="quka-badge-success">Ana Dil</span></td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>🇬🇧 İngilizce (English)</td>
+                  <td>en-US</td>
+                  <td>LTR</td>
+                  <td>%96</td>
+                  <td>-</td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>🇩🇪 Almanca (Deutsch)</td>
+                  <td>de-DE</td>
+                  <td>LTR</td>
+                  <td>%88</td>
+                  <td>-</td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>🇸🇦 Arapça (العربية)</td>
+                  <td>ar-SA</td>
+                  <td>RTL</td>
+                  <td>%75</td>
+                  <td>-</td>
+                  <td><span className="quka-badge-muted">Pasif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>🇷🇺 Rusça (Русский)</td>
+                  <td>ru-RU</td>
+                  <td>LTR</td>
+                  <td>%70</td>
+                  <td>-</td>
+                  <td><span className="quka-badge-muted">Pasif</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 8. WEB SERVİS (API) */}
+        {activeTab === "api" && (
+          <div className="quka-card">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <h5 style={{ margin: 0 }}>Web Servis (REST & SOAP API Hesapları)</h5>
+                <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 4 }}>
+                  ERP, Muhasebe, Pazaryeri ve Mobil Uygulama entegrasyonları için API erişim anahtarları.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="quka-btn-primary"
+                onClick={() => showToast("Yeni API kullanıcısı oluşturma penceresi açıldı.")}
+              >
+                + Yeni API Hesabı Ekle
+              </button>
+            </div>
+
+            <table className="quka-table">
+              <thead>
+                <tr>
+                  <th>Uygulama / Entegrasyon Adı</th>
+                  <th>API Kullanıcı Kodu</th>
+                  <th>Yetki Kapsamı</th>
+                  <th>IP Kısıtlaması</th>
+                  <th>Son Erişim</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>EntegreShop ERP & E-Fatura Köprüsü</td>
+                  <td><code>api_erp_prod_01</code></td>
+                  <td>Ürün, Sipariş, Stok, Cari (Tam Yetki)</td>
+                  <td>Tüm IP'ler</td>
+                  <td>2 dakika önce</td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Pazaryeri Senkronizasyon Servisi</td>
+                  <td><code>api_mp_sync_02</code></td>
+                  <td>Ürün, Fiyat, Stok, Sipariş</td>
+                  <td>Tüm IP'ler</td>
+                  <td>5 dakika önce</td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Mobil Uygulama (iOS & Android)</td>
+                  <td><code>api_mobile_storefront</code></td>
+                  <td>Katalog, Sepet, Müşteri</td>
+                  <td>Tüm IP'ler</td>
+                  <td>12 dakika önce</td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 9. PERSONELLER */}
+        {activeTab === "staff" && (
+          <div className="quka-card">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <div>
+                <h5 style={{ margin: 0 }}>Yönetici Kullanıcılar & Personel Yetkileri</h5>
+                <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 4 }}>
+                  Yönetim paneline erişebilen personelleri ve departman bazlı yetki gruplarını yönetin.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="quka-btn-primary"
+                onClick={() => showToast("Yeni personel ekleme formu açıldı.")}
+              >
+                + Yeni Personel Ekle
+              </button>
+            </div>
+
+            <table className="quka-table">
+              <thead>
+                <tr>
+                  <th>Ad Soyad</th>
+                  <th>E-Posta Adresi</th>
+                  <th>Telefon</th>
+                  <th>Yetki Grubu</th>
+                  <th>2FA Güvenlik</th>
+                  <th>Durum</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Çizgi Butik Admin</td>
+                  <td>info@cizgibutik.com</td>
+                  <td>0552 001 99 66</td>
+                  <td>Süper Yönetici (Tam Yetki)</td>
+                  <td><span className="quka-badge-success">SMS + E-Posta</span></td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Depo & Kargo Operasyon</td>
+                  <td>depo@cizgibutik.com</td>
+                  <td>0552 001 99 67</td>
+                  <td>Sipariş ve Kargo Sorumlusu</td>
+                  <td><span className="quka-badge-muted">Standart</span></td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+                <tr>
+                  <td style={{ fontWeight: 600 }}>Katalog & Pazaryeri Uzmanı</td>
+                  <td>katalog@cizgibutik.com</td>
+                  <td>0552 001 99 68</td>
+                  <td>Ürün, Kategori ve Pazaryeri</td>
+                  <td><span className="quka-badge-muted">Standart</span></td>
+                  <td><span className="quka-badge-success">✓ Aktif</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 10. LİSANS */}
+        {activeTab === "licence" && (
+          <div>
+            <div
+              className="quka-card"
+              style={{
+                background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)",
+                color: "#ffffff",
+                border: "none",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+                <div>
+                  <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: 1, color: "#93c5fd", fontWeight: 700 }}>
+                    AKTİF E-TİCARET & PAZARYERİ LİSANSI
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4 }}>
+                    EntegreShop Enterprise Плюс (Tam Paket)
+                  </div>
+                  <div style={{ fontSize: 13, color: "#cbd5e1", marginTop: 4 }}>
+                    Lisans Anahtarı: <code>ENT-BKM-2026-PRO-99482</code> • Alan Adı: <strong>cizgibutik.com</strong>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#38bdf8" }}>227 Gün Kaldı</div>
+                  <div style={{ fontSize: 12, color: "#cbd5e1" }}>Yenileme Tarihi: 01.07.2027</div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: 18,
+                  background: "rgba(255,255,255,0.12)",
+                  height: 8,
+                  borderRadius: 999,
+                  overflow: "hidden",
+                }}
+              >
+                <div style={{ width: "65%", height: "100%", background: "#38bdf8" }} />
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+                  gap: 12,
+                  marginTop: 20,
+                }}
+              >
+                {[
+                  { label: "Ürün Limiti", val: "Sınırsız" },
+                  { label: "Trafik / Bant Genişliği", val: "Sınırsız CDN" },
+                  { label: "Çift Yönlü Pazaryeri", val: "10 Pazaryeri Aktif" },
+                  { label: "E-Fatura & ERP", val: "Aktif (Sınırsız)" },
+                  { label: "Yönetici / Personel", val: "10 Kullanıcı" },
+                ].map((box) => (
+                  <div
+                    key={box.label}
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      borderRadius: 8,
+                      padding: "12px 14px",
+                    }}
+                  >
+                    <div style={{ fontSize: 11.5, color: "#cbd5e1" }}>{box.label}</div>
+                    <div style={{ fontSize: 15, fontWeight: 700, marginTop: 4 }}>{box.val}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 18 }}>
+              {[
+                {
+                  name: "Başlangıç (Starter)",
+                  price: "14.900 TL / Yıl",
+                  features: ["5.000 Ürün Limiti", "Standart E-Ticaret Vitrini", "Sanal POS & Kargo Entegrasyonu", "E-Posta ve SMS Bildirimleri"],
+                  current: false,
+                },
+                {
+                  name: "Profesyonel (Pazaryeri)",
+                  price: "24.900 TL / Yıl",
+                  features: ["25.000 Ürün Limiti", "Trendyol, Hepsiburada, N11 Entegrasyonu", "E-Fatura & Muhasebe Entegrasyonu", "Gelişmiş Kampanya Kurguları"],
+                  current: false,
+                },
+                {
+                  name: "Enterprise (Tam Paket)",
+                  price: "39.900 TL / Yıl",
+                  features: ["Sınırsız Ürün & Varyant", "Tüm Pazaryerleri + B2B Bayilik", "Rocket Önbellek + Çoklu Dil (E-İhracat)", "7/24 Öncelikli VIP Destek"],
+                  current: true,
+                },
+              ].map((pkg) => (
+                <div
+                  key={pkg.name}
+                  className="quka-card"
+                  style={{
+                    borderColor: pkg.current ? "#2196f3" : "#e2e8f0",
+                    borderWidth: pkg.current ? 2 : 1,
+                    marginBottom: 0,
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <h5 style={{ margin: 0 }}>{pkg.name}</h5>
+                    {pkg.current && <span className="quka-badge-success">Mevcut Paketiniz</span>}
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#0f172a", margin: "12px 0" }}>
+                    {pkg.price}
+                  </div>
+                  <ul style={{ paddingLeft: 18, margin: "0 0 16px 0", fontSize: 13, color: "#475569", lineHeight: 1.8 }}>
+                    {pkg.features.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    className={pkg.current ? "quka-btn-primary" : "quka-btn-outline"}
+                    style={{ width: "100%", justifyContent: "center" }}
+                    onClick={() => showToast(`${pkg.name} lisans detayları görüntülendi.`)}
+                  >
+                    {pkg.current ? "✓ Aktif Lisansınız" : "Paketi İncele"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* STICKY BOTTOM SAVE BAR */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: "#ffffff",
+          borderTop: "1px solid #e2e8f0",
+          padding: "12px 32px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          zIndex: 90,
+          boxShadow: "0 -4px 12px rgba(15, 23, 42, 0.04)",
+        }}
+      >
+        <div style={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>
+          Ayarlar › <span style={{ color: "#0f172a", fontWeight: 700 }}>{footerLabelMap[activeTab]}</span>
         </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            background: "#2ecc71",
+            color: "#ffffff",
+            border: "none",
+            borderRadius: 6,
+            padding: "9px 24px",
+            fontSize: 13.5,
+            fontWeight: 700,
+            cursor: saving ? "wait" : "pointer",
+            boxShadow: "0 2px 6px rgba(46, 204, 113, 0.28)",
+          }}
+        >
+          {saving ? "Kaydediliyor..." : "✓ Kaydet"}
+        </button>
       </div>
     </div>
   )
 }
 
 export const config = defineRouteConfig({
-  label: "Genel Ayarlar",
-  icon: CogSixTooth,
+  label: "Mağaza Ayarları",
 })
 
 export default StoreSettingsPage
