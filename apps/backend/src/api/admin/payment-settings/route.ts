@@ -6,6 +6,7 @@ import os from "os"
 
 const configFilePath = path.join(process.cwd(), "uploads", "payment-settings.json")
 const legacyConfigFilePath = path.join(process.cwd(), ".xoox-payment-settings.json")
+const legacyHomeConfigFilePath = path.join(os.homedir(), ".xoox-payment-settings.json")
 
 const defaultInstallments = [
   { taksit: "Tek Çekim", oran: 0, active: true },
@@ -68,7 +69,11 @@ export function readConfig() {
   try {
     const targetPath = fs.existsSync(configFilePath)
       ? configFilePath
-      : (fs.existsSync(legacyConfigFilePath) ? legacyConfigFilePath : null)
+      : fs.existsSync(legacyConfigFilePath)
+        ? legacyConfigFilePath
+        : fs.existsSync(legacyHomeConfigFilePath)
+          ? legacyHomeConfigFilePath
+          : null
 
     if (targetPath) {
       const content = fs.readFileSync(targetPath, "utf-8")
