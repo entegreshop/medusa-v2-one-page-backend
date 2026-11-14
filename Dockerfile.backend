@@ -5,19 +5,7 @@ WORKDIR /app
 # 1. Önce sadece package.json ve package-lock.json dosyalarını kopyalıyoruz.
 # Böylece kaynak kod değiştiğinde Docker node_modules kurulumunu önbellekten (CACHED) 0 saniyede geçer!
 COPY package.json package-lock.json ./
-COPY apps/api/package.json ./apps/api/
 COPY apps/backend/package.json ./apps/backend/
-COPY apps/merchant-admin/package.json ./apps/merchant-admin/
-COPY apps/platform-admin/package.json ./apps/platform-admin/
-COPY apps/storefront/package.json ./apps/storefront/
-COPY apps/worker/package.json ./apps/worker/
-COPY packages/auth/package.json ./packages/auth/
-COPY packages/commerce-core/package.json ./packages/commerce-core/
-COPY packages/config/package.json ./packages/config/
-COPY packages/database/package.json ./packages/database/
-COPY packages/integrations/package.json ./packages/integrations/
-COPY packages/types/package.json ./packages/types/
-COPY packages/ui/package.json ./packages/ui/
 
 # 2. Mevcut package-lock.json ile bağımlılıkları kuruyoruz (npmmirror 504 zaman aşımı verirse otomatik olarak npmjs / yarnpkg yedeğine geçer)
 RUN npm config set fetch-retries 3 && \
