@@ -38,12 +38,55 @@ module.exports = defineConfig({
       options: {
         providers: [
           {
-            resolve: "./src/modules/custom-payment",
-            id: "custom-payment",
+            resolve: "./src/modules/custom-payment/providers/cash-on-delivery",
+            id: "CASH-ON-DELIVERY",
             options: {},
           },
+          {
+            resolve: "./src/modules/custom-payment/providers/card-on-delivery",
+            id: "CARD-ON-DELIVERY",
+            options: {},
+          },
+          {
+            resolve: "./src/modules/custom-payment/providers/bank-transfer",
+            id: "BANK-TRANSFER",
+            options: {},
+          },
+          {
+            resolve: "./src/modules/custom-payment/providers/paytr",
+            id: "PAYTR",
+            options: {},
+          }
         ],
       },
+    },
+    multiPaymentModuleService: {
+      resolve: "./src/modules/payment-integrations"
+    },
+    ...(process.env.REDIS_URL ? {
+      [Modules.EVENT_BUS]: {
+        resolve: "@medusajs/event-bus-redis",
+        options: {
+          redisUrl: process.env.REDIS_URL,
+        },
+      },
+      [Modules.CACHE]: {
+        resolve: "@medusajs/cache-redis",
+        options: {
+          redisUrl: process.env.REDIS_URL,
+        },
+      },
+      [Modules.WORKFLOW_ENGINE]: {
+        resolve: "@medusajs/workflow-engine-redis",
+        options: {
+          redis: {
+            url: process.env.REDIS_URL,
+          },
+        },
+      },
+    } : {}),
+    xml_import: {
+      resolve: "./src/modules/xml_import",
     },
     [Modules.FILE]: {
       resolve: "@medusajs/file",
@@ -62,3 +105,22 @@ module.exports = defineConfig({
     },
   }
 })
+
+// Veritabanindaki eski payment provider kalintilarini ve kopmus baglantilari silen temizlik kodu
+setTimeout(async () => {
+  try {
+    const { Client } = require('pg');
+    const c = new Client({ connectionString: process.env.DATABASE_URL });
+    await c.connect();
+    
+    // 1. Gecersiz odeme saglayicilarini sil (zaten silinmisti)
+    await c.query(`DELETE FROM payment_provider WHERE id NOT IN ('pp_CASH-ON-DELIVERY_CASH-ON-DELIVERY', 'pp_CARD-ON-DELIVERY_CARD-ON-DELIVERY', 'pp_BANK-TRANSFER_BANK-TRANSFER', 'pp_PAYTR_PAYTR', 'pp_system_default')`).catch(() => {});
+    
+    // 2. Bölgelere (Region) bagli olan ama aslinda silinmis olan (null dönen) ödeme yöntemlerinin kopmus baglantilarini sil
+    await c.query(`DELETE FROM region_payment_provider WHERE payment_provider_id NOT IN (SELECT id FROM payment_provider)`).catch(() => {});
+    await c.query(`DELETE FROM store_payment_provider WHERE payment_provider_id NOT IN (SELECT id FROM payment_provider)`).catch(() => {});
+    
+    await c.end();
+    console.log('KOPMUS VERITABANI BAGLANTILARI TEMIZLENDI!');
+  } catch (e) { console.error(e); }
+}, 10000);

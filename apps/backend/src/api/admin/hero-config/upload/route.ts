@@ -18,11 +18,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const base64Data = base64.includes(",") ? base64.split(",")[1] : base64
     const buffer = Buffer.from(base64Data, "base64")
 
-    // Define the upload directory.
-    // In production (Coolify Docker), the storefront doesn't exist in the same container.
-    // We must save files to the backend's "uploads" folder, which is served by our custom static route.
+    // Dosyaların kaydedileceği yol (Artık direkt backend'in kendi uploads klasörü)
     let uploadDir = path.join(process.cwd(), "uploads");
-    
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true })
@@ -34,52 +31,16 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const safeFilename = `${Date.now()}-${base}${ext}`
     const filePath = path.join(uploadDir, safeFilename)
 
-    // Write file to storefront public uploads
+    // Write file to backend uploads
     fs.writeFileSync(filePath, buffer)
 
-    // Dynamic storefront URL resolution
-    let storefrontUrl = "http://localhost:8001"
-    const referer = req.headers.referer || ""
-    let isLocalRequest = true
-
-    if (referer) {
-      try {
-        const parsedReferer = new URL(referer)
-        const hostname = parsedReferer.hostname
-        if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-          isLocalRequest = false
-        }
-        
-        // If sslip.io subdomain, map to storefront subdomain
-        if (hostname.includes("sslip.io")) {
-          const parts = hostname.split(".")
-          if (parts.length > 2) {
-            parts[0] = "storefront"
-          }
-          storefrontUrl = `${parsedReferer.protocol}//${parts.join(".")}:8001`
-        } else if (!isLocalRequest) {
-          // Custom domain fallback (e.g. replace admin.cizgibutik.com with cizgibutik.com)
-          const domain = hostname.replace("admin.", "www.").replace("backend.", "www.")
-          storefrontUrl = `${parsedReferer.protocol}//${domain}`
-        }
-      } catch (e) {
-        console.error("Error parsing referer in upload route:", e)
-      }
-    }
-
-    // Fallback to STORE_CORS if sslip.io/referer logic didn't override it and we are in production
-    if (storefrontUrl === "http://localhost:8001" && process.env.STORE_CORS) {
-      const origins = process.env.STORE_CORS.split(",")
-      if (isLocalRequest) {
-        const localOrigin = origins.find(o => o.includes("localhost:8001") || o.includes("localhost:8000"))
-        if (localOrigin) storefrontUrl = localOrigin.trim()
-      } else {
-        const nonLocalOrigin = origins.find(o => !o.includes("localhost:") && !o.includes("127.0.0.1:"))
-        if (nonLocalOrigin) storefrontUrl = nonLocalOrigin.trim()
-      }
-    }
-
-    const publicUrl = `${storefrontUrl}/uploads/${safeFilename}`
+    // Artık dosyaları Storefront'tan değil, kendi yazdığımız Backend rotasından okuyacağız!
+    // Bu yüzden URL direkt olarak Backend adresimiz olmalı.
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "api.cizgibutik.com"
+    const protocol = req.headers["x-forwarded-proto"] || "https"
+    
+    // Doğru URL: https://api.cizgibutik.com/uploads/dosya.mp4
+    const publicUrl = `${protocol}://${host}/uploads/${safeFilename}`
 
     res.json({
       success: true,

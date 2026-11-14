@@ -3,7 +3,7 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
-const configFilePath = path.join(os.homedir(), ".xoox-shipping-settings.json")
+const configFilePath = path.join(process.cwd(), "uploads", "shipping-settings.json")
 
 const defaultData = {
   systemType: "advanced", // "advanced" | "simple"
@@ -62,10 +62,10 @@ const defaultData = {
       key: "interline",
       general: {
         name: "INTERLINE KARGO",
-        active: true,
+        active: false,
         description: "",
         sortOrder: 0,
-        taxNumber: "11111111111",
+        taxNumber: "",
         customerType: "Hepsi",
         companyCode: "",
         logoUrl: "",
@@ -75,15 +75,15 @@ const defaultData = {
         limitProductQuantity: false
       },
       api: {
-        apiActive: true,
-        autoGenerateBarcode: true,
+        apiActive: false,
+        autoGenerateBarcode: false,
         generateBarcodeForNonCarrier: false,
         markAsShippedOnBranchReceive: false,
         barcodeGenerationStage: "Yeni Sipariş",
         sendFixedVolumetricWeight: false,
-        apiAuthorization: "gvC8kSXzRBHMaW1Ucnls53N6KAZ0TFb7YGphm4QE",
-        apiFrom: "modoskop@interlinekargo.com",
-        branchName: "582"
+        apiAuthorization: "",
+        apiFrom: "",
+        branchName: ""
       },
       regions: {
         deliveryType: "all",
@@ -216,11 +216,150 @@ export function readConfig() {
 
 function writeConfig(data: any) {
   try {
+    const dir = path.dirname(configFilePath)
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
     fs.writeFileSync(configFilePath, JSON.stringify(data, null, 2), "utf-8")
     return true
   } catch (err) {
     console.error("Error writing shipping config in admin api:", err)
     return false
+  }
+}
+
+export function calculateEffectiveShippingKurus(itemsNetKurus: number, shippingConfig?: any): number {
+  const cfg = shippingConfig || readConfig()
+  if (!cfg || cfg.standardShippingEnabled === false) {
+    return 0
+  }
+  const itemsNetTl = itemsNetKurus / 100
+  if (cfg.freeShippingEnabled && itemsNetTl >= Number(cfg.freeShippingThreshold || 0)) {
+    return 0
+  }
+  return Math.max(0, Math.round(Number(cfg.standardShippingFee ?? 0) * 100))
+}
+
+export async function syncMedusaShippingOptionPrices(scope: any, shippingConfig?: any): Promise<void> {
+  try {
+    const cfg = shippingConfig || readConfig()
+    const fee = Number(cfg.standardShippingFee ?? 0)
+    const medusaAmount = cfg.standardShippingEnabled === false ? 0 : Math.max(0, Math.round(fee * 100))
+
+    const { ContainerRegistrationKeys, Modules } = await import("@medusajs/framework/utils")
+    const { updateShippingOptionsWorkflow } = await import("@medusajs/core-flows")
+    const query = scope.resolve(ContainerRegistrationKeys.QUERY)
+
+    const { data: shippingOptions } = await query.graph({
+      entity: "shipping_option",
+      fields: [
+        "id",
+        "name",
+        "price_type",
+        "provider_id",
+        "prices.*",
+        "prices.price_rules.*",
+        "service_zone.geo_zones.*",
+        "shipping_profile.*"
+      ],
+      filters: {
+        price_type: "flat"
+      }
+    })
+
+    if (shippingOptions && shippingOptions.length > 0) {
+      for (const option of (shippingOptions as any[])) {
+        const tryPrices = (option.prices || []).filter(
+          (p: any) => !p.currency_code || p.currency_code?.toLowerCase() === "try"
+        )
+
+        if (tryPrices.length > 0) {
+          // 1. Update directly via Pricing Module if price_set_id is present
+          try {
+            const pricingModule = scope.resolve(Modules.PRICING)
+            const priceSetIds = Array.from(
+              new Set(tryPrices.map((p: any) => p.price_set_id).filter(Boolean))
+            ) as string[]
+            for (const psId of priceSetIds) {
+              await pricingModule.updatePriceSets(psId, {
+                prices: [{ amount: medusaAmount, currency_code: "try" }]
+              })
+            }
+          } catch (pmErr) {
+            console.warn(`Note: direct pricingModule update for shipping option ${option.id}:`, pmErr)
+          }
+
+          // 2. Also run updateShippingOptionsWorkflow for completeness
+          const fallbackPrices = option.prices.map((p: any) => {
+            const isTry = !p.currency_code || p.currency_code?.toLowerCase() === "try"
+            const payload: any = {
+              id: p.id,
+              amount: isTry ? medusaAmount : p.amount,
+              currency_code: p.currency_code || "try"
+            }
+            if (p.region_id) payload.region_id = p.region_id
+            if (p.price_rules && p.price_rules.length > 0) {
+              payload.rules = p.price_rules.map((pr: any) => ({
+                attribute: pr.attribute,
+                operator: pr.operator,
+                value: pr.value
+              }))
+            }
+            return payload
+          })
+
+          try {
+            await updateShippingOptionsWorkflow(scope).run({
+              input: [
+                {
+                  id: option.id,
+                  prices: fallbackPrices
+                }
+              ]
+            })
+          } catch (wfErr) {
+            console.warn(`Warning updating shipping option ${option.id} via workflow:`, wfErr)
+          }
+        }
+      }
+    }
+  } catch (err: any) {
+    console.error("Warning syncing Medusa shipping option prices:", err)
+  }
+}
+
+export async function syncCartShippingMethods(scope: any, cartId: string): Promise<number> {
+  const shippingConfig = readConfig()
+  try {
+    const { Modules } = await import("@medusajs/framework/utils")
+    const cartModule = scope.resolve(Modules.CART)
+    const cart = await cartModule.retrieveCart(cartId, {
+      relations: ["items", "shipping_methods"]
+    })
+
+    const subtotalKurus = (cart.items || [])
+      .filter((i: any) => !i.title?.includes("Kapıda") && !i.metadata?.is_cod_fee)
+      .reduce((acc: number, item: any) => acc + (Number(item.unit_price || 0) * Number(item.quantity || 1)), 0)
+
+    const effectiveShippingKurus = calculateEffectiveShippingKurus(subtotalKurus, shippingConfig)
+
+    if (cart.shipping_methods && cart.shipping_methods.length > 0) {
+      const updates = cart.shipping_methods
+        .filter((sm: any) => Number(sm.amount) !== effectiveShippingKurus)
+        .map((sm: any) => ({
+          id: sm.id,
+          amount: effectiveShippingKurus
+        }))
+
+      if (updates.length > 0) {
+        await cartModule.updateShippingMethods(updates)
+      }
+    }
+
+    return effectiveShippingKurus
+  } catch (err) {
+    console.warn("syncCartShippingMethods warning:", err)
+    return calculateEffectiveShippingKurus(0, shippingConfig)
   }
 }
 
@@ -231,10 +370,24 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const body = req.body as any
-  const success = writeConfig(body)
-  if (success) {
-    res.json({ success: true, config: body })
-  } else {
-    res.status(500).json({ success: false, message: "Could not write shipping configuration" })
+  const fee = Number(body.standardShippingFee ?? 0)
+  const currency = body.standardShippingCurrency || "TL"
+
+  if (typeof fee !== "number" || !isFinite(fee) || fee < 0) {
+    return res.status(400).json({ success: false, message: "Geçersiz kargo ücreti" })
   }
+  if (currency !== "TL") {
+    return res.status(400).json({ success: false, message: "Sadece TL desteklenmektedir" })
+  }
+
+  // 1. Always persist JSON config first so settings are never lost
+  const savedToDisk = writeConfig(body)
+  if (!savedToDisk) {
+    return res.status(500).json({ success: false, message: "Ayar dosyaya kaydedilemedi." })
+  }
+
+  // 2. Sync canonical Medusa shipping options (both base TRY price and regional Turkey price)
+  await syncMedusaShippingOptionPrices(req.scope, body)
+
+  return res.json({ success: true, config: body })
 }

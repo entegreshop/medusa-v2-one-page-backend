@@ -3,9 +3,7 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 
-const configDir = path.join(process.cwd(), "uploads", "settings")
-if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true })
-const configFilePath = path.join(configDir, "sms-settings.json")
+const configFilePath = path.join(process.cwd(), "uploads", "sms-settings.json")
 
 interface SMSConfig {
   active: boolean
@@ -47,6 +45,10 @@ export function readConfig(): SMSConfig {
 
 function writeConfig(data: any) {
   try {
+    const dir = path.dirname(configFilePath)
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
     fs.writeFileSync(configFilePath, JSON.stringify(data, null, 2), "utf-8")
     return true
   } catch (err) {
@@ -74,31 +76,18 @@ async function sendNetgsmSms(usercode: string, password: string, header: string,
   }
 
   try {
-    const xmlPayload = `<?xml version="1.0" encoding="UTF-8"?>
-<mainbody>
-    <header>
-        <company dil="TR">Netgsm</company>
-        <usercode>${usercode}</usercode>
-        <password>${password}</password>
-        <msgheader>${header}</msgheader>
-    </header>
-    <body>
-        <msg>
-            <gsm>
-                <no>${cleanPhone}</no>
-            </gsm>
-            <msg>${message}</msg>
-        </msg>
-    </body>
-</mainbody>`;
+    const params = new URLSearchParams()
+    params.append("usercode", usercode)
+    params.append("password", password)
+    params.append("gsmno", cleanPhone)
+    params.append("message", message)
+    params.append("msgheader", header)
 
-    const response = await fetch(`https://api.netgsm.com.tr/sms/send/xml`, {
-      method: "POST",
+    const response = await fetch(`https://api.netgsm.com.tr/sms/send/get?${params.toString()}`, {
+      method: "GET",
       headers: {
-        "Content-Type": "application/xml",
         "Accept": "text/html"
-      },
-      body: xmlPayload
+      }
     })
 
     const body = await response.text()

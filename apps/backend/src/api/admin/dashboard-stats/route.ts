@@ -1,5 +1,6 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Pool } from "pg"
+import { getGaRealtimeStats } from "../pixel-settings/route"
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgres://postgres@localhost:5432/medusa_v2_ikinci"
@@ -201,7 +202,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         SELECT 
           oli.product_title, 
           oli.variant_title, 
-          oli.thumbnail, 
+          COALESCE(NULLIF(oli.thumbnail, ''), p.thumbnail) as thumbnail, 
           oli.variant_sku as sku, 
           SUM(CAST(oi.quantity AS integer)) as quantity,
           AVG(CAST(oli.unit_price AS numeric)) / 100 as price,
@@ -210,10 +211,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         JOIN order_line_item oli ON oli.id = oi.item_id
         JOIN "order" o ON o.id = oi.order_id
         LEFT JOIN "product_variant" pv ON pv.id = oli.variant_id
+        LEFT JOIN "product" p ON p.id = pv.product_id
         WHERE o.deleted_at IS NULL AND oi.deleted_at IS NULL AND oli.deleted_at IS NULL
           AND o.status != 'draft'
           AND o.created_at >= $1 AND o.created_at <= $2
-        GROUP BY oli.product_title, oli.variant_title, oli.thumbnail, oli.variant_sku, pv.metadata
+        GROUP BY oli.product_title, oli.variant_title, oli.thumbnail, p.thumbnail, oli.variant_sku, pv.metadata
         ORDER BY quantity DESC
         LIMIT 10
       `, [start.toISOString(), end.toISOString()])
@@ -429,51 +431,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const monthlyAvgOrders = parseFloat((dailyAvgOrders * 30).toFixed(1))
 
     // Calculate cart summary dynamically
-    const mockAverageCart = 1463.54
-    const mockAveragePrice = 963.98
-    const mockAverageProductCount = 1.4
-    const mockAverageQuantityCount = 1.4
+    const averageCart = realOrderCount > 0 ? parseFloat((realTotalRevenue / realOrderCount).toFixed(2)) : 0
+    const averageQuantityCount = realOrderCount > 0 ? parseFloat((realItemQuantitySum / realOrderCount).toFixed(1)) : 0
+    const averageProductCount = realOrderCount > 0 ? parseFloat((realUniqueItemsCount / realOrderCount).toFixed(1)) : 0
+    const averagePrice = realItemQuantitySum > 0 ? parseFloat((realUnitPriceSum / realItemQuantitySum).toFixed(2)) : 0
 
-    const averageCart = realOrderCount > 0 ? parseFloat((realTotalRevenue / realOrderCount).toFixed(2)) : mockAverageCart
-    const averageQuantityCount = realOrderCount > 0 ? parseFloat((realItemQuantitySum / realOrderCount).toFixed(1)) : mockAverageQuantityCount
-    const averageProductCount = realOrderCount > 0 ? parseFloat((realUniqueItemsCount / realOrderCount).toFixed(1)) : mockAverageProductCount
-    const averagePrice = realItemQuantitySum > 0 ? parseFloat((realUnitPriceSum / realItemQuantitySum).toFixed(2)) : mockAveragePrice
-
-    // Add some default best sellers if DB is empty to make it look full
-    if (bestSellers.length === 0) {
-      bestSellers = [
-        {
-          title: "Stradivarius Vintage Kot Ceket",
-          subtitle: "SVPDZFZZXM",
-          thumbnail: "https://images.unsplash.com/photo-1544441893-675973e31985?w=120&auto=format&fit=crop&q=60",
-          sku: "SVPDZFZZXM",
-          quantity: 119,
-          price: 871.90,
-          costPrice: 348.76,
-          totalSales: 103755.70
-        },
-        {
-          title: "Siyah Power Likra Dalgıç İspanyol Taytlı Takım",
-          subtitle: "904VSULFFP",
-          thumbnail: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=120&auto=format&fit=crop&q=60",
-          sku: "904VSULFFP",
-          quantity: 109,
-          price: 1094.98,
-          costPrice: 437.99,
-          totalSales: 119353.00
-        },
-        {
-          title: "Siyah Oysho Model Kumaş Şalvar Pantolon",
-          subtitle: "31V04FFSRJ",
-          thumbnail: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=120&auto=format&fit=crop&q=60",
-          sku: "31V04FFSRJ",
-          quantity: 56,
-          price: 759.61,
-          costPrice: 303.84,
-          totalSales: 42538.20
-        }
-      ]
-    }
+    // No mock best sellers
 
     // Fetch number of active carts in the last 30 minutes
     let activeCartsCount = 0
@@ -490,79 +453,24 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       console.error("Dashboard stats query error (active carts):", dbErr)
     }
 
-    const currentHour = new Date().getHours()
-    let baseVisitors = 8
-    if (currentHour >= 9 && currentHour <= 18) {
-      baseVisitors = 12 + (Math.floor(Math.sin(Date.now() / 100000) * 3) + 2) // fluctuates slowly between 11 and 17
-    } else {
-      baseVisitors = 5 + (Math.floor(Math.sin(Date.now() / 100000) * 2) + 1) // fluctuates slowly between 4 and 8
-    }
-    const activeVisitorsCount = baseVisitors + activeCartsCount
-    const desktopPercent = 60 + (Math.floor(Math.sin(Date.now() / 50000) * 5) + 5) // fluctuates between 60% and 70%
-    const mobilePercent = 100 - desktopPercent
+    const gaRealtime = await getGaRealtimeStats(activeCartsCount)
+    const activeVisitorsCount = gaRealtime.count
+    const desktopPercent = gaRealtime.desktopPercent
+    const mobilePercent = gaRealtime.mobilePercent
 
     let conversionCarts = realCartsCount
     let conversionCheckout = realCartsWithEmailCount
     let conversionAddress = realCartsWithAddressCount
 
-    // Enforce logical progression and realistic drop-offs
-    if (conversionAddress < totalOrders) {
-      conversionAddress = totalOrders
-    }
-    if (conversionCheckout < conversionAddress) {
-      const diff = Math.max(1, Math.round(conversionAddress * 0.3))
-      conversionCheckout = conversionAddress + (totalOrders > 0 ? diff : 0)
-    }
-    if (conversionCarts < conversionCheckout) {
-      const diff = Math.max(2, Math.round(conversionCheckout * 0.4))
-      conversionCarts = conversionCheckout + (totalOrders > 0 ? diff : 0)
-    }
-
-    const conversionVisitors = Math.max(100, Math.round(conversionCarts / 0.0812))
+    // Without an anonymous tracking service, we assume carts = visitors.
+    const conversionVisitors = Math.max(conversionCarts, totalOrders)
     const conversionOverallRate = conversionVisitors > 0 ? parseFloat(((totalOrders / conversionVisitors) * 100).toFixed(2)) : 0
     const cartsCreatedPercent = conversionVisitors > 0 ? parseFloat(((conversionCarts / conversionVisitors) * 100).toFixed(2)) : 0
     const checkoutInitiatedPercent = conversionVisitors > 0 ? parseFloat(((conversionCheckout / conversionVisitors) * 100).toFixed(2)) : 0
     const addressEnteredPercent = conversionVisitors > 0 ? parseFloat(((conversionAddress / conversionVisitors) * 100).toFixed(2)) : 0
 
-    // Traffic Sources distribution based on totalOrders and conversionVisitors
-    const sources = [
-      { name: "instagram.com", vPercent: 0.45, oPercent: 0.50 },
-      { name: "Doğrudan Ziyaret", vPercent: 0.30, oPercent: 0.30 },
-      { name: "facebook.com", vPercent: 0.15, oPercent: 0.12 },
-      { name: "google.com", vPercent: 0.08, oPercent: 0.08 },
-      { name: "parqleglobal.com", vPercent: 0.02, oPercent: 0.00 }
-    ]
-
-    let allocatedVisitors = 0
-    let allocatedOrders = 0
-
-    const trafficSources = sources.map((src, idx) => {
-      let srcVisitors = 0
-      let srcOrders = 0
-
-      if (idx === sources.length - 1) {
-        srcVisitors = conversionVisitors - allocatedVisitors
-        srcOrders = totalOrders - allocatedOrders
-      } else {
-        srcVisitors = Math.round(conversionVisitors * src.vPercent)
-        srcOrders = Math.round(totalOrders * src.oPercent)
-        allocatedVisitors += srcVisitors
-        allocatedOrders += srcOrders
-      }
-
-      if (srcOrders > srcVisitors) {
-        srcVisitors = srcOrders
-      }
-
-      const rate = srcVisitors > 0 ? parseFloat(((srcOrders / srcVisitors) * 100).toFixed(2)) : 0
-
-      return {
-        source: src.name,
-        visitors: srcVisitors,
-        sales: srcOrders,
-        rate
-      }
-    })
+    // Traffic Sources distribution - currently no real data source in standard Medusa DB
+    const trafficSources: any[] = []
 
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate")
     res.setHeader("Pragma", "no-cache")
@@ -580,7 +488,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
           iadeEdilen: iadeEdilenCount,
           circleCount: onayBekleyenCount + iadeEdilenCount,
           channels: [
-            { name: "Çizgibutik", count: realPendingCount + realPreparingCount },
+            { name: "cizgibutik.com (Web Mağaza)", count: realOrderCount },
             { name: "N11", count: "-" },
             { name: "Hepsiburada", count: "-" },
             { name: "Trendyol", count: "-" }
@@ -605,7 +513,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         activeVisitors: {
           count: activeVisitorsCount,
           desktopPercent,
-          mobilePercent
+          mobilePercent,
+          source: gaRealtime.source,
+          sessions: gaRealtime.sessions,
+          minuteHistory: gaRealtime.minuteHistory,
         },
         conversionRates: {
           overallRate: conversionOverallRate,
